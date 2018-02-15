@@ -1,0 +1,80 @@
+list( APPEND fv3_src_files
+atmos_cubed_sphere/model/a2b_edge.F90
+atmos_cubed_sphere/model/boundary.F90
+atmos_cubed_sphere/model/dyn_core.F90
+atmos_cubed_sphere/model/fv_arrays.F90
+atmos_cubed_sphere/model/fv_cmp.F90
+atmos_cubed_sphere/model/fv_control.F90
+atmos_cubed_sphere/model/fv_current_grid.F90
+atmos_cubed_sphere/model/fv_dynamics.F90
+atmos_cubed_sphere/model/fv_fill.F90
+atmos_cubed_sphere/model/fv_grid_utils.F90
+atmos_cubed_sphere/model/fv_mapz.F90
+atmos_cubed_sphere/model/fv_nesting.F90
+atmos_cubed_sphere/model/fv_sg.F90
+atmos_cubed_sphere/model/fv_tracer2d.F90
+atmos_cubed_sphere/model/fv_update_phys.F90
+atmos_cubed_sphere/model/lin_cloud_microphys.F90
+atmos_cubed_sphere/model/sw_core.F90
+atmos_cubed_sphere/model/tp_core.F90
+atmos_cubed_sphere/model/nh_core.F90
+atmos_cubed_sphere/model/nh_utils.F90
+atmos_cubed_sphere/tools/external_ic.F90
+atmos_cubed_sphere/tools/external_sst.F90
+atmos_cubed_sphere/tools/fv_diagnostics.F90
+atmos_cubed_sphere/tools/fv_eta.F90
+atmos_cubed_sphere/tools/fv_grid_tools.F90
+atmos_cubed_sphere/tools/fv_io.F90
+atmos_cubed_sphere/tools/fv_mp_mod.F90
+atmos_cubed_sphere/tools/fv_nggps_diag.F90
+atmos_cubed_sphere/tools/fv_nudge.F90
+atmos_cubed_sphere/tools/fv_restart.F90
+atmos_cubed_sphere/tools/fv_surf_map.F90
+atmos_cubed_sphere/tools/fv_timing.F90
+atmos_cubed_sphere/tools/fv_treat_da_inc.F90
+atmos_cubed_sphere/tools/init_hydro.F90
+atmos_cubed_sphere/tools/sim_nc_mod.F90
+atmos_cubed_sphere/tools/sorted_index.F90
+atmos_cubed_sphere/tools/test_cases.F90
+atmos_cubed_sphere/model_tlmadm/a2b_edge_adm.F90
+atmos_cubed_sphere/model_tlmadm/a2b_edge_tlm.F90
+atmos_cubed_sphere/model_tlmadm/adBuffer.f
+atmos_cubed_sphere/model_tlmadm/adStack.c
+atmos_cubed_sphere/model_tlmadm/boundary_adm.F90
+atmos_cubed_sphere/model_tlmadm/boundary_tlm.F90
+atmos_cubed_sphere/model_tlmadm/dyn_core_adm.F90
+atmos_cubed_sphere/model_tlmadm/dyn_core_tlm.F90
+atmos_cubed_sphere/model_tlmadm/fv_arrays_nlm.F90
+atmos_cubed_sphere/model_tlmadm/fv_control_nlm.F90
+atmos_cubed_sphere/model_tlmadm/fv_dynamics_adm.F90
+atmos_cubed_sphere/model_tlmadm/fv_dynamics_tlm.F90
+atmos_cubed_sphere/model_tlmadm/fv_grid_utils_adm.F90
+atmos_cubed_sphere/model_tlmadm/fv_grid_utils_tlm.F90
+atmos_cubed_sphere/model_tlmadm/fv_mapz_adm.F90
+atmos_cubed_sphere/model_tlmadm/fv_mapz_tlm.F90
+atmos_cubed_sphere/model_tlmadm/fv_mp_adm.F90
+atmos_cubed_sphere/model_tlmadm/fv_mp_tlm.F90
+atmos_cubed_sphere/model_tlmadm/fv_nesting_adm.F90
+atmos_cubed_sphere/model_tlmadm/fv_nesting_tlm.F90
+atmos_cubed_sphere/model_tlmadm/fv_restart_adm.F90
+atmos_cubed_sphere/model_tlmadm/fv_restart_tlm.F90
+atmos_cubed_sphere/model_tlmadm/fv_tracer2d_adm.F90
+atmos_cubed_sphere/model_tlmadm/fv_tracer2d_tlm.F90
+atmos_cubed_sphere/model_tlmadm/nh_core_adm.F90
+atmos_cubed_sphere/model_tlmadm/nh_core_tlm.F90
+atmos_cubed_sphere/model_tlmadm/nh_utils_adm.F90
+atmos_cubed_sphere/model_tlmadm/nh_utils_tlm.F90
+atmos_cubed_sphere/model_tlmadm/sw_core_adm.F90
+atmos_cubed_sphere/model_tlmadm/sw_core_tlm.F90
+atmos_cubed_sphere/model_tlmadm/tapenade_iter.F90
+atmos_cubed_sphere/model_tlmadm/tp_core_adm.F90
+atmos_cubed_sphere/model_tlmadm/tp_core_tlm.F90
+)
+
+ecbuild_add_library( TARGET   fv3
+                     SOURCES  ${fv3_src_files}
+                     LIBS     ${NETCDF_LIBRARIES} ${FMS_LIBRARIES}
+                     INCLUDES ${FMS_INCLUDES}
+                     INSTALL_HEADERS LISTED
+                     LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
+                    )
