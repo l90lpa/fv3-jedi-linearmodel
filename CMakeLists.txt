@@ -64,6 +64,8 @@ include_directories( ${FMS_INCLUDE_DIRS} )
 # Definitions
 ################################################################################
 
+set(COMPDEFS "-DsysLinux;-DESMA64;-DHAS_NETCDF4;-DHAS_NETCDF3;-DH5_HAVE_PARALLEL;-DNETCDF_NEED_NF_MPIIO;-DEIGHT_BYTE;-DSPMD;-DTIMING;-Duse_libMPI;-Duse_netCDF;-DHAVE_SHMEM;-DMAPL_MODE;-DOLDMPP")
+
 add_definitions( ${COMPDEFS} )
 
 ################################################################################
