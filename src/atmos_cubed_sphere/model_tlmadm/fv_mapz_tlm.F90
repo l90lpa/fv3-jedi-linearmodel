@@ -36,6 +36,7 @@ module fv_mapz_tlm_mod
   use fv_mp_mod,         only: is_master
   use fv_cmp_mod,        only: qs_init, fv_sat_adj
   use fv_diagnostics_mod, only: prt_mxm
+  use fv_arrays_nlm_mod, only: fpp
 
   implicit none
   real, parameter:: consv_min= 0.001   ! below which no correction applies
@@ -60,8 +61,8 @@ module fv_mapz_tlm_mod
          map1_q2_tlm
 
 !---- version number -----
-  character(len=128) :: version = '$Id: fv_mapz_tlm.F90,v 1.2 2017/11/13 21:58:44 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_18_0_vlabfv3pert $'
+  character(len=128) :: version = '$Id: fv_mapz_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of lagrangian_to_eulerian in forward (tangent) mode:
@@ -167,7 +168,7 @@ CONTAINS
 ! as input; output: temperature
     REAL, DIMENSION(isd:ied, jsd:jed, km), INTENT(INOUT) :: delz
     REAL, DIMENSION(isd:ied, jsd:jed, km), INTENT(INOUT) :: delz_tl
-    REAL, DIMENSION(isd:isd, jsd:jsd, 1), INTENT(INOUT) :: q_con, cappa
+    REAL, DIMENSION(isd:ied, jsd:jed, km), INTENT(INOUT) :: q_con, cappa
     LOGICAL, INTENT(IN) :: hydrostatic
     LOGICAL, INTENT(IN) :: hybrid_z
     LOGICAL, INTENT(IN) :: out_dt
@@ -293,12 +294,21 @@ CONTAINS
     rg = rdgas
     rcp = 1./cp
     rrg = -(rdgas/grav)
-    liq_wat = -1
-    ice_wat = -1
-    rainwat = -1
-    snowwat = -1
-    graupel = -1
-    cld_amt = -1
+    IF (fpp%fpp_mapl_mode) THEN
+      liq_wat = 2
+      ice_wat = 3
+      rainwat = -1
+      snowwat = -1
+      graupel = -1
+      cld_amt = -1
+    ELSE
+      liq_wat = GET_TRACER_INDEX(model_atmos, 'liq_wat')
+      ice_wat = GET_TRACER_INDEX(model_atmos, 'ice_wat')
+      rainwat = GET_TRACER_INDEX(model_atmos, 'rainwat')
+      snowwat = GET_TRACER_INDEX(model_atmos, 'snowwat')
+      graupel = GET_TRACER_INDEX(model_atmos, 'graupel')
+      cld_amt = GET_TRACER_INDEX(model_atmos, 'cld_amt')
+    END IF
     IF (do_sat_adj) THEN
       fast_mp_consv = .NOT.do_adiabatic_init .AND. consv .GT. consv_min
       DO k=1,km
@@ -1179,8 +1189,8 @@ v_tj = v
 &                 rainwat), q(isd:ied, jsd:jed, k, snowwat), q(isd:ied, &
 &                 jsd:jed, k, graupel), dpln, delz(isd:ied, jsd:jed, k)&
 &                 , pt(isd:ied, jsd:jed, k), delp(isd:ied, jsd:jed, k), &
-&                 q_con(isd:isd, jsd:jsd, k), cappa(isd:, jsd:, k), &
-&                 gridstruct%area_64, dtdt(is:ie, js:je, k), out_dt, &
+&                 q_con(isd:ied, jsd:jed, k), cappa(isd:ied, jsd:jed, k)&
+&                 , gridstruct%area_64, dtdt(is:ie, js:je, k), out_dt, &
 &                 last_step, cld_amt .GT. 0, q(isd:ied, jsd:jed, k, &
 &                 cld_amt))
         IF (.NOT.hydrostatic) THEN
@@ -1436,7 +1446,7 @@ v_tj = v
     REAL, INTENT(INOUT) :: pt(isd:ied, jsd:jed, km)
 ! as input; output: temperature
     REAL, DIMENSION(isd:ied, jsd:jed, km), INTENT(INOUT) :: delz
-    REAL, DIMENSION(isd:isd, jsd:jsd, 1), INTENT(INOUT) :: q_con, cappa
+    REAL, DIMENSION(isd:ied, jsd:jed, km), INTENT(INOUT) :: q_con, cappa
     LOGICAL, INTENT(IN) :: hydrostatic
     LOGICAL, INTENT(IN) :: hybrid_z
     LOGICAL, INTENT(IN) :: out_dt
@@ -1538,12 +1548,21 @@ v_tj = v
     rg = rdgas
     rcp = 1./cp
     rrg = -(rdgas/grav)
-    liq_wat = -1
-    ice_wat = -1
-    rainwat = -1
-    snowwat = -1
-    graupel = -1
-    cld_amt = -1
+    IF (fpp%fpp_mapl_mode) THEN
+      liq_wat = 2
+      ice_wat = 3
+      rainwat = -1
+      snowwat = -1
+      graupel = -1
+      cld_amt = -1
+    ELSE
+      liq_wat = GET_TRACER_INDEX(model_atmos, 'liq_wat')
+      ice_wat = GET_TRACER_INDEX(model_atmos, 'ice_wat')
+      rainwat = GET_TRACER_INDEX(model_atmos, 'rainwat')
+      snowwat = GET_TRACER_INDEX(model_atmos, 'snowwat')
+      graupel = GET_TRACER_INDEX(model_atmos, 'graupel')
+      cld_amt = GET_TRACER_INDEX(model_atmos, 'cld_amt')
+    END IF
     IF (do_sat_adj) THEN
       fast_mp_consv = .NOT.do_adiabatic_init .AND. consv .GT. consv_min
       DO k=1,km
@@ -2152,8 +2171,8 @@ v_tj = v
 &                 rainwat), q(isd:ied, jsd:jed, k, snowwat), q(isd:ied, &
 &                 jsd:jed, k, graupel), dpln, delz(isd:ied, jsd:jed, k)&
 &                 , pt(isd:ied, jsd:jed, k), delp(isd:ied, jsd:jed, k), &
-&                 q_con(isd:isd, jsd:jsd, k), cappa(isd:, jsd:, k), &
-&                 gridstruct%area_64, dtdt(is:ie, js:je, k), out_dt, &
+&                 q_con(isd:ied, jsd:jed, k), cappa(isd:ied, jsd:jed, k)&
+&                 , gridstruct%area_64, dtdt(is:ie, js:je, k), out_dt, &
 &                 last_step, cld_amt .GT. 0, q(isd:ied, jsd:jed, k, &
 &                 cld_amt))
         IF (.NOT.hydrostatic) THEN

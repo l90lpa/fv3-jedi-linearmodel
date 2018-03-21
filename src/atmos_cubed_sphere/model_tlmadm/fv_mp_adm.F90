@@ -1,7 +1,7 @@
 module fv_mp_adm_mod
 
 use fv_arrays_mod,   only : R_GRID
-use fv_arrays_nlm_mod,   only :fv_timing_onoff
+use fv_arrays_nlm_mod,only : fv_timing_onoff
 use mpp_domains_mod, only : domain2D
 use mpp_domains_mod, only : mpp_start_group_update, mpp_complete_group_update
 use mpp_domains_mod, only : mpp_group_update_initialized

@@ -70,8 +70,8 @@ module tp_core_mod
 ! integer:: is, ie, js, je, isd, ied, jsd, jed
 
 !---- version number -----
-   character(len=128) :: version = '$Id$'
-   character(len=128) :: tagname = '$Name$'
+   character(len=128) :: version = '$Id: tp_core.F90,v 1.4 2018/03/15 14:02:27 drholdaw Exp $'
+   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 !
 !EOP

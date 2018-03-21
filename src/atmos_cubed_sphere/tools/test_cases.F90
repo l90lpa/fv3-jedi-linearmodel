@@ -156,8 +156,8 @@
       public :: checker_tracers
 
  !---- version number -----
-      character(len=128) :: version = '$Id$'
-      character(len=128) :: tagname = '$Name$'
+      character(len=128) :: version = '$Id: test_cases.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $'
+      character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
   INTERFACE mp_update_dwinds
      MODULE PROCEDURE mp_update_dwinds_2d

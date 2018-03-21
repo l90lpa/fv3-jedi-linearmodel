@@ -56,8 +56,8 @@ module fv_update_phys_mod
 #endif
 
 !---- version number -----
-  character(len=128) :: version = '$Id$'
-  character(len=128) :: tagname = '$Name$'
+  character(len=128) :: version = '$Id: fv_update_phys.F90,v 1.4 2018/03/15 14:02:27 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
   real,parameter:: con_cp  = cp_air
 
   contains
@@ -168,6 +168,26 @@ module fv_update_phys_mod
            zvir = 0.
     endif
 
+#ifdef MAPL_MODE
+    conv_vmr_mmr(1:nq) = .false.
+    sphum   = 1
+    select case(nwat)
+    case(1)
+       liq_wat = -1
+       ice_wat = -1
+       rainwat = -1
+       snowwat = -1
+       graupel = -1
+       cld_amt = -1
+    case(3)
+       liq_wat = 2
+       ice_wat = 3
+       rainwat = -1
+       snowwat = -1
+       graupel = -1
+       cld_amt = -1
+    end select
+#else
 !f1p
     conv_vmr_mmr(1:nq) = .false.
     if (flagstruct%adj_mass_vmr) then
@@ -196,6 +216,7 @@ module fv_update_phys_mod
     else
         w_diff = 0
     endif
+#endif
 
     if ( .not. hydrostatic .and. .not. flagstruct%phys_hydrostatic .and. nwat == 0 ) then
        gama_dt = dt*cp_air/cv_air
@@ -358,7 +379,7 @@ module fv_update_phys_mod
          endif
       endif
 
-#ifndef GFS_PHYS
+#if !defined(GFS_PHYS) && !defined(MAPL_MODE)
       do j=js,je
          do i=is,ie
             ua(i,j,k) = ua(i,j,k) + dt*u_dt(i,j,k)
@@ -540,7 +561,7 @@ module fv_update_phys_mod
     call update_dwinds_phys(is, ie, js, je, isd, ied, jsd, jed, dt, u_dt, v_dt, u, v, gridstruct, npx, npy, npz, domain)
  endif
                                                     call timing_off(' Update_dwinds')
-#ifdef GFS_PHYS
+#if defined(GFS_PHYS) || defined(MAPL_MODE)
     call cubed_to_latlon(u, v, ua, va, gridstruct, &
          npx, npy, npz, 1, gridstruct%grid_type, domain, gridstruct%nested, flagstruct%c2l_ord, bd)
 #endif

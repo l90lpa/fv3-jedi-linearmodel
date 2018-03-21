@@ -202,14 +202,14 @@ CONTAINS
       DO j=js1,je1
         DO i=is1,ie1
           gz_tl(i, j, k) = ((area(i, j)*gz2_tl(i, j)+fx_tl(i, j)-fx_tl(i&
-&           +1, j)+fy_tl(i, j)-fy_tl(i, j+1))*(area(i, j)+xfx(i, j)-xfx(&
-&           i+1, j)+yfx(i, j)-yfx(i, j+1))-(gz2(i, j)*area(i, j)+fx(i, j&
-&           )-fx(i+1, j)+fy(i, j)-fy(i, j+1))*(xfx_tl(i, j)-xfx_tl(i+1, &
-&           j)+yfx_tl(i, j)-yfx_tl(i, j+1)))/(area(i, j)+xfx(i, j)-xfx(i&
-&           +1, j)+yfx(i, j)-yfx(i, j+1))**2
-          gz(i, j, k) = (gz2(i, j)*area(i, j)+fx(i, j)-fx(i+1, j)+fy(i, &
-&           j)-fy(i, j+1))/(area(i, j)+xfx(i, j)-xfx(i+1, j)+yfx(i, j)-&
-&           yfx(i, j+1))
+&           +1, j)+fy_tl(i, j)-fy_tl(i, j+1))*(area(i, j)+(xfx(i, j)-xfx&
+&           (i+1, j))+(yfx(i, j)-yfx(i, j+1)))-(gz2(i, j)*area(i, j)+(fx&
+&           (i, j)-fx(i+1, j))+(fy(i, j)-fy(i, j+1)))*(xfx_tl(i, j)-&
+&           xfx_tl(i+1, j)+yfx_tl(i, j)-yfx_tl(i, j+1)))/(area(i, j)+(&
+&           xfx(i, j)-xfx(i+1, j))+(yfx(i, j)-yfx(i, j+1)))**2
+          gz(i, j, k) = (gz2(i, j)*area(i, j)+(fx(i, j)-fx(i+1, j))+(fy(&
+&           i, j)-fy(i, j+1)))/(area(i, j)+(xfx(i, j)-xfx(i+1, j))+(yfx(&
+&           i, j)-yfx(i, j+1)))
         END DO
       END DO
     END DO
@@ -352,9 +352,9 @@ CONTAINS
       END DO
       DO j=js1,je1
         DO i=is1,ie1
-          gz(i, j, k) = (gz2(i, j)*area(i, j)+fx(i, j)-fx(i+1, j)+fy(i, &
-&           j)-fy(i, j+1))/(area(i, j)+xfx(i, j)-xfx(i+1, j)+yfx(i, j)-&
-&           yfx(i, j+1))
+          gz(i, j, k) = (gz2(i, j)*area(i, j)+(fx(i, j)-fx(i+1, j))+(fy(&
+&           i, j)-fy(i, j+1)))/(area(i, j)+(xfx(i, j)-xfx(i+1, j))+(yfx(&
+&           i, j)-yfx(i, j+1)))
         END DO
       END DO
     END DO
@@ -475,14 +475,14 @@ CONTAINS
       DO j=jsd,jed
         DO i=is,ie
           ra_x_tl(i, j) = xfx_adv_tl(i, j, k) - xfx_adv_tl(i+1, j, k)
-          ra_x(i, j) = area(i, j) + xfx_adv(i, j, k) - xfx_adv(i+1, j, k&
+          ra_x(i, j) = area(i, j) + (xfx_adv(i, j, k)-xfx_adv(i+1, j, k)&
 &           )
         END DO
       END DO
       DO j=js,je
         DO i=isd,ied
           ra_y_tl(i, j) = yfx_adv_tl(i, j, k) - yfx_adv_tl(i, j+1, k)
-          ra_y(i, j) = area(i, j) + yfx_adv(i, j, k) - yfx_adv(i, j+1, k&
+          ra_y(i, j) = area(i, j) + (yfx_adv(i, j, k)-yfx_adv(i, j+1, k)&
 &           )
         END DO
       END DO
@@ -521,13 +521,13 @@ CONTAINS
           DO i=is,ie
             zh_tl(i, j, k) = ((area(i, j)*z2_tl(i, j)+fx_tl(i, j)-fx_tl(&
 &             i+1, j)+fy_tl(i, j)-fy_tl(i, j+1))*(ra_x(i, j)+ra_y(i, j)-&
-&             area(i, j))-(z2(i, j)*area(i, j)+fx(i, j)-fx(i+1, j)+fy(i&
-&             , j)-fy(i, j+1))*(ra_x_tl(i, j)+ra_y_tl(i, j)))/(ra_x(i, j&
-&             )+ra_y(i, j)-area(i, j))**2 + rarea(i, j)*(fx2_tl(i, j)-&
-&             fx2_tl(i+1, j)+fy2_tl(i, j)-fy2_tl(i, j+1))
-            zh(i, j, k) = (z2(i, j)*area(i, j)+fx(i, j)-fx(i+1, j)+fy(i&
-&             , j)-fy(i, j+1))/(ra_x(i, j)+ra_y(i, j)-area(i, j)) + (fx2&
-&             (i, j)-fx2(i+1, j)+fy2(i, j)-fy2(i, j+1))*rarea(i, j)
+&             area(i, j))-(z2(i, j)*area(i, j)+(fx(i, j)-fx(i+1, j))+(fy&
+&             (i, j)-fy(i, j+1)))*(ra_x_tl(i, j)+ra_y_tl(i, j)))/(ra_x(i&
+&             , j)+ra_y(i, j)-area(i, j))**2 + rarea(i, j)*(fx2_tl(i, j)&
+&             -fx2_tl(i+1, j)+fy2_tl(i, j)-fy2_tl(i, j+1))
+            zh(i, j, k) = (z2(i, j)*area(i, j)+(fx(i, j)-fx(i+1, j))+(fy&
+&             (i, j)-fy(i, j+1)))/(ra_x(i, j)+ra_y(i, j)-area(i, j)) + (&
+&             fx2(i, j)-fx2(i+1, j)+(fy2(i, j)-fy2(i, j+1)))*rarea(i, j)
           END DO
         END DO
       ELSE
@@ -558,11 +558,11 @@ CONTAINS
           DO i=is,ie
             zh_tl(i, j, k) = ((area(i, j)*zh_tl(i, j, k)+fx_tl(i, j)-&
 &             fx_tl(i+1, j)+fy_tl(i, j)-fy_tl(i, j+1))*(ra_x(i, j)+ra_y(&
-&             i, j)-area(i, j))-(zh(i, j, k)*area(i, j)+fx(i, j)-fx(i+1&
-&             , j)+fy(i, j)-fy(i, j+1))*(ra_x_tl(i, j)+ra_y_tl(i, j)))/(&
-&             ra_x(i, j)+ra_y(i, j)-area(i, j))**2
-            zh(i, j, k) = (zh(i, j, k)*area(i, j)+fx(i, j)-fx(i+1, j)+fy&
-&             (i, j)-fy(i, j+1))/(ra_x(i, j)+ra_y(i, j)-area(i, j))
+&             i, j)-area(i, j))-(zh(i, j, k)*area(i, j)+(fx(i, j)-fx(i+1&
+&             , j))+(fy(i, j)-fy(i, j+1)))*(ra_x_tl(i, j)+ra_y_tl(i, j))&
+&             )/(ra_x(i, j)+ra_y(i, j)-area(i, j))**2
+            zh(i, j, k) = (zh(i, j, k)*area(i, j)+(fx(i, j)-fx(i+1, j))+&
+&             (fy(i, j)-fy(i, j+1)))/(ra_x(i, j)+ra_y(i, j)-area(i, j))
           END DO
         END DO
       END IF
@@ -647,13 +647,13 @@ CONTAINS
     DO k=1,km+1
       DO j=jsd,jed
         DO i=is,ie
-          ra_x(i, j) = area(i, j) + xfx_adv(i, j, k) - xfx_adv(i+1, j, k&
+          ra_x(i, j) = area(i, j) + (xfx_adv(i, j, k)-xfx_adv(i+1, j, k)&
 &           )
         END DO
       END DO
       DO j=js,je
         DO i=isd,ied
-          ra_y(i, j) = area(i, j) + yfx_adv(i, j, k) - yfx_adv(i, j+1, k&
+          ra_y(i, j) = area(i, j) + (yfx_adv(i, j, k)-yfx_adv(i, j+1, k)&
 &           )
         END DO
       END DO
@@ -676,9 +676,9 @@ CONTAINS
 &                   , gridstruct, bd)
         DO j=js,je
           DO i=is,ie
-            zh(i, j, k) = (z2(i, j)*area(i, j)+fx(i, j)-fx(i+1, j)+fy(i&
-&             , j)-fy(i, j+1))/(ra_x(i, j)+ra_y(i, j)-area(i, j)) + (fx2&
-&             (i, j)-fx2(i+1, j)+fy2(i, j)-fy2(i, j+1))*rarea(i, j)
+            zh(i, j, k) = (z2(i, j)*area(i, j)+(fx(i, j)-fx(i+1, j))+(fy&
+&             (i, j)-fy(i, j+1)))/(ra_x(i, j)+ra_y(i, j)-area(i, j)) + (&
+&             fx2(i, j)-fx2(i+1, j)+(fy2(i, j)-fy2(i, j+1)))*rarea(i, j)
           END DO
         END DO
       ELSE
@@ -693,8 +693,8 @@ CONTAINS
         END IF
         DO j=js,je
           DO i=is,ie
-            zh(i, j, k) = (zh(i, j, k)*area(i, j)+fx(i, j)-fx(i+1, j)+fy&
-&             (i, j)-fy(i, j+1))/(ra_x(i, j)+ra_y(i, j)-area(i, j))
+            zh(i, j, k) = (zh(i, j, k)*area(i, j)+(fx(i, j)-fx(i+1, j))+&
+&             (fy(i, j)-fy(i, j+1)))/(ra_x(i, j)+ra_y(i, j)-area(i, j))
           END DO
         END DO
       END IF
@@ -733,7 +733,7 @@ CONTAINS
 &   delp
     REAL, DIMENSION(is-ng:ie+ng, js-ng:je+ng, km), INTENT(IN) :: pt_tl, &
 &   delp_tl
-    REAL, DIMENSION(is-ng:is-ng, js-ng:js-ng, 1), INTENT(IN) :: q_con, &
+    REAL, DIMENSION(is-ng:ie+ng, js-ng:je+ng, km), INTENT(IN) :: q_con, &
 &   cappa
     REAL, INTENT(IN) :: hs(is-ng:ie+ng, js-ng:je+ng)
     REAL, DIMENSION(is-ng:ie+ng, js-ng:je+ng, km), INTENT(IN) :: w3
@@ -853,7 +853,7 @@ CONTAINS
     REAL, INTENT(IN) :: ws(is-ng:ie+ng, js-ng:je+ng)
     REAL, DIMENSION(is-ng:ie+ng, js-ng:je+ng, km), INTENT(IN) :: pt, &
 &   delp
-    REAL, DIMENSION(is-ng:is-ng, js-ng:js-ng, 1), INTENT(IN) :: q_con, &
+    REAL, DIMENSION(is-ng:ie+ng, js-ng:je+ng, km), INTENT(IN) :: q_con, &
 &   cappa
     REAL, INTENT(IN) :: hs(is-ng:ie+ng, js-ng:je+ng)
     REAL, DIMENSION(is-ng:ie+ng, js-ng:je+ng, km), INTENT(IN) :: w3
@@ -950,7 +950,7 @@ CONTAINS
     REAL, INTENT(IN) :: zs(isd:ied, jsd:jed)
     LOGICAL, INTENT(IN) :: last_call, use_logp, fp_out
     REAL, INTENT(IN) :: ws(is:ie, js:je)
-    REAL, DIMENSION(isd:isd, jsd:jsd, 1), INTENT(IN) :: q_con, cappa
+    REAL, DIMENSION(isd:ied, jsd:jed, km), INTENT(IN) :: q_con, cappa
     REAL, DIMENSION(isd:ied, jsd:jed, km), INTENT(IN) :: delp, pt
     REAL, DIMENSION(isd:ied, jsd:jed, km+1), INTENT(INOUT) :: zh
     REAL, DIMENSION(isd:ied, jsd:jed, km), INTENT(INOUT) :: w

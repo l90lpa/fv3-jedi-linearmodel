@@ -44,8 +44,8 @@ module a2b_edge_mod
   public :: a2b_ord2, a2b_ord4
 
 !---- version number -----
-  character(len=128) :: version = '$Id$'
-  character(len=128) :: tagname = '$Name$'
+  character(len=128) :: version = '$Id: a2b_edge.F90,v 1.5 2018/03/15 14:02:27 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains
 

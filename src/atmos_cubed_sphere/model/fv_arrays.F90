@@ -26,9 +26,17 @@ module fv_arrays_mod
   use mpp_domains_mod,       only: nest_domain_type
   use mpp_mod,               only: mpp_broadcast
   use platform_mod,          only: r8_kind
+  use, intrinsic :: iso_fortran_env, only: REAL64, REAL32
   public
 
   integer, public, parameter :: R_GRID = r8_kind
+  integer, parameter :: REAL4 = REAL32
+  integer, parameter :: REAL8 = REAL64
+#ifdef SINGLE_FV
+  integer, parameter :: FVPRC = REAL4  ! Full Build Precision for the model
+#else
+  integer, parameter :: FVPRC = REAL8  ! Full Build Precision for the model
+#endif
 
   !Several 'auxiliary' structures are introduced here. These are for
   ! the internal use by certain modules, and although fv_atmos_type
@@ -263,7 +271,7 @@ module fv_arrays_mod
 ! Heat & air mass (delp) transport options:
    integer :: hord_tm = 9    ! virtual potential temperature
    integer :: hord_dp = 9    ! delp (positive definite)
-   integer :: kord_tm =-8    !
+   integer :: kord_tm = 8    !
 
 ! Tracer transport options:
    integer :: hord_tr = 12   !11: PPM mono constraint (Lin 2004); fast 
@@ -307,6 +315,7 @@ module fv_arrays_mod
 ! PG off centering:
    real    :: beta  = 0.0    ! 0.5 is "neutral" but it may not be stable
 #ifdef SW_DYNAMICS
+   integer :: n_zfilter = 0  ! Number of layers at the top of the atmosphere for dz filter
    integer :: n_sponge = 0   ! Number of sponge layers at the top of the atmosphere
    real    :: d_ext = 0.    
    integer :: nwat  = 0      ! Number of water species
@@ -314,6 +323,7 @@ module fv_arrays_mod
    logical :: inline_q = .true.
    logical :: adiabatic = .true.     ! Run without physics (full or idealized).
 #else
+   integer :: n_zfilter = 0  ! Number of layers at the top of the atmosphere for dz filter
    integer :: n_sponge = 1   ! Number of sponge layers at the top of the atmosphere
    real    :: d_ext = 0.02   ! External model damping (was 0.02)
    integer :: nwat  = 3      ! Number of water species
@@ -422,8 +432,7 @@ module fv_arrays_mod
    logical :: fv_debug  = .false.
    logical :: srf_init  = .false.
    logical :: mountain  = .true.
-   logical :: remap_t  = .true.
-   integer :: remap_option = 2        !Geos version only
+   integer :: remap_option  = 0 
    logical :: z_tracer = .false.      ! transport tracers layer by layer with independent
                                       ! time split; use this if tracer number is huge and/or
                                       ! high resolution (nsplt > 1)
@@ -456,7 +465,6 @@ module fv_arrays_mod
    logical :: external_ic = .false.   ! use ICs from external sources; e.g. lat-lon FV core
                                       ! or NCEP re-analysis; both vertical remapping & horizontal
                                       ! (lat-lon to cubed sphere) interpolation will be done
-   logical :: read_increment = .false.   ! read in analysis increment and add to restart
 ! Default restart files from the "Memphis" latlon FV core:
    character(len=128) :: res_latlon_dynamics = 'INPUT/fv_rst.res.nc'
    character(len=128) :: res_latlon_tracers  = 'INPUT/atmos_tracers.res.nc'
@@ -746,8 +754,8 @@ module fv_arrays_mod
   end type fv_atmos_type
 
 !---- version number -----
-  character(len=128) :: version = '$Id$'
-  character(len=128) :: tagname = '$Name$'
+  character(len=128) :: version = '$Id: fv_arrays.F90,v 1.5 2018/03/15 14:02:27 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains
 
@@ -999,7 +1007,15 @@ contains
     allocate ( Atm%gridstruct% area_c(isd_2d:ied_2d+1,jsd_2d:jed_2d+1) )   ! Cell Corners
     allocate ( Atm%gridstruct% area_c_64(isd_2d:ied_2d+1,jsd_2d:jed_2d+1) )! Cell Corners
     allocate ( Atm%gridstruct%rarea_c(isd_2d:ied_2d+1,jsd_2d:jed_2d+1) )   ! Cell Corners
-    
+   
+    Atm%gridstruct% area = 0.0
+    Atm%gridstruct% area_64 = 0.0
+    Atm%gridstruct%rarea = 0.0
+
+    Atm%gridstruct% area_c = 0.0
+    Atm%gridstruct% area_c_64 = 0.0
+    Atm%gridstruct%rarea_c = 0.0
+ 
     allocate ( Atm%gridstruct% dx(isd_2d:ied_2d  ,jsd_2d:jed_2d+1) )
     allocate ( Atm%gridstruct% dx_64(isd_2d:ied_2d  ,jsd_2d:jed_2d+1) )
     allocate ( Atm%gridstruct%rdx(isd_2d:ied_2d  ,jsd_2d:jed_2d+1) )

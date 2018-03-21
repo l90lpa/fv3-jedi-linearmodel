@@ -17,7 +17,7 @@
 !*           675 Mass Ave, Cambridge, MA 02139, USA.                   *
 !* or see:   http://www.gnu.org/licenses/gpl.html                      *
 !***********************************************************************
-! $Id$
+! $Id: fv_control.F90,v 1.5 2018/03/15 14:02:27 drholdaw Exp $
 !
 !----------------
 ! FV contro panel
@@ -115,6 +115,7 @@ module fv_control_mod
    logical , pointer :: use_old_omega 
 ! PG off centering:
    real    , pointer :: beta  
+   integer , pointer :: n_zfilter
    integer , pointer :: n_sponge 
    real    , pointer :: d_ext 
    integer , pointer :: nwat  
@@ -182,7 +183,7 @@ module fv_control_mod
    logical , pointer :: fv_debug  
    logical , pointer :: srf_init  
    logical , pointer :: mountain  
-   logical , pointer :: remap_t  
+   integer , pointer :: remap_option  
    logical , pointer :: z_tracer 
 
    logical , pointer :: old_divg_damp 
@@ -198,7 +199,6 @@ module fv_control_mod
    logical , pointer :: use_ncep_phy 
    logical , pointer :: fv_diag_ic 
    logical , pointer :: external_ic 
-   logical , pointer :: read_increment
    character(len=128) , pointer :: res_latlon_dynamics
    character(len=128) , pointer :: res_latlon_tracers 
    logical , pointer :: hydrostatic 
@@ -243,9 +243,13 @@ module fv_control_mod
    integer :: commID, max_refinement_of_global = 1.
    integer :: gid
 
+#ifdef MAPL_MODE
+   real   :: dyn_timer, comm_timer
+   public :: dyn_timer, comm_timer
+#endif
 !---- version number -----
-   character(len=128) :: version = '$Id$'
-   character(len=128) :: tagname = '$Name$'
+   character(len=128) :: version = '$Id: fv_control.F90,v 1.5 2018/03/15 14:02:27 drholdaw Exp $'
+   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
    real :: umax = 350.           ! max wave speed for grid_type>3
    integer :: parent_grid_num = -1
@@ -257,7 +261,6 @@ module fv_control_mod
  contains
 
 !-------------------------------------------------------------------------------
-         
  subroutine fv_init(Atm, dt_atmos, grids_on_this_pe, p_split)
 
    type(fv_atmos_type), allocatable, intent(inout), target :: Atm(:)
@@ -481,17 +484,18 @@ module fv_control_mod
 
 !-------------------------------------------------------------------------------
          
- subroutine fv_end(Atm, grids_on_this_pe)
+ subroutine fv_end(Atm, grids_on_this_pe, restarts)
 
     type(fv_atmos_type), intent(inout) :: Atm(:)
     logical, intent(INOUT) :: grids_on_this_pe(:)
+    logical, intent(IN) :: restarts
 
     integer :: n
 
     call timing_off('TOTAL')
     call timing_prt( gid )
 
-    call fv_restart_end(Atm, grids_on_this_pe)
+    if (restarts) call fv_restart_end(Atm, grids_on_this_pe)
     call fv_io_exit()
 
   ! Free temporary memory from sw_core routines
@@ -544,16 +548,16 @@ module fv_control_mod
                             use_logp, p_fac, a_imp, k_split, n_split, m_split, q_split, print_freq, do_schmidt,      &
                             hord_mt, hord_vt, hord_tm, hord_dp, hord_tr, shift_fac, stretch_fac, target_lat, target_lon, &
                             kord_mt, kord_wz, kord_tm, kord_tr, fv_debug, fv_land, nudge, do_sat_adj, do_f3d, &
-                            external_ic, read_increment, ncep_ic, nggps_ic, ecmwf_ic, use_new_ncep, use_ncep_phy, fv_diag_ic, &
+                            external_ic, ncep_ic, nggps_ic, ecmwf_ic, use_new_ncep, use_ncep_phy, fv_diag_ic, &
                             res_latlon_dynamics, res_latlon_tracers, scale_z, w_max, z_min, &
-                            dddmp, d2_bg, d4_bg, vtdm4, trdm2, d_ext, delt_max, beta, non_ortho, n_sponge, &
+                            dddmp, d2_bg, d4_bg, vtdm4, trdm2, d_ext, delt_max, beta, non_ortho, n_sponge, n_zfilter, &
                             warm_start, adjust_dry_mass, mountain, d_con, ke_bg, nord, nord_tr, convert_ke, use_old_omega, &
                             dry_mass, grid_type, do_Held_Suarez, do_reed_physics, reed_cond_only, &
                             consv_te, fill, filter_phys, fill_dp, fill_wz, consv_am, &
                             range_warn, dwind_2d, inline_q, z_tracer, reproduce_sum, adiabatic, do_vort_damp, no_dycore,   &
                             tau, tau_h2o, rf_cutoff, nf_omega, hydrostatic, fv_sg_adj, breed_vortex_inline,  &
                             na_init, hybrid_z, Make_NH, n_zs_filter, nord_zs_filter, full_zs_filter, reset_eta,         &
-                            pnats, dnats, a2b_ord, remap_t, p_ref, d2_bg_k1, d2_bg_k2,  &
+                            pnats, dnats, a2b_ord, remap_option, p_ref, d2_bg_k1, d2_bg_k2,  &
                             c2l_ord, dx_const, dy_const, umax, deglat,      &
                             deglon_start, deglon_stop, deglat_start, deglat_stop, &
                             phys_hydrostatic, use_hydro_pressure, make_hybrid_z, old_divg_damp, add_noise, &
@@ -598,6 +602,7 @@ module fv_control_mod
    ! Read Main namelist
       read (f_unit,fv_grid_nml,iostat=ios)
       ierr = check_nml_error(ios,'fv_grid_nml')
+      rewind (f_unit)
       call close_file(f_unit)
 #endif
 
@@ -695,6 +700,7 @@ module fv_control_mod
          ! Define n_split if not in namelist
          if (ntiles==6) then
             dimx = 4.0*(npx-1)
+#ifndef MAPL_MODE
          if ( hydrostatic ) then
             if ( npx >= 120 ) ns0 = 6
          else
@@ -706,6 +712,7 @@ module fv_control_mod
                  ns0 = 8
             endif
          endif
+#endif
       else
          dimx = max ( npx, 2*(npy-1) )
       endif
@@ -834,6 +841,7 @@ module fv_control_mod
       endif
 
       if(is_master()) then
+         if (n_zfilter >= 0) write(*,199) 'Using n_zfilter : ', n_zfilter
          if (n_sponge >= 0) write(*,199) 'Using n_sponge : ', n_sponge
          write(*,197) 'Using non_ortho : ', non_ortho
       endif
@@ -1117,6 +1125,7 @@ module fv_control_mod
      do_vort_damp                  => Atm%flagstruct%do_vort_damp
      use_old_omega                 => Atm%flagstruct%use_old_omega
      beta                          => Atm%flagstruct%beta
+     n_zfilter                     => Atm%flagstruct%n_zfilter
      n_sponge                      => Atm%flagstruct%n_sponge
      d_ext                         => Atm%flagstruct%d_ext
      nwat                          => Atm%flagstruct%nwat
@@ -1178,7 +1187,7 @@ module fv_control_mod
      fv_debug                      => Atm%flagstruct%fv_debug
      srf_init                      => Atm%flagstruct%srf_init
      mountain                      => Atm%flagstruct%mountain
-     remap_t                       => Atm%flagstruct%remap_t
+     remap_option                  => Atm%flagstruct%remap_option
      z_tracer                      => Atm%flagstruct%z_tracer
      old_divg_damp                 => Atm%flagstruct%old_divg_damp
      fv_land                       => Atm%flagstruct%fv_land
@@ -1193,7 +1202,6 @@ module fv_control_mod
      use_ncep_phy                  => Atm%flagstruct%use_ncep_phy
      fv_diag_ic                    => Atm%flagstruct%fv_diag_ic
      external_ic                   => Atm%flagstruct%external_ic
-     read_increment                => Atm%flagstruct%read_increment
 
      hydrostatic                   => Atm%flagstruct%hydrostatic
      phys_hydrostatic              => Atm%flagstruct%phys_hydrostatic

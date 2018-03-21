@@ -45,28 +45,28 @@ public :: tracer_2d_bwd, tracer_2d_nested_bwd, tracer_2d_1L_bwd
 real, allocatable, dimension(:,:,:) :: nest_fx_west_accum, nest_fx_east_accum, nest_fx_south_accum, nest_fx_north_accum
 
 !---- version number -----
-   character(len=128) :: version = '$Id: fv_tracer2d_adm.F90,v 1.2 2017/11/13 21:58:43 drholdaw Exp $'
-   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_18_0_vlabfv3pert $'
+   character(len=128) :: version = '$Id: fv_tracer2d_adm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
+   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of tracer_2d_1l in reverse (adjoint) mode, forward sweep (with options split(a2b_edge_mod.a2b_ord4 a2b_edge
 !_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_cor
 !e_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod
 !.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Raylei
-!gh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos f
-!v_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_map
-!z_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.ma
-!pn_tracer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_
-!limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod
-!.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.trac
-!er_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.R
-!iem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM
-!3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest
-!_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_v
-!ect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw
-!_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.c
-!opy_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.
-!great_circle_dist sw_core_mod.edge_interpolate4)):
+!gh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_o
+!rd4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.
+!remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d
+! fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiter
+!s fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv
+!_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subg
+!rid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_util
+!s_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_
+!mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_m
+!od.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.
+!d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_
+!v_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_cor
+!e_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_uti
+!ls_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q dp1
 !   with respect to varying inputs: q dp1 mfx mfy cx cy
 !-----------------------------------------------------------------------
@@ -317,12 +317,12 @@ CONTAINS
       DO j=jsd,jed
         DO i=is,ie
           CALL PUSHREALARRAY(ra_x(i, j))
-          ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+          ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
         END DO
         IF (j .GE. js .AND. j .LE. je) THEN
           DO i=isd,ied
             CALL PUSHREALARRAY(ra_y(i, j))
-            ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+            ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
           END DO
           CALL PUSHCONTROL(1,1)
         ELSE
@@ -335,8 +335,8 @@ CONTAINS
         DO j=js,je
           DO i=is,ie
             CALL PUSHREALARRAY(dp2(i, j))
-            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+mfy(&
-&             i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(mfy&
+&             (i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
           END DO
         END DO
 !$OMP parallel do default(none) shared(k,nsplt,it,is,ie,js,je,isd,ied,jsd,jed,npx,npy,cx,xfx,hord,trdm, &
@@ -382,8 +382,8 @@ CONTAINS
                 DO i=is,ie
                   CALL PUSHREALARRAY(qn2(i, j, iq))
                   qn2(i, j, iq) = (qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                   fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, &
-&                   j)
+&                   fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i&
+&                   , j)
                 END DO
               END DO
               CALL PUSHCONTROL(2,2)
@@ -392,8 +392,8 @@ CONTAINS
                 DO i=is,ie
                   CALL PUSHREALARRAY(q(i, j, k, iq))
                   q(i, j, k, iq) = (qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)&
-&                   -fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i&
-&                   , j)
+&                   -fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(&
+&                   i, j)
                 END DO
               END DO
               CALL PUSHCONTROL(2,1)
@@ -424,7 +424,8 @@ CONTAINS
               DO i=is,ie
                 CALL PUSHREALARRAY(q(i, j, k, iq))
                 q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                 fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&                 fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, &
+&                 j)
               END DO
             END DO
             CALL PUSHCONTROL(2,0)
@@ -463,20 +464,20 @@ CONTAINS
 !e_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_co
 !re_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mo
 !d.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayle
-!igh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos 
-!fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_ma
-!pz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.m
-!apn_tracer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs
-!_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mo
-!d.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tra
-!cer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.
-!Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SI
-!M3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nes
-!t_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_
-!vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v s
-!w_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.
-!copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod
-!.great_circle_dist sw_core_mod.edge_interpolate4)):
+!igh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_
+!ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod
+!.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2
+!d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limite
+!rs fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic f
+!v_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_sub
+!grid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_uti
+!ls_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils
+!_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_
+!mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod
+!.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp
+!_v_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_co
+!re_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_ut
+!ils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q dp1
 !   with respect to varying inputs: q dp1 mfx mfy cx cy
 !-----------------------------------------------------------------------
@@ -553,11 +554,7 @@ CONTAINS
     REAL :: temp
     REAL :: temp_ad4
     REAL :: temp_ad5
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
     INTEGER :: ad_to
     REAL :: x1
     REAL :: z1
@@ -591,9 +588,7 @@ CONTAINS
     y2 = 0
     y1 = 0
     ad_to = 0
-#ifndef BPOINT
     branch = 0
-#endif
 
     CALL POPREALARRAY(xfx, (bd%ie-bd%is+2)*(bd%jed-bd%jsd+1)*npz)
     CALL POPREALARRAY(dp2, (bd%ie-bd%is+1)*(bd%je-bd%js+1))
@@ -1092,11 +1087,11 @@ CONTAINS
 !$OMP parallel do default(none) shared(k,is,ie,js,je,isd,ied,jsd,jed,xfx,area,yfx,ra_x,ra_y)
       DO j=jsd,jed
         DO i=is,ie
-          ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+          ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
         END DO
         IF (j .GE. js .AND. j .LE. je) THEN
           DO i=isd,ied
-            ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+            ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
           END DO
         END IF
       END DO
@@ -1105,8 +1100,8 @@ CONTAINS
 !$OMP parallel do default(none) shared(k,is,ie,js,je,rarea,mfx,mfy,dp1,dp2)
         DO j=js,je
           DO i=is,ie
-            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+mfy(&
-&             i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(mfy&
+&             (i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
           END DO
         END DO
 !$OMP parallel do default(none) shared(k,nsplt,it,is,ie,js,je,isd,ied,jsd,jed,npx,npy,cx,xfx,hord,trdm, &
@@ -1131,7 +1126,7 @@ CONTAINS
             ELSE
               CALL FV_TP_2D(qn2(isd:ied, jsd:jed, iq), cx(is:ie+1, jsd:&
 &                     jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
-&                     hord_pert, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
+&                     hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
 &                     isd:ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, &
 &                     mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1&
 &                     , k))
@@ -1141,16 +1136,16 @@ CONTAINS
               DO j=js,je
                 DO i=is,ie
                   qn2(i, j, iq) = (qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                   fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, &
-&                   j)
+&                   fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i&
+&                   , j)
                 END DO
               END DO
             ELSE
               DO j=js,je
                 DO i=is,ie
                   q(i, j, k, iq) = (qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)&
-&                   -fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i&
-&                   , j)
+&                   -fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(&
+&                   i, j)
                 END DO
               END DO
             END IF
@@ -1165,7 +1160,7 @@ CONTAINS
             ELSE
               CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
 &                     jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
-&                     hord_pert, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
+&                     hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
 &                     isd:ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, &
 &                     mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1&
 &                     , k))
@@ -1173,7 +1168,8 @@ CONTAINS
             DO j=js,je
               DO i=is,ie
                 q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                 fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&                 fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, &
+&                 j)
               END DO
             END DO
           END IF
@@ -1202,20 +1198,20 @@ CONTAINS
 !d.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_m
 !od.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mi
 !x_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_
-!Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_g
-!rid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_m
-!od.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_
-!tracer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_lim
-!iters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.mo
-!ist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_
-!2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem
-!_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0
-!_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_ha
-!lo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect
-! sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_co
-!re_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy
-!_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.gre
-!at_circle_dist sw_core_mod.edge_interpolate4)):
+!Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4
+! fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.rem
+!ap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv
+!_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters f
+!v_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_re
+!start_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid
+!_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_m
+!od.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod
+!.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.
+!nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a
+!2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v_f
+!b sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_m
+!od.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_
+!mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q dp1
 !   with respect to varying inputs: q dp1 mfx mfy cx cy
   SUBROUTINE TRACER_2D_FWD(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, &
@@ -1506,25 +1502,25 @@ CONTAINS
           DO j=js,je
             DO i=is,ie
               CALL PUSHREALARRAY(dp2(i, j))
-              dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+&
-&               mfy(i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+              dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(&
+&               mfy(i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
             END DO
           END DO
           DO j=jsd,jed
             DO i=is,ie
               CALL PUSHREALARRAY(ra_x(i, j))
-              ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+              ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
             END DO
           END DO
           DO j=js,je
             DO i=isd,ied
               CALL PUSHREALARRAY(ra_y(i, j))
-              ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+              ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
             END DO
           END DO
           DO iq=1,nq
-            IF (hord .EQ. hord_pert .AND. (.NOT.split_damp_tr)) THEN
-              IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+            IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+              IF (hord .EQ. hord_pert) THEN
                 CALL FV_TP_2D_FWD(q(isd:ied, jsd:jed, k, iq), cx(is:&
 &                              ie+1, jsd:jed, k), cy(isd:ied, js:je+1, k&
 &                              ), npx, npy, hord, fx, fy, xfx(is:ie+1, &
@@ -1535,27 +1531,26 @@ CONTAINS
 &                              nord_tr, damp_c=trdm)
                 CALL PUSHCONTROL(2,3)
               ELSE
-                CALL FV_TP_2D_FWD(q(isd:ied, jsd:jed, k, iq), cx(is:&
-&                              ie+1, jsd:jed, k), cy(isd:ied, js:je+1, k&
-&                              ), npx, npy, hord, fx, fy, xfx(is:ie+1, &
-&                              jsd:jed, k), yfx(isd:ied, js:je+1, k), &
-&                              gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie&
-&                              +1, js:je, k), mfy=mfy(is:ie, js:je+1, k)&
-&                             )
+                CALL PUSHREALARRAY(fy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
+                CALL PUSHREALARRAY(fx, (bd%ie-bd%is+2)*(bd%je-bd%js+1))
+                CALL PUSHREALARRAY(q(isd:ied, jsd:jed, k, iq), (ied-isd&
+&                             +1)*(jed-jsd+1))
+                CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, &
+&                       jsd:jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
+&                       hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx&
+&                       (isd:ied, js:je+1, k), gridstruct, bd, ra_x, &
+&                       ra_y, mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie&
+&                       , js:je+1, k), mass=dp1(isd:ied, jsd:jed, k), &
+&                       nord=nord_tr, damp_c=trdm)
                 CALL PUSHCONTROL(2,2)
               END IF
-            ELSE IF (it .EQ. 1 .AND. trdm_pert .GT. 1.e-4) THEN
-              CALL PUSHREALARRAY(fy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
-              CALL PUSHREALARRAY(fx, (bd%ie-bd%is+2)*(bd%je-bd%js+1))
-              CALL PUSHREALARRAY(q(isd:ied, jsd:jed, k, iq), (ied-isd+1&
-&                           )*(jed-jsd+1))
-              CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
-&                     jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
-&                     hord_pert, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
-&                     isd:ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, &
-&                     mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1&
-&                     , k), mass=dp1(isd:ied, jsd:jed, k), nord=&
-&                     nord_tr_pert, damp_c=trdm_pert)
+            ELSE IF (hord .EQ. hord_pert) THEN
+              CALL FV_TP_2D_FWD(q(isd:ied, jsd:jed, k, iq), cx(is:ie+&
+&                            1, jsd:jed, k), cy(isd:ied, js:je+1, k), &
+&                            npx, npy, hord, fx, fy, xfx(is:ie+1, jsd:&
+&                            jed, k), yfx(isd:ied, js:je+1, k), &
+&                            gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1&
+&                            , js:je, k), mfy=mfy(is:ie, js:je+1, k))
               CALL PUSHCONTROL(2,1)
             ELSE
               CALL PUSHREALARRAY(fy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
@@ -1564,7 +1559,7 @@ CONTAINS
 &                           )*(jed-jsd+1))
               CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
 &                     jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
-&                     hord_pert, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
+&                     hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
 &                     isd:ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, &
 &                     mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1&
 &                     , k))
@@ -1574,7 +1569,8 @@ CONTAINS
               DO i=is,ie
                 CALL PUSHREALARRAY(q(i, j, k, iq))
                 q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                 fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&                 fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, &
+&                 j)
               END DO
             END DO
           END DO
@@ -1617,20 +1613,20 @@ CONTAINS
 !od.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_
 !mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.m
 !ix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh
-!_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_
-!grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_
-!mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn
-!_tracer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_li
-!miters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.m
-!oist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer
-!_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Rie
-!m_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p
-!0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_h
-!alo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vec
-!t sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_c
-!ore_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.cop
-!y_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.gr
-!eat_circle_dist sw_core_mod.edge_interpolate4)):
+!_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord
+!4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.re
+!map_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d f
+!v_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters 
+!fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_r
+!estart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgri
+!d_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_
+!mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mo
+!d.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod
+!.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2
+!a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v_
+!fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_
+!mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils
+!_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q dp1
 !   with respect to varying inputs: q dp1 mfx mfy cx cy
   SUBROUTINE TRACER_2D_BWD(q, q_ad, dp1, dp1_ad, mfx, mfx_ad, mfy, &
@@ -1700,11 +1696,7 @@ CONTAINS
     REAL :: temp
     REAL :: temp_ad0
     REAL :: temp_ad1
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
     REAL :: x1
     REAL :: z1
     REAL :: y3
@@ -1738,9 +1730,7 @@ CONTAINS
     y3 = 0.0
     y2 = 0.0
     y1 = 0.0
-#ifndef BPOINT
     branch = 0
-#endif
 
     CALL POPREALARRAY(xfx, (bd%ie-bd%is+2)*(bd%jed-bd%jsd+1)*npz)
     CALL POPREALARRAY(dp2, (bd%ie-bd%is+1)*(bd%je-bd%js+1))
@@ -1827,37 +1817,37 @@ CONTAINS
 &                           k), mfx_ad(is:ie+1, js:je, k), mfy(is:ie, js&
 &                           :je+1, k), mfy_ad(is:ie, js:je+1, k))
               ELSE
-                CALL POPREALARRAY(q(isd:ied, jsd:jed, k, iq), (ied-isd+&
-&                            1)*(jed-jsd+1))
-                CALL POPREALARRAY(fx, (bd%ie-bd%is+2)*(bd%je-bd%js+1))
-                CALL POPREALARRAY(fy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
-                CALL FV_TP_2D_ADM(q(isd:ied, jsd:jed, k, iq), q_ad(isd:&
-&                           ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k&
-&                           ), cx_ad(is:ie+1, jsd:jed, k), cy(isd:ied, &
-&                           js:je+1, k), cy_ad(isd:ied, js:je+1, k), npx&
-&                           , npy, hord_pert, fx, fx_ad, fy, fy_ad, xfx(&
-&                           is:ie+1, jsd:jed, k), xfx_ad(is:ie+1, jsd:&
-&                           jed, k), yfx(isd:ied, js:je+1, k), yfx_ad(&
-&                           isd:ied, js:je+1, k), gridstruct, bd, ra_x, &
-&                           ra_x_ad, ra_y, ra_y_ad, mfx(is:ie+1, js:je, &
-&                           k), mfx_ad(is:ie+1, js:je, k), mfy(is:ie, js&
-&                           :je+1, k), mfy_ad(is:ie, js:je+1, k), dp1(&
-&                           isd:ied, jsd:jed, k), dp1_ad(isd:ied, jsd:&
-&                           jed, k), nord=nord_tr_pert, damp_c=trdm_pert&
-&                          )
+                CALL FV_TP_2D_BWD(q(isd:ied, jsd:jed, k, iq), q_ad(&
+&                              isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd&
+&                              :jed, k), cx_ad(is:ie+1, jsd:jed, k), cy(&
+&                              isd:ied, js:je+1, k), cy_ad(isd:ied, js:&
+&                              je+1, k), npx, npy, hord, fx, fx_ad, fy, &
+&                              fy_ad, xfx(is:ie+1, jsd:jed, k), xfx_ad(&
+&                              is:ie+1, jsd:jed, k), yfx(isd:ied, js:je+&
+&                              1, k), yfx_ad(isd:ied, js:je+1, k), &
+&                              gridstruct, bd, ra_x, ra_x_ad, ra_y, &
+&                              ra_y_ad, mfx(is:ie+1, js:je, k), mfx_ad(&
+&                              is:ie+1, js:je, k), mfy(is:ie, js:je+1, k&
+&                              ), mfy_ad(is:ie, js:je+1, k))
               END IF
             ELSE IF (branch .EQ. 2) THEN
-              CALL FV_TP_2D_BWD(q(isd:ied, jsd:jed, k, iq), q_ad(isd:&
-&                            ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, &
-&                            k), cx_ad(is:ie+1, jsd:jed, k), cy(isd:ied&
-&                            , js:je+1, k), cy_ad(isd:ied, js:je+1, k), &
-&                            npx, npy, hord, fx, fx_ad, fy, fy_ad, xfx(&
-&                            is:ie+1, jsd:jed, k), xfx_ad(is:ie+1, jsd:&
-&                            jed, k), yfx(isd:ied, js:je+1, k), yfx_ad(&
-&                            isd:ied, js:je+1, k), gridstruct, bd, ra_x&
-&                            , ra_x_ad, ra_y, ra_y_ad, mfx(is:ie+1, js:&
-&                            je, k), mfx_ad(is:ie+1, js:je, k), mfy(is:&
-&                            ie, js:je+1, k), mfy_ad(is:ie, js:je+1, k))
+              CALL POPREALARRAY(q(isd:ied, jsd:jed, k, iq), (ied-isd+1)&
+&                          *(jed-jsd+1))
+              CALL POPREALARRAY(fx, (bd%ie-bd%is+2)*(bd%je-bd%js+1))
+              CALL POPREALARRAY(fy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
+              CALL FV_TP_2D_ADM(q(isd:ied, jsd:jed, k, iq), q_ad(isd:ied&
+&                         , jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k), &
+&                         cx_ad(is:ie+1, jsd:jed, k), cy(isd:ied, js:je+&
+&                         1, k), cy_ad(isd:ied, js:je+1, k), npx, npy, &
+&                         hord_pert, fx, fx_ad, fy, fy_ad, xfx(is:ie+1, &
+&                         jsd:jed, k), xfx_ad(is:ie+1, jsd:jed, k), yfx(&
+&                         isd:ied, js:je+1, k), yfx_ad(isd:ied, js:je+1&
+&                         , k), gridstruct, bd, ra_x, ra_x_ad, ra_y, &
+&                         ra_y_ad, mfx(is:ie+1, js:je, k), mfx_ad(is:ie+&
+&                         1, js:je, k), mfy(is:ie, js:je+1, k), mfy_ad(&
+&                         is:ie, js:je+1, k), dp1(isd:ied, jsd:jed, k), &
+&                         dp1_ad(isd:ied, jsd:jed, k), nord=nord_tr_pert&
+&                         , damp_c=trdm_pert)
             ELSE
               CALL FV_TP_2D_BWD(q(isd:ied, jsd:jed, k, iq), q_ad(isd:&
 &                            ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, &
@@ -2224,23 +2214,23 @@ CONTAINS
         IF (it .LE. ksplt(k)) THEN
           DO j=js,je
             DO i=is,ie
-              dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+&
-&               mfy(i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+              dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(&
+&               mfy(i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
             END DO
           END DO
           DO j=jsd,jed
             DO i=is,ie
-              ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+              ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
             END DO
           END DO
           DO j=js,je
             DO i=isd,ied
-              ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+              ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
             END DO
           END DO
           DO iq=1,nq
-            IF (hord .EQ. hord_pert .AND. (.NOT.split_damp_tr)) THEN
-              IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+            IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+              IF (hord .EQ. hord_pert) THEN
                 CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1&
 &                          , jsd:jed, k), cy(isd:ied, js:je+1, k), npx, &
 &                          npy, hord, fx, fy, xfx(is:ie+1, jsd:jed, k), &
@@ -2249,24 +2239,24 @@ CONTAINS
 &                          , js:je+1, k), dp1(isd:ied, jsd:jed, k), &
 &                          nord_tr, trdm)
               ELSE
-                CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1&
-&                          , jsd:jed, k), cy(isd:ied, js:je+1, k), npx, &
-&                          npy, hord, fx, fy, xfx(is:ie+1, jsd:jed, k), &
-&                          yfx(isd:ied, js:je+1, k), gridstruct, bd, &
-&                          ra_x, ra_y, mfx=mfx(is:ie+1, js:je, k), mfy=&
-&                          mfy(is:ie, js:je+1, k))
+                CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, &
+&                       jsd:jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
+&                       hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx&
+&                       (isd:ied, js:je+1, k), gridstruct, bd, ra_x, &
+&                       ra_y, mfx(is:ie+1, js:je, k), mfy(is:ie, js:je+1&
+&                       , k), dp1(isd:ied, jsd:jed, k), nord_tr, trdm)
               END IF
-            ELSE IF (it .EQ. 1 .AND. trdm_pert .GT. 1.e-4) THEN
-              CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
-&                     jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
-&                     hord_pert, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
-&                     isd:ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, &
-&                     mfx(is:ie+1, js:je, k), mfy(is:ie, js:je+1, k), &
-&                     dp1(isd:ied, jsd:jed, k), nord_tr_pert, trdm_pert)
+            ELSE IF (hord .EQ. hord_pert) THEN
+              CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, &
+&                        jsd:jed, k), cy(isd:ied, js:je+1, k), npx, npy&
+&                        , hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
+&                        isd:ied, js:je+1, k), gridstruct, bd, ra_x, &
+&                        ra_y, mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie&
+&                        , js:je+1, k))
             ELSE
               CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
 &                     jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
-&                     hord_pert, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
+&                     hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
 &                     isd:ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, &
 &                     mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1&
 &                     , k))
@@ -2274,7 +2264,8 @@ CONTAINS
             DO j=js,je
               DO i=is,ie
                 q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                 fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&                 fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, &
+&                 j)
               END DO
             END DO
           END DO
@@ -2303,20 +2294,20 @@ CONTAINS
 !edge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn
 !_core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core
 !_mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Ra
-!yleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_ge
-!os fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv
-!_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mo
-!d.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod
-!.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz
-!_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.
-!tracer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_m
-!od.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod
-!.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.
-!nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a
-!2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v_f
-!b sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_m
-!od.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_
-!mod.great_circle_dist sw_core_mod.edge_interpolate4)):
+!yleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c
+!2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_
+!mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.rema
+!p_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_lim
+!iters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubi
+!c fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_
+!subgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_
+!utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_ut
+!ils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_uti
+!ls_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_
+!mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.
+!ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp
+!_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid
+!_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q dp1
 !   with respect to varying inputs: q dp1 mfx mfy cx cy
   SUBROUTINE TRACER_2D_NESTED_FWD(q, dp1, mfx, mfy, cx, cy, gridstruct, &
@@ -2626,25 +2617,25 @@ CONTAINS
         DO j=js,je
           DO i=is,ie
             CALL PUSHREALARRAY(dp2(i, j))
-            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+mfy(&
-&             i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(mfy&
+&             (i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
           END DO
         END DO
         DO j=jsd,jed
           DO i=is,ie
             CALL PUSHREALARRAY(ra_x(i, j))
-            ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+            ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
           END DO
         END DO
         DO j=js,je
           DO i=isd,ied
             CALL PUSHREALARRAY(ra_y(i, j))
-            ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+            ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
           END DO
         END DO
         DO iq=1,nq
-          IF (hord .EQ. hord_pert .AND. (.NOT.split_damp_tr)) THEN
-            IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+          IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+            IF (hord .EQ. hord_pert) THEN
               CALL FV_TP_2D_FWD(q(isd:ied, jsd:jed, k, iq), cx(is:ie+&
 &                            1, jsd:jed, k), cy(isd:ied, js:je+1, k), &
 &                            npx, npy, hord, fx, fy, xfx(is:ie+1, jsd:&
@@ -2655,26 +2646,26 @@ CONTAINS
 &                            , damp_c=trdm)
               CALL PUSHCONTROL(2,3)
             ELSE
-              CALL FV_TP_2D_FWD(q(isd:ied, jsd:jed, k, iq), cx(is:ie+&
-&                            1, jsd:jed, k), cy(isd:ied, js:je+1, k), &
-&                            npx, npy, hord, fx, fy, xfx(is:ie+1, jsd:&
-&                            jed, k), yfx(isd:ied, js:je+1, k), &
-&                            gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1&
-&                            , js:je, k), mfy=mfy(is:ie, js:je+1, k))
+              CALL PUSHREALARRAY(fy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
+              CALL PUSHREALARRAY(fx, (bd%ie-bd%is+2)*(bd%je-bd%js+1))
+              CALL PUSHREALARRAY(q(isd:ied, jsd:jed, k, iq), (ied-isd+1&
+&                           )*(jed-jsd+1))
+              CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
+&                     jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
+&                     hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
+&                     isd:ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, &
+&                     mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1&
+&                     , k), mass=dp1(isd:ied, jsd:jed, k), nord=nord_tr&
+&                     , damp_c=trdm)
               CALL PUSHCONTROL(2,2)
             END IF
-          ELSE IF (it .EQ. 1 .AND. trdm_pert .GT. 1.e-4) THEN
-            CALL PUSHREALARRAY(fy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
-            CALL PUSHREALARRAY(fx, (bd%ie-bd%is+2)*(bd%je-bd%js+1))
-            CALL PUSHREALARRAY(q(isd:ied, jsd:jed, k, iq), (ied-isd+1)*&
-&                         (jed-jsd+1))
-            CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
-&                   jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
-&                   hord_pert, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(isd&
-&                   :ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, mfx=&
-&                   mfx(is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1, k), &
-&                   mass=dp1(isd:ied, jsd:jed, k), nord=nord_tr_pert, &
-&                   damp_c=trdm_pert)
+          ELSE IF (hord .EQ. hord_pert) THEN
+            CALL FV_TP_2D_FWD(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1&
+&                          , jsd:jed, k), cy(isd:ied, js:je+1, k), npx, &
+&                          npy, hord, fx, fy, xfx(is:ie+1, jsd:jed, k), &
+&                          yfx(isd:ied, js:je+1, k), gridstruct, bd, &
+&                          ra_x, ra_y, mfx=mfx(is:ie+1, js:je, k), mfy=&
+&                          mfy(is:ie, js:je+1, k))
             CALL PUSHCONTROL(2,1)
           ELSE
             CALL PUSHREALARRAY(fy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
@@ -2683,7 +2674,7 @@ CONTAINS
 &                         (jed-jsd+1))
             CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
 &                   jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
-&                   hord_pert, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(isd&
+&                   hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(isd&
 &                   :ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, mfx=&
 &                   mfx(is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1, k))
             CALL PUSHCONTROL(2,0)
@@ -2692,7 +2683,7 @@ CONTAINS
             DO i=is,ie
               CALL PUSHREALARRAY(q(i, j, k, iq))
               q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-fx&
-&               (i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&               (i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, j)
             END DO
           END DO
         END DO
@@ -2732,8 +2723,8 @@ CONTAINS
         DO j=js,je
           DO i=is,ie
             CALL PUSHREALARRAY(dp1(i, j, k))
-            dp1(i, j, k) = (xfx(i+1, j, k)-xfx(i, j, k)+yfx(i, j+1, k)-&
-&             yfx(i, j, k))*rarea(i, j)*rdt
+            dp1(i, j, k) = (xfx(i+1, j, k)-xfx(i, j, k)+(yfx(i, j+1, k)-&
+&             yfx(i, j, k)))*rarea(i, j)*rdt
           END DO
         END DO
       END DO
@@ -2775,20 +2766,20 @@ CONTAINS
 !_edge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dy
 !n_core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_cor
 !e_mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.R
-!ayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_g
-!eos fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian f
-!v_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_m
-!od.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mo
-!d.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_map
-!z_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod
-!.tracer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_
-!mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mo
-!d.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod
-!.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2
-!a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v_
-!fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_
-!mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils
-!_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
+!ayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.
+!c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz
+!_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.rem
+!ap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_li
+!miters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cub
+!ic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv
+!_subgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh
+!_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_u
+!tils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_ut
+!ils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core
+!_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod
+!.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d t
+!p_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_gri
+!d_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q dp1
 !   with respect to varying inputs: q dp1 mfx mfy cx cy
   SUBROUTINE TRACER_2D_NESTED_BWD(q, q_ad, dp1, dp1_ad, mfx, mfx_ad, mfy&
@@ -2865,11 +2856,7 @@ CONTAINS
     REAL :: temp_ad0
     REAL :: temp_ad1
     REAL :: temp_ad2
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
     !TYPE(C_PTR) :: cptr
     !INTEGER :: unknown_shape_in_tracer_2d_nested
     REAL :: x2
@@ -2908,9 +2895,7 @@ CONTAINS
     x1 = 0.0
     y2 = 0.0
     y1 = 0.0
-#ifndef BPOINT
     branch = 0
-#endif
 
     CALL POPCONTROL(1,branch)
     IF (branch .EQ. 0) THEN
@@ -2937,7 +2922,7 @@ CONTAINS
       CALL POPREALARRAY(xfx, (bd%ie-bd%is+2)*(bd%jed-bd%jsd+1)*npz)
       !CALL POPPOINTER8(cptr)
       rarea => gridstruct%rarea ! (/unknown_shape_in_tracer_2d_nested&
-!&                /))
+!i&                /))
       CALL POPREALARRAY(dp2, (bd%ie-bd%is+1)*(bd%je-bd%js+1))
       CALL POPREALARRAY(frac)
       CALL POPINTEGER(ie)
@@ -3036,36 +3021,36 @@ CONTAINS
 &                         1, js:je, k), mfy(is:ie, js:je+1, k), mfy_ad(&
 &                         is:ie, js:je+1, k))
             ELSE
-              CALL POPREALARRAY(q(isd:ied, jsd:jed, k, iq), (ied-isd+1)&
-&                          *(jed-jsd+1))
-              CALL POPREALARRAY(fx, (bd%ie-bd%is+2)*(bd%je-bd%js+1))
-              CALL POPREALARRAY(fy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
-              CALL FV_TP_2D_ADM(q(isd:ied, jsd:jed, k, iq), q_ad(isd:ied&
-&                         , jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k), &
-&                         cx_ad(is:ie+1, jsd:jed, k), cy(isd:ied, js:je+&
-&                         1, k), cy_ad(isd:ied, js:je+1, k), npx, npy, &
-&                         hord_pert, fx, fx_ad, fy, fy_ad, xfx(is:ie+1, &
-&                         jsd:jed, k), xfx_ad(is:ie+1, jsd:jed, k), yfx(&
-&                         isd:ied, js:je+1, k), yfx_ad(isd:ied, js:je+1&
-&                         , k), gridstruct, bd, ra_x, ra_x_ad, ra_y, &
-&                         ra_y_ad, mfx(is:ie+1, js:je, k), mfx_ad(is:ie+&
-&                         1, js:je, k), mfy(is:ie, js:je+1, k), mfy_ad(&
-&                         is:ie, js:je+1, k), dp1(isd:ied, jsd:jed, k), &
-&                         dp1_ad(isd:ied, jsd:jed, k), nord=nord_tr_pert&
-&                         , damp_c=trdm_pert)
+              CALL FV_TP_2D_BWD(q(isd:ied, jsd:jed, k, iq), q_ad(isd:&
+&                            ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, &
+&                            k), cx_ad(is:ie+1, jsd:jed, k), cy(isd:ied&
+&                            , js:je+1, k), cy_ad(isd:ied, js:je+1, k), &
+&                            npx, npy, hord, fx, fx_ad, fy, fy_ad, xfx(&
+&                            is:ie+1, jsd:jed, k), xfx_ad(is:ie+1, jsd:&
+&                            jed, k), yfx(isd:ied, js:je+1, k), yfx_ad(&
+&                            isd:ied, js:je+1, k), gridstruct, bd, ra_x&
+&                            , ra_x_ad, ra_y, ra_y_ad, mfx(is:ie+1, js:&
+&                            je, k), mfx_ad(is:ie+1, js:je, k), mfy(is:&
+&                            ie, js:je+1, k), mfy_ad(is:ie, js:je+1, k))
             END IF
           ELSE IF (branch .EQ. 2) THEN
-            CALL FV_TP_2D_BWD(q(isd:ied, jsd:jed, k, iq), q_ad(isd:&
-&                          ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k)&
-&                          , cx_ad(is:ie+1, jsd:jed, k), cy(isd:ied, js:&
-&                          je+1, k), cy_ad(isd:ied, js:je+1, k), npx, &
-&                          npy, hord, fx, fx_ad, fy, fy_ad, xfx(is:ie+1&
-&                          , jsd:jed, k), xfx_ad(is:ie+1, jsd:jed, k), &
-&                          yfx(isd:ied, js:je+1, k), yfx_ad(isd:ied, js:&
-&                          je+1, k), gridstruct, bd, ra_x, ra_x_ad, ra_y&
-&                          , ra_y_ad, mfx(is:ie+1, js:je, k), mfx_ad(is:&
-&                          ie+1, js:je, k), mfy(is:ie, js:je+1, k), &
-&                          mfy_ad(is:ie, js:je+1, k))
+            CALL POPREALARRAY(q(isd:ied, jsd:jed, k, iq), (ied-isd+1)*(&
+&                        jed-jsd+1))
+            CALL POPREALARRAY(fx, (bd%ie-bd%is+2)*(bd%je-bd%js+1))
+            CALL POPREALARRAY(fy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
+            CALL FV_TP_2D_ADM(q(isd:ied, jsd:jed, k, iq), q_ad(isd:ied, &
+&                       jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k), cx_ad(&
+&                       is:ie+1, jsd:jed, k), cy(isd:ied, js:je+1, k), &
+&                       cy_ad(isd:ied, js:je+1, k), npx, npy, hord_pert&
+&                       , fx, fx_ad, fy, fy_ad, xfx(is:ie+1, jsd:jed, k)&
+&                       , xfx_ad(is:ie+1, jsd:jed, k), yfx(isd:ied, js:&
+&                       je+1, k), yfx_ad(isd:ied, js:je+1, k), &
+&                       gridstruct, bd, ra_x, ra_x_ad, ra_y, ra_y_ad, &
+&                       mfx(is:ie+1, js:je, k), mfx_ad(is:ie+1, js:je, k&
+&                       ), mfy(is:ie, js:je+1, k), mfy_ad(is:ie, js:je+1&
+&                       , k), dp1(isd:ied, jsd:jed, k), dp1_ad(isd:ied, &
+&                       jsd:jed, k), nord=nord_tr_pert, damp_c=trdm_pert&
+&                      )
           ELSE
             CALL FV_TP_2D_BWD(q(isd:ied, jsd:jed, k, iq), q_ad(isd:&
 &                          ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k)&
@@ -3465,23 +3450,23 @@ CONTAINS
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
-            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+mfy(&
-&             i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(mfy&
+&             (i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
           END DO
         END DO
         DO j=jsd,jed
           DO i=is,ie
-            ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+            ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
           END DO
         END DO
         DO j=js,je
           DO i=isd,ied
-            ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+            ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
           END DO
         END DO
         DO iq=1,nq
-          IF (hord .EQ. hord_pert .AND. (.NOT.split_damp_tr)) THEN
-            IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+          IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+            IF (hord .EQ. hord_pert) THEN
               CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, &
 &                        jsd:jed, k), cy(isd:ied, js:je+1, k), npx, npy&
 &                        , hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
@@ -3489,31 +3474,30 @@ CONTAINS
 &                        ra_y, mfx(is:ie+1, js:je, k), mfy(is:ie, js:je+&
 &                        1, k), dp1(isd:ied, jsd:jed, k), nord_tr, trdm)
             ELSE
-              CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, &
-&                        jsd:jed, k), cy(isd:ied, js:je+1, k), npx, npy&
-&                        , hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
-&                        isd:ied, js:je+1, k), gridstruct, bd, ra_x, &
-&                        ra_y, mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie&
-&                        , js:je+1, k))
+              CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
+&                     jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
+&                     hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
+&                     isd:ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, &
+&                     mfx(is:ie+1, js:je, k), mfy(is:ie, js:je+1, k), &
+&                     dp1(isd:ied, jsd:jed, k), nord_tr, trdm)
             END IF
-          ELSE IF (it .EQ. 1 .AND. trdm_pert .GT. 1.e-4) THEN
-            CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
-&                   jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
-&                   hord_pert, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(isd&
-&                   :ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, mfx(&
-&                   is:ie+1, js:je, k), mfy(is:ie, js:je+1, k), dp1(isd:&
-&                   ied, jsd:jed, k), nord_tr_pert, trdm_pert)
+          ELSE IF (hord .EQ. hord_pert) THEN
+            CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd&
+&                      :jed, k), cy(isd:ied, js:je+1, k), npx, npy, hord&
+&                      , fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(isd:ied, &
+&                      js:je+1, k), gridstruct, bd, ra_x, ra_y, mfx=mfx(&
+&                      is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1, k))
           ELSE
             CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd:&
 &                   jed, k), cy(isd:ied, js:je+1, k), npx, npy, &
-&                   hord_pert, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(isd&
+&                   hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(isd&
 &                   :ied, js:je+1, k), gridstruct, bd, ra_x, ra_y, mfx=&
 &                   mfx(is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1, k))
           END IF
           DO j=js,je
             DO i=is,ie
               q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-fx&
-&               (i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&               (i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, j)
             END DO
           END DO
         END DO
@@ -3545,8 +3529,8 @@ CONTAINS
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
-            dp1(i, j, k) = (xfx(i+1, j, k)-xfx(i, j, k)+yfx(i, j+1, k)-&
-&             yfx(i, j, k))*rarea(i, j)*rdt
+            dp1(i, j, k) = (xfx(i+1, j, k)-xfx(i, j, k)+(yfx(i, j+1, k)-&
+&             yfx(i, j, k)))*rarea(i, j)*rdt
           END DO
         END DO
       END DO

@@ -17,22 +17,29 @@
 !*           675 Mass Ave, Cambridge, MA 02139, USA.                   *
 !* or see:   http://www.gnu.org/licenses/gpl.html                      *
 !***********************************************************************
-! $Id: fv_control_nlm.F90,v 1.3 2017/11/13 21:58:43 drholdaw Exp $
+! $Id: fv_control_nlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $
 !
 !----------------
 ! FV contro panel
 !----------------
+
+!Prepare the FV_AtmP derived type that holds the perturbation variables and the 
+!coefficients used for advection, remapping and damping in the tangent linear
+!and adjoint versions of FV3.
 
 module fv_control_nlm_mod
 
  use fv_arrays_mod,     only: fv_atmos_type 
  use fv_arrays_nlm_mod, only: fv_atmos_pert_type, allocate_fv_atmos_pert_type, deallocate_fv_atmos_pert_type 
  use fms_mod,           only: open_namelist_file, check_nml_error, close_file
- use mpp_mod,           only: stdlog
+ use mpp_mod,           only: stdlog, mpp_pe, mpp_root_pe
 
  implicit none
  private
 
+ integer, public :: ngrids = 1
+
+!Convenience pointer to AtmP(n)
  logical, pointer :: split_hord 
  integer, pointer :: hord_mt_pert 
  integer, pointer :: hord_vt_pert 
@@ -49,11 +56,28 @@ module fv_control_nlm_mod
  integer, pointer :: nord_pert 
  real,    pointer :: dddmp_pert 
  real,    pointer :: d2_bg_pert 
- real,    pointer :: d4_bg_pert 
+ real,    pointer :: d4_bg_pert
  real,    pointer :: vtdm4_pert 
+ real,    pointer :: d2_bg_k1_pert
+ real,    pointer :: d2_bg_k2_pert
+ real,    pointer :: d2_bg_ks_pert
  logical, pointer :: split_damp_tr 
  integer, pointer :: nord_tr_pert 
  real,    pointer :: trdm2_pert
+ integer, pointer :: n_sponge_pert
+ logical, pointer :: hord_ks_pert
+ integer, pointer :: hord_mt_ks_pert 
+ integer, pointer :: hord_vt_ks_pert 
+ integer, pointer :: hord_tm_ks_pert 
+ integer, pointer :: hord_dp_ks_pert 
+ integer, pointer :: hord_tr_ks_pert 
+ logical, pointer :: hord_ks_traj 
+ integer, pointer :: hord_mt_ks_traj
+ integer, pointer :: hord_vt_ks_traj
+ integer, pointer :: hord_tm_ks_traj
+ integer, pointer :: hord_dp_ks_traj
+ integer, pointer :: hord_tr_ks_traj
+
 
  public fv_init_pert, fv_end_pert
 
@@ -67,6 +91,8 @@ module fv_control_nlm_mod
  type(fv_atmos_pert_type), allocatable, intent(inout), target :: AtmP(:)
 
  integer :: n, ntilesMe
+
+  allocate(AtmP(ngrids))
 
   call run_setup_pert(AtmP,Atm)
 
@@ -124,10 +150,26 @@ module fv_control_nlm_mod
    d2_bg_pert        => AtmP%flagstruct%d2_bg_pert
    d4_bg_pert        => AtmP%flagstruct%d4_bg_pert
    do_vort_damp_pert => AtmP%flagstruct%do_vort_damp_pert
+   d2_bg_k1_pert     => AtmP%flagstruct%d2_bg_k1_pert
+   d2_bg_k2_pert     => AtmP%flagstruct%d2_bg_k2_pert
+   d2_bg_ks_pert     => AtmP%flagstruct%d2_bg_ks_pert
    vtdm4_pert        => AtmP%flagstruct%vtdm4_pert
    split_damp_tr     => AtmP%flagstruct%split_damp_tr
    nord_tr_pert      => AtmP%flagstruct%nord_tr_pert
    trdm2_pert        => AtmP%flagstruct%trdm2_pert
+   n_sponge_pert     => AtmP%flagstruct%n_sponge_pert
+   hord_ks_pert      => AtmP%flagstruct%hord_ks_pert
+   hord_mt_ks_pert   => AtmP%flagstruct%hord_mt_ks_pert
+   hord_vt_ks_pert   => AtmP%flagstruct%hord_vt_ks_pert
+   hord_tm_ks_pert   => AtmP%flagstruct%hord_tm_ks_pert
+   hord_dp_ks_pert   => AtmP%flagstruct%hord_dp_ks_pert
+   hord_tr_ks_pert   => AtmP%flagstruct%hord_tr_ks_pert
+   hord_ks_traj      => AtmP%flagstruct%hord_ks_traj 
+   hord_mt_ks_traj   => AtmP%flagstruct%hord_mt_ks_traj
+   hord_vt_ks_traj   => AtmP%flagstruct%hord_vt_ks_traj
+   hord_tm_ks_traj   => AtmP%flagstruct%hord_tm_ks_traj
+   hord_dp_ks_traj   => AtmP%flagstruct%hord_dp_ks_traj
+   hord_tr_ks_traj   => AtmP%flagstruct%hord_tr_ks_traj
 
   end subroutine setup_pointers_pert
 
@@ -143,8 +185,11 @@ module fv_control_nlm_mod
  
   namelist /fv_core_pert_nml/split_hord, hord_mt_pert, hord_vt_pert, hord_tm_pert, hord_dp_pert, hord_tr_pert, &
                              split_kord, kord_mt_pert, kord_wz_pert, kord_tm_pert, kord_tr_pert, split_damp, do_vort_damp_pert, &
-                             nord_pert, dddmp_pert, d2_bg_pert, d4_bg_pert, vtdm4_pert, &
-                             split_damp_tr, nord_tr_pert, trdm2_pert
+                             nord_pert, dddmp_pert, d2_bg_pert, d4_bg_pert, vtdm4_pert, d2_bg_k1_pert, d2_bg_k2_pert, d2_bg_ks_pert, &
+                             split_damp_tr, nord_tr_pert, trdm2_pert, &
+                             n_sponge_pert, &
+                             hord_ks_traj, hord_mt_ks_traj, hord_vt_ks_traj, hord_tm_ks_traj, hord_dp_ks_traj, hord_tr_ks_traj, &
+                             hord_ks_pert, hord_mt_ks_pert, hord_vt_ks_pert, hord_tm_ks_pert, hord_dp_ks_pert, hord_tr_ks_pert
 
   do n=1,size(AtmP)
 
@@ -177,6 +222,8 @@ module fv_control_nlm_mod
         Atm(n)%flagstruct%d4_bg        = AtmP(n)%flagstruct%d4_bg_pert
         Atm(n)%flagstruct%do_vort_damp = AtmP(n)%flagstruct%do_vort_damp_pert
         Atm(n)%flagstruct%vtdm4        = AtmP(n)%flagstruct%vtdm4_pert
+        Atm(n)%flagstruct%d2_bg_k1     = AtmP(n)%flagstruct%d2_bg_k1_pert
+        Atm(n)%flagstruct%d2_bg_k2     = AtmP(n)%flagstruct%d2_bg_k2_pert
      endif
 
      !Unless specfied the trajectory uses the coeffs suitable for the perts
@@ -200,6 +247,99 @@ module fv_control_nlm_mod
         Atm(n)%flagstruct%kord_wz = AtmP(n)%flagstruct%kord_wz_pert
         Atm(n)%flagstruct%kord_tm = AtmP(n)%flagstruct%kord_tm_pert
         Atm(n)%flagstruct%kord_tr = AtmP(n)%flagstruct%kord_tr_pert
+     endif
+
+     if (mpp_pe() == mpp_root_pe()) then
+
+        print*, ''
+        print*, '|-----------------------------------------------|'
+        print*, '| Advection, remapping and damping coefficients |'
+        print*, '|-----------------------------------------------|'
+        print*, ''
+        print*, ' Splitting (off for speed, on for accuracy)'
+        print*, '  split_hord = ', split_hord
+        print*, '  split_kord = ', split_kord
+        print*, '  split_damp = ', split_damp
+        print*, '  split_damp_tr = ', split_damp_tr
+        print*, ''
+        print*, ' Advection of the trajectory'
+        print*, '  hord_mt = ', Atm(n)%flagstruct%hord_mt
+        print*, '  hord_vt = ', Atm(n)%flagstruct%hord_vt
+        print*, '  hord_tm = ', Atm(n)%flagstruct%hord_tm
+        print*, '  hord_dp = ', Atm(n)%flagstruct%hord_dp
+        print*, '  hord_tr = ', Atm(n)%flagstruct%hord_tr
+        print*, ''
+        print*, ' Advection of the perturbations'
+        print*, '  hord_mt_pert = ', AtmP(n)%flagstruct%hord_mt_pert
+        print*, '  hord_vt_pert = ', AtmP(n)%flagstruct%hord_vt_pert
+        print*, '  hord_tm_pert = ', AtmP(n)%flagstruct%hord_tm_pert
+        print*, '  hord_dp_pert = ', AtmP(n)%flagstruct%hord_dp_pert
+        print*, '  hord_tr_pert = ', AtmP(n)%flagstruct%hord_tr_pert
+        print*, ''
+        print*, ' Number of sponge layers for the perturbations'
+        print*, '  n_sponge_pert = ', AtmP(n)%flagstruct%n_sponge_pert 
+        print*, ''
+        print*, ' Sponge layer advection of the trajecotry'
+        print*, '  hord_ks_traj = '   , AtmP(n)%flagstruct%hord_ks_traj
+        print*, '  hord_mt_ks_traj = ', AtmP(n)%flagstruct%hord_mt_ks_traj
+        print*, '  hord_vt_ks_traj = ', AtmP(n)%flagstruct%hord_vt_ks_traj
+        print*, '  hord_tm_ks_traj = ', AtmP(n)%flagstruct%hord_tm_ks_traj
+        print*, '  hord_dp_ks_traj = ', AtmP(n)%flagstruct%hord_dp_ks_traj
+        print*, '  hord_tr_ks_traj = ', AtmP(n)%flagstruct%hord_tr_ks_traj
+        print*, ' '
+        print*, ' Sponge layer advection of the perturbations'
+        print*, '  hord_ks_pert = '   , AtmP(n)%flagstruct%hord_ks_pert
+        print*, '  hord_mt_ks_pert = ', AtmP(n)%flagstruct%hord_mt_ks_pert
+        print*, '  hord_vt_ks_pert = ', AtmP(n)%flagstruct%hord_vt_ks_pert
+        print*, '  hord_tm_ks_pert = ', AtmP(n)%flagstruct%hord_tm_ks_pert
+        print*, '  hord_dp_ks_pert = ', AtmP(n)%flagstruct%hord_dp_ks_pert
+        print*, '  hord_tr_ks_pert = ', AtmP(n)%flagstruct%hord_tr_ks_pert
+        print*, ''
+        print*, ' Remapping of the trajectory'
+        print*, '  kord_mt = ', Atm(n)%flagstruct%kord_mt
+        print*, '  kord_wz = ', Atm(n)%flagstruct%kord_wz
+        print*, '  kord_tm = ', Atm(n)%flagstruct%kord_tm
+        print*, '  kord_tr = ', Atm(n)%flagstruct%kord_tr
+        print*, ''              
+        print*, ' Remapping of the perturbations'
+        print*, '  kord_mt_pert = ', AtmP(n)%flagstruct%kord_mt_pert
+        print*, '  kord_wz_pert = ', AtmP(n)%flagstruct%kord_wz_pert
+        print*, '  kord_tm_pert = ', AtmP(n)%flagstruct%kord_tm_pert
+        print*, '  kord_tr_pert = ', AtmP(n)%flagstruct%kord_tr_pert
+        print*, ''
+        print*, ' Dynamics damping, trajectory'
+        print*, '  nord         = ', Atm(n)%flagstruct%nord
+        print*, '  dddmp        = ', Atm(n)%flagstruct%dddmp       
+        print*, '  d2_bg        = ', Atm(n)%flagstruct%d2_bg
+        print*, '  d4_bg        = ', Atm(n)%flagstruct%d4_bg
+        print*, '  do_vort_damp = ', Atm(n)%flagstruct%do_vort_damp
+        print*, '  vtdm4        = ', Atm(n)%flagstruct%vtdm4
+        print*, '  d2_bg_k1     = ', Atm(n)%flagstruct%d2_bg_k1
+        print*, '  d2_bg_k2     = ', Atm(n)%flagstruct%d2_bg_k2
+   
+        print*, ''
+        print*, ' Dynamics damping, perturbations'
+        print*, '  nord_pert         = ', AtmP(n)%flagstruct%nord_pert
+        print*, '  dddmp_pert        = ', AtmP(n)%flagstruct%dddmp_pert
+        print*, '  d2_bg_pert        = ', AtmP(n)%flagstruct%d2_bg_pert
+        print*, '  d4_bg_pert        = ', AtmP(n)%flagstruct%d4_bg_pert
+        print*, '  do_vort_damp_pert = ', AtmP(n)%flagstruct%do_vort_damp_pert
+        print*, '  vtdm4_pert        = ', AtmP(n)%flagstruct%vtdm4_pert
+        print*, '  d2_bg_k1_pert     = ', AtmP(n)%flagstruct%d2_bg_k1_pert
+        print*, '  d2_bg_k2_pert     = ', AtmP(n)%flagstruct%d2_bg_k2_pert
+        print*, '  d2_bg_ks_pert     = ', AtmP(n)%flagstruct%d2_bg_ks_pert
+        print*, ''
+        print*, ' Tracer damping, trajectory'
+        print*, '  nord_tr = ', Atm(n)%flagstruct%nord_tr
+        print*, '  trdm2   = ', Atm(n)%flagstruct%trdm2
+        print*, ''
+        print*, ' Tracer damping, perturbations'
+        print*, '  nord_tr_pert = ', AtmP(n)%flagstruct%nord_tr_pert
+        print*, '  trdm2_pert   = ', AtmP(n)%flagstruct%trdm2_pert
+        print*, ''
+        print*, '|-----------------------------------------------|'
+        print*, ''
+
      endif
 
    enddo

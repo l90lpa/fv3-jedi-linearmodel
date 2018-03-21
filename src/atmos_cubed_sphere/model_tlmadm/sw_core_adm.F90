@@ -28,6 +28,7 @@
  use fv_arrays_mod,    only: fv_grid_type, fv_grid_bounds_type, fv_flags_type, r_grid
  use a2b_edge_adm_mod, only: a2b_ord4
  use a2b_edge_adm_mod, only: a2b_ord4_fwd, a2b_ord4_bwd, a2b_ord4_adm
+ use fv_arrays_mod,    only: fvprc
 
  use tapenade_iter, only: pushcontrol, popcontrol, pushinteger, popinteger, &
                           pushrealarray, poprealarray, pushrealarray_adm, poprealarray_adm
@@ -35,6 +36,8 @@
 #ifdef SW_DYNAMICS
  use test_cases_mod,   only: test_case
 #endif
+
+ use fv_arrays_nlm_mod, only: fpp
 
  implicit none
 
@@ -68,45 +71,45 @@
 ! real, parameter:: c3 =  0.375
 !----------------------------------------------
 ! scheme 2.1: perturbation form
-  real, parameter:: b1 =   1./30.
-  real, parameter:: b2 = -13./60.
-  real, parameter:: b3 = -13./60.
-  real, parameter:: b4 =  0.45
-  real, parameter:: b5 = -0.05
-
-
-!---- version number -----
-  character(len=128) :: version = '$Id: sw_core_adm.F90,v 1.1.2.1 2017/09/29 20:23:48 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-EnADAS-5_16_7p6_newfv3pert_vlab $'
-
-      private
-      public :: c_sw, d_sw, fill_4corners, del6_vt_flux, divergence_corner, divergence_corner_nest
-      public :: d2a2c_vect
-      public :: c_sw_fwd, c_sw_bwd, d_sw_fwd, d_sw_bwd, fill_4corners_fwd, fill_4corners_bwd
-      public :: divergence_corner_fwd, divergence_corner_bwd
-      public :: divergence_corner_nest_fwd, divergence_corner_nest_bwd
-      public :: d2a2c_vect_fwd, d2a2c_vect_bwd, del6_vt_flux_adm
-      public :: FILL2_4CORNERS_FWD, FILL2_4CORNERS_BWD
+  REAL, PARAMETER :: b1=1./30.
+  REAL, PARAMETER :: b2=-(13./60.)
+  REAL, PARAMETER :: b3=-(13./60.)
+  REAL, PARAMETER :: b4=0.45
+  REAL, PARAMETER :: b5=-0.05
+  PRIVATE 
+  PUBLIC c_sw, d_sw, fill_4corners, del6_vt_flux, divergence_corner, &
+& divergence_corner_nest
+  PUBLIC c_sw_fwd, c_sw_bwd, d_sw_fwd, d_sw_bwd, fill_4corners_fwd, &
+& fill_4corners_bwd, del6_vt_flux_adm, divergence_corner_fwd, &
+& divergence_corner_bwd, divergence_corner_nest_fwd, &
+& divergence_corner_nest_bwd
+  PUBLIC d2a2c_vect
+  PUBLIC d2a2c_vect_fwd, d2a2c_vect_bwd
+  EXTERNAL D_SW_ADM
+  EXTERNAL DIVERGENCE_CORNER_NEST_ADM
+  EXTERNAL DIVERGENCE_CORNER_ADM
+  EXTERNAL C_SW_ADM
+  EXTERNAL FILL_4CORNERS_ADM
 
 CONTAINS
 !  Differentiation of c_sw in reverse (adjoint) mode, forward sweep (with options split(a2b_edge_mod.a2b_ord4 a2b_edge_mod.a2b
 !_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_mod.p_
 !grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mix_dp 
 !dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_Super
-! fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_grid_u
-!tils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.co
-!mpute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_trace
-!r_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters
-! fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_c
-!v fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv
-!_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Solv
-!er_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_solv
-!er nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_nh
-! sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_c
-!ore_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_mo
-!d.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_corn
-!ers_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_ci
-!rcle_dist sw_core_mod.edge_interpolate4)):
+! fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_g
+!rid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z 
+!fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz
+!_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_map
+!z_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart
+!_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid_z ma
+!in_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Ri
+!em_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3
+!p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_
+!halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_ve
+!ct sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_
+!core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.co
+!py_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.g
+!reat_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v w delp ua uc ptc ut delpc
 !                va vc vt divg_d wc pt
 !   with respect to varying inputs: u v w delp ua uc ptc ut delpc
@@ -328,11 +331,11 @@ CONTAINS
       DO j=js-1,jep1
         DO i=is-1,iep1
           CALL PUSHREALARRAY(delpc(i, j))
-          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+fy1(i, j)-&
-&           fy1(i, j+1))*gridstruct%rarea(i, j)
+          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+(fy1(i, j)-&
+&           fy1(i, j+1)))*gridstruct%rarea(i, j)
           CALL PUSHREALARRAY(ptc(i, j))
-          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+fy(i, j)&
-&           -fy(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
+          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+(fy(i, j&
+&           )-fy(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
         END DO
       END DO
       CALL PUSHCONTROL(1,0)
@@ -368,14 +371,14 @@ CONTAINS
       DO j=js-1,je+1
         DO i=is-1,ie+1
           CALL PUSHREALARRAY(delpc(i, j))
-          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+fy1(i, j)-&
-&           fy1(i, j+1))*gridstruct%rarea(i, j)
+          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+(fy1(i, j)-&
+&           fy1(i, j+1)))*gridstruct%rarea(i, j)
           CALL PUSHREALARRAY(ptc(i, j))
-          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+fy(i, j)&
-&           -fy(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
+          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+(fy(i, j&
+&           )-fy(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
           CALL PUSHREALARRAY(wc(i, j))
-          wc(i, j) = (w(i, j)*delp(i, j)+(fx2(i, j)-fx2(i+1, j)+fy2(i, j&
-&           )-fy2(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
+          wc(i, j) = (w(i, j)*delp(i, j)+(fx2(i, j)-fx2(i+1, j)+(fy2(i, &
+&           j)-fy2(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
         END DO
       END DO
       CALL PUSHCONTROL(1,1)
@@ -500,7 +503,7 @@ CONTAINS
     DO j=js,je+1
       DO i=is,ie+1
         CALL PUSHREALARRAY(vort(i, j))
-        vort(i, j) = fx(i, j-1) - fx(i, j) - fy(i-1, j) + fy(i, j)
+        vort(i, j) = fx(i, j-1) - fx(i, j) + (fy(i, j)-fy(i-1, j))
       END DO
     END DO
 ! Remove the extra term at the corners:
@@ -685,20 +688,20 @@ CONTAINS
 !b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_mod.p
 !_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mix_dp
 ! dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_Supe
-!r fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_grid_
-!utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.c
-!ompute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_trac
-!er_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiter
-!s fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_
-!cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d f
-!v_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Sol
-!ver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_sol
-!ver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_n
-!h sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_
-!core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_m
-!od.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_cor
-!ners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_c
-!ircle_dist sw_core_mod.edge_interpolate4)):
+!r fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_
+!grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z
+! fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_map
+!z_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_ma
+!pz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restar
+!t_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid_z m
+!ain_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.R
+!iem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM
+!3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest
+!_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_v
+!ect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw
+!_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.c
+!opy_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.
+!great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v w delp ua uc ptc ut delpc
 !                va vc vt divg_d wc pt
 !   with respect to varying inputs: u v w delp ua uc ptc ut delpc
@@ -771,11 +774,7 @@ CONTAINS
     REAL :: temp_ad11
     REAL :: temp_ad12
     REAL :: temp_ad13
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
     !TYPE(C_PTR) :: cptr
     !INTEGER :: unknown_shape_in_c_sw
 
@@ -802,20 +801,7 @@ CONTAINS
     jed = 0
     npx = 0
     npy = 0
-#ifndef BPOINT
     branch = 0
-#endif
-
-    sin_sg => gridstruct%sin_sg
-    cos_sg => gridstruct%cos_sg
-    cosa_u => gridstruct%cosa_u
-    cosa_v => gridstruct%cosa_v
-    sina_u => gridstruct%sina_u
-    sina_v => gridstruct%sina_v
-    dx => gridstruct%dx
-    dy => gridstruct%dy
-    dxc => gridstruct%dxc
-    dyc => gridstruct%dyc
 
     CALL POPINTEGER(js)
     CALL POPINTEGER(npx)
@@ -1528,10 +1514,10 @@ CONTAINS
       END DO
       DO j=js-1,jep1
         DO i=is-1,iep1
-          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+fy1(i, j)-&
-&           fy1(i, j+1))*gridstruct%rarea(i, j)
-          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+fy(i, j)&
-&           -fy(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
+          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+(fy1(i, j)-&
+&           fy1(i, j+1)))*gridstruct%rarea(i, j)
+          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+(fy(i, j&
+&           )-fy(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
         END DO
       END DO
     ELSE
@@ -1557,12 +1543,12 @@ CONTAINS
       END DO
       DO j=js-1,je+1
         DO i=is-1,ie+1
-          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+fy1(i, j)-&
-&           fy1(i, j+1))*gridstruct%rarea(i, j)
-          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+fy(i, j)&
-&           -fy(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
-          wc(i, j) = (w(i, j)*delp(i, j)+(fx2(i, j)-fx2(i+1, j)+fy2(i, j&
-&           )-fy2(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
+          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+(fy1(i, j)-&
+&           fy1(i, j+1)))*gridstruct%rarea(i, j)
+          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+(fy(i, j&
+&           )-fy(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
+          wc(i, j) = (w(i, j)*delp(i, j)+(fx2(i, j)-fx2(i+1, j)+(fy2(i, &
+&           j)-fy2(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
         END DO
       END DO
     END IF
@@ -1664,7 +1650,7 @@ CONTAINS
     END DO
     DO j=js,je+1
       DO i=is,ie+1
-        vort(i, j) = fx(i, j-1) - fx(i, j) - fy(i-1, j) + fy(i, j)
+        vort(i, j) = fx(i, j-1) - fx(i, j) + (fy(i, j)-fy(i-1, j))
       END DO
     END DO
 ! Remove the extra term at the corners:
@@ -1768,36 +1754,36 @@ CONTAINS
 !_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_mod.p_
 !grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mix_dp 
 !dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_Super
-! fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_grid_u
-!tils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.co
-!mpute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_trace
-!r_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters
-! fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_c
-!v fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv
-!_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Solv
-!er_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_solv
-!er nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_nh
-! sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_c
-!ore_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_mo
-!d.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_corn
-!ers_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_ci
-!rcle_dist sw_core_mod.edge_interpolate4)):
+! fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_g
+!rid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z 
+!fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz
+!_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_map
+!z_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart
+!_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid_z ma
+!in_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Ri
+!em_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3
+!p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_
+!halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_ve
+!ct sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_
+!core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.co
+!py_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.g
+!reat_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: yfx_adv q crx_adv u v w delp
 !                ua xfx_adv uc ptc xflux cry_adv delpc va vc yflux
-!                divg_d z_rat heat_source pt cx cy
+!                divg_d z_rat heat_source pt cx cy dpx
 !   with respect to varying inputs: yfx_adv q crx_adv u v w delp
 !                ua xfx_adv uc ptc xflux cry_adv delpc va vc yflux
-!                divg_d z_rat heat_source pt cx cy
+!                divg_d z_rat heat_source pt cx cy dpx
 !     d_sw :: D-Grid Shallow Water Routine
   SUBROUTINE D_SW_FWD(delpc, delp, ptc, pt, u, v, w, uc, vc, ua, va, &
 &   divg_d, xflux, yflux, cx, cy, crx_adv, cry_adv, xfx_adv, yfx_adv, &
-&   q_con, z_rat, kgb, heat_source, zvir, sphum, nq, q, k, km, inline_q&
-&   , dt, hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, nord, nord_v, &
-&   nord_w, nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, damp_t, d_con, &
-&   hydrostatic, gridstruct, flagstruct, bd, hord_tr_pert, hord_mt_pert&
-&   , hord_vt_pert, hord_tm_pert, hord_dp_pert, split_damp, nord_pert, &
-&   nord_v_pert, nord_w_pert, nord_t_pert, dddmp_pert, d2_bg_pert, &
-&   d4_bg_pert, damp_v_pert, damp_w_pert, damp_t_pert)
+&   q_con, z_rat, kgb, heat_source, dpx, zvir, sphum, nq, q, k, km, &
+&   inline_q, dt, hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, nord, &
+&   nord_v, nord_w, nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, damp_t&
+&   , d_con, hydrostatic, gridstruct, flagstruct, bd, hord_tr_pert, &
+&   hord_mt_pert, hord_vt_pert, hord_tm_pert, hord_dp_pert, split_damp, &
+&   nord_pert, nord_v_pert, nord_w_pert, nord_t_pert, dddmp_pert, &
+&   d2_bg_pert, d4_bg_pert, damp_v_pert, damp_w_pert, damp_t_pert)
     !USE ISO_C_BINDING
     !USE ADMM_TAPENADE_INTERFACE
     IMPLICIT NONE
@@ -1826,8 +1812,8 @@ CONTAINS
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(IN) :: z_rat
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: delp&
 &   , pt, ua, va
-    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%ied), INTENT(INOUT) :: w
-    REAL, DIMENSION(bd%isd:bd%isd, bd%jsd:bd%isd), INTENT(INOUT) :: &
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: w
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: &
 &   q_con
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed+1), INTENT(INOUT) :: u&
 &   , vc
@@ -1836,6 +1822,8 @@ CONTAINS
     REAL, INTENT(INOUT) :: q(bd%isd:bd%ied, bd%jsd:bd%jed, km, nq)
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed) :: delpc, ptc
     REAL, DIMENSION(bd%is:bd%ie, bd%js:bd%je) :: heat_source
+    REAL(kind=8), DIMENSION(bd%is:bd%ie, bd%js:bd%je), INTENT(INOUT) :: &
+&   dpx
 ! The flux capacitors:
     REAL, INTENT(INOUT) :: xflux(bd%is:bd%ie+1, bd%js:bd%je)
     REAL, INTENT(INOUT) :: yflux(bd%is:bd%ie, bd%js:bd%je+1)
@@ -1891,6 +1879,18 @@ CONTAINS
     INTEGER :: isd, ied, jsd, jed
     INTEGER :: npx, npy
     LOGICAL :: nested
+    REAL :: delp_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: pt_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: vort_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: wk_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: delpc_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: ptc_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: ke_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed+1)
+    REAL :: vc_tj(bd%isd:bd%ied, bd%jsd:bd%jed+1)
+    REAL :: uc_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed)
+    REAL :: divg_d_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed+1)
+    REAL :: ut_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed)
+    REAL :: vt_tj(bd%isd:bd%ied, bd%jsd:bd%jed+1)
     INTRINSIC MAX
     INTRINSIC MIN
     INTRINSIC ABS
@@ -2327,12 +2327,12 @@ CONTAINS
     END DO
     DO j=jsd,jed
       DO i=is,ie
-        ra_x(i, j) = area(i, j) + xfx_adv(i, j) - xfx_adv(i+1, j)
+        ra_x(i, j) = area(i, j) + (xfx_adv(i, j)-xfx_adv(i+1, j))
       END DO
     END DO
     DO j=js,je
       DO i=isd,ied
-        ra_y(i, j) = area(i, j) + yfx_adv(i, j) - yfx_adv(i, j+1)
+        ra_y(i, j) = area(i, j) + (yfx_adv(i, j)-yfx_adv(i, j+1))
       END DO
     END DO
     IF (hord_dp .EQ. hord_dp_pert .AND. (.NOT.split_damp)) THEN
@@ -2386,7 +2386,7 @@ CONTAINS
 &                   gridstruct, bd)
         DO j=js,je
           DO i=is,ie
-            dw(i, j) = (fx2(i, j)-fx2(i+1, j)+fy2(i, j)-fy2(i, j+1))*&
+            dw(i, j) = (fx2(i, j)-fx2(i+1, j)+(fy2(i, j)-fy2(i, j+1)))*&
 &             rarea(i, j)
 ! 0.5 * [ (w+dw)**2 - w**2 ] = w*dw + 0.5*dw*dw
 !                   heat_source(i,j) = -d_con*dw(i,j)*(w(i,j)+0.5*dw(i,j))
@@ -2405,7 +2405,7 @@ CONTAINS
       ELSE
         CALL PUSHREALARRAY(gy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
         CALL PUSHREALARRAY(gx, (bd%ie-bd%is+2)*(bd%je-bd%js+1))
-        CALL PUSHREALARRAY(w, (bd%ied-bd%isd+1)*(bd%ied-bd%jsd+1))
+        CALL PUSHREALARRAY(w, (bd%ied-bd%isd+1)*(bd%jed-bd%jsd+1))
         CALL FV_TP_2D(w, crx_adv, cry_adv, npx, npy, hord_vt, gx, &
 &               gy, xfx_adv, yfx_adv, gridstruct, bd, ra_x, ra_y, mfx=fx&
 &               , mfy=fy)
@@ -2414,8 +2414,8 @@ CONTAINS
       DO j=js,je
         DO i=is,ie
           CALL PUSHREALARRAY(w(i, j))
-          w(i, j) = delp(i, j)*w(i, j) + (gx(i, j)-gx(i+1, j)+gy(i, j)-&
-&           gy(i, j+1))*rarea(i, j)
+          w(i, j) = delp(i, j)*w(i, j) + (gx(i, j)-gx(i+1, j)+(gy(i, j)-&
+&           gy(i, j+1)))*rarea(i, j)
         END DO
       END DO
       CALL PUSHCONTROL(1,0)
@@ -2449,11 +2449,11 @@ CONTAINS
         DO i=is,ie
           wk(i, j) = delp(i, j)
           CALL PUSHREALARRAY(delp(i, j))
-          delp(i, j) = wk(i, j) + (fx(i, j)-fx(i+1, j)+fy(i, j)-fy(i, j+&
-&           1))*rarea(i, j)
+          delp(i, j) = wk(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i, j&
+&           +1)))*rarea(i, j)
           CALL PUSHREALARRAY(pt(i, j))
-          pt(i, j) = (pt(i, j)*wk(i, j)+(gx(i, j)-gx(i+1, j)+gy(i, j)-gy&
-&           (i, j+1))*rarea(i, j))/delp(i, j)
+          pt(i, j) = (pt(i, j)*wk(i, j)+(gx(i, j)-gx(i+1, j)+(gy(i, j)-&
+&           gy(i, j+1)))*rarea(i, j))/delp(i, j)
         END DO
       END DO
       DO iq=1,nq
@@ -2478,7 +2478,7 @@ CONTAINS
           DO i=is,ie
             CALL PUSHREALARRAY(q(i, j, k, iq))
             q(i, j, k, iq) = (q(i, j, k, iq)*wk(i, j)+(gx(i, j)-gx(i+1, &
-&             j)+gy(i, j)-gy(i, j+1))*rarea(i, j))/delp(i, j)
+&             j)+(gy(i, j)-gy(i, j+1)))*rarea(i, j))/delp(i, j)
           END DO
         END DO
       END DO
@@ -2494,15 +2494,26 @@ CONTAINS
       DO j=js,je
         DO i=is,ie
           CALL PUSHREALARRAY(pt(i, j))
-          pt(i, j) = pt(i, j)*delp(i, j) + (gx(i, j)-gx(i+1, j)+gy(i, j)&
-&           -gy(i, j+1))*rarea(i, j)
+          pt(i, j) = pt(i, j)*delp(i, j) + (gx(i, j)-gx(i+1, j)+(gy(i, j&
+&           )-gy(i, j+1)))*rarea(i, j)
           CALL PUSHREALARRAY(delp(i, j))
-          delp(i, j) = delp(i, j) + (fx(i, j)-fx(i+1, j)+fy(i, j)-fy(i, &
-&           j+1))*rarea(i, j)
+          delp(i, j) = delp(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i&
+&           , j+1)))*rarea(i, j)
           CALL PUSHREALARRAY(pt(i, j))
           pt(i, j) = pt(i, j)/delp(i, j)
         END DO
       END DO
+      CALL PUSHCONTROL(1,1)
+    END IF
+    IF (fpp%fpp_overload_r4) THEN
+      DO j=js,je
+        DO i=is,ie
+          dpx(i, j) = dpx(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i, j&
+&           +1)))*rarea(i, j)
+        END DO
+      END DO
+      CALL PUSHCONTROL(1,0)
+    ELSE
       CALL PUSHCONTROL(1,1)
     END IF
 !----------------------
@@ -2749,7 +2760,8 @@ CONTAINS
     DO j=jsd,jed
       DO i=isd,ied
         CALL PUSHREALARRAY(wk(i, j))
-        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)-ut(i, j)+ut(i+1, j))
+        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)+(ut(i+1, j)-ut(i, j)&
+&         ))
       END DO
     END DO
     IF (.NOT.hydrostatic) THEN
@@ -3029,13 +3041,13 @@ CONTAINS
     DO j=js,je+1
       DO i=is,ie
         CALL PUSHREALARRAY(u(i, j))
-        u(i, j) = vt(i, j) + ke(i, j) - ke(i+1, j) + fy(i, j)
+        u(i, j) = vt(i, j) + (ke(i, j)-ke(i+1, j)) + fy(i, j)
       END DO
     END DO
     DO j=js,je
       DO i=is,ie+1
         CALL PUSHREALARRAY(v(i, j))
-        v(i, j) = ut(i, j) + ke(i, j) - ke(i, j+1) - fx(i, j)
+        v(i, j) = ut(i, j) + (ke(i, j)-ke(i, j+1)) - fx(i, j)
       END DO
     END DO
 !--------------------------------------------------------
@@ -3238,38 +3250,38 @@ CONTAINS
 !b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_mod.p
 !_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mix_dp
 ! dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_Supe
-!r fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_grid_
-!utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.c
-!ompute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_trac
-!er_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiter
-!s fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_
-!cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d f
-!v_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Sol
-!ver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_sol
-!ver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_n
-!h sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_
-!core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_m
-!od.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_cor
-!ners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_c
-!ircle_dist sw_core_mod.edge_interpolate4)):
+!r fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_
+!grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z
+! fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_map
+!z_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_ma
+!pz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restar
+!t_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid_z m
+!ain_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.R
+!iem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM
+!3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest
+!_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_v
+!ect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw
+!_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.c
+!opy_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.
+!great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: yfx_adv q crx_adv u v w delp
 !                ua xfx_adv uc ptc xflux cry_adv delpc va vc yflux
-!                divg_d z_rat heat_source pt cx cy
+!                divg_d z_rat heat_source pt cx cy dpx
 !   with respect to varying inputs: yfx_adv q crx_adv u v w delp
 !                ua xfx_adv uc ptc xflux cry_adv delpc va vc yflux
-!                divg_d z_rat heat_source pt cx cy
+!                divg_d z_rat heat_source pt cx cy dpx
 !     d_sw :: D-Grid Shallow Water Routine
   SUBROUTINE D_SW_BWD(delpc, delpc_ad, delp, delp_ad, ptc, ptc_ad, pt, &
 &   pt_ad, u, u_ad, v, v_ad, w, w_ad, uc, uc_ad, vc, vc_ad, ua, ua_ad, &
 &   va, va_ad, divg_d, divg_d_ad, xflux, xflux_ad, yflux, yflux_ad, cx, &
 &   cx_ad, cy, cy_ad, crx_adv, crx_adv_ad, cry_adv, cry_adv_ad, xfx_adv&
 &   , xfx_adv_ad, yfx_adv, yfx_adv_ad, q_con, z_rat, z_rat_ad, kgb, &
-&   heat_source, heat_source_ad, zvir, sphum, nq, q, q_ad, k, km, &
-&   inline_q, dt, hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, nord, &
-&   nord_v, nord_w, nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, damp_t&
-&   , d_con, hydrostatic, gridstruct, flagstruct, bd, hord_tr_pert, &
-&   hord_mt_pert, hord_vt_pert, hord_tm_pert, hord_dp_pert, split_damp, &
-&   nord_pert, nord_v_pert, nord_w_pert, nord_t_pert, dddmp_pert, &
+&   heat_source, heat_source_ad, dpx, dpx_ad, zvir, sphum, nq, q, q_ad, &
+&   k, km, inline_q, dt, hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, &
+&   nord, nord_v, nord_w, nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, &
+&   damp_t, d_con, hydrostatic, gridstruct, flagstruct, bd, hord_tr_pert&
+&   , hord_mt_pert, hord_vt_pert, hord_tm_pert, hord_dp_pert, split_damp&
+&   , nord_pert, nord_v_pert, nord_w_pert, nord_t_pert, dddmp_pert, &
 &   d2_bg_pert, d4_bg_pert, damp_v_pert, damp_w_pert, damp_t_pert)
     !USE ISO_C_BINDING
     !USE ADMM_TAPENADE_INTERFACE
@@ -3298,9 +3310,9 @@ CONTAINS
 &   , pt, ua, va
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: &
 &   delp_ad, pt_ad, ua_ad, va_ad
-    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%ied), INTENT(INOUT) :: w
-    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%ied), INTENT(INOUT) :: w_ad
-    REAL, DIMENSION(bd%isd:bd%isd, bd%jsd:bd%isd), INTENT(INOUT) :: &
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: w
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: w_ad
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: &
 &   q_con
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed+1), INTENT(INOUT) :: u&
 &   , vc
@@ -3316,6 +3328,10 @@ CONTAINS
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed) :: delpc_ad, ptc_ad
     REAL, DIMENSION(bd%is:bd%ie, bd%js:bd%je) :: heat_source
     REAL, DIMENSION(bd%is:bd%ie, bd%js:bd%je) :: heat_source_ad
+    REAL(kind=8), DIMENSION(bd%is:bd%ie, bd%js:bd%je), INTENT(INOUT) :: &
+&   dpx
+    REAL(kind=8), DIMENSION(bd%is:bd%ie, bd%js:bd%je), INTENT(INOUT) :: &
+&   dpx_ad
     REAL, INTENT(INOUT) :: xflux(bd%is:bd%ie+1, bd%js:bd%je)
     REAL, INTENT(INOUT) :: xflux_ad(bd%is:bd%ie+1, bd%js:bd%je)
     REAL, INTENT(INOUT) :: yflux(bd%is:bd%ie, bd%js:bd%je+1)
@@ -3383,6 +3399,18 @@ CONTAINS
     INTEGER :: isd, ied, jsd, jed
     INTEGER :: npx, npy
     LOGICAL :: nested
+    REAL :: delp_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: pt_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: vort_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: wk_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: delpc_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: ptc_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: ke_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed+1)
+    REAL :: vc_tj(bd%isd:bd%ied, bd%jsd:bd%jed+1)
+    REAL :: uc_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed)
+    REAL :: divg_d_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed+1)
+    REAL :: ut_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed)
+    REAL :: vt_tj(bd%isd:bd%ied, bd%jsd:bd%jed+1)
     INTRINSIC MAX
     INTRINSIC MIN
     INTRINSIC ABS
@@ -3484,16 +3512,13 @@ CONTAINS
     REAL :: temp_ad84
     REAL :: temp_ad85
     REAL :: temp_ad86
-    REAL :: temp0
     REAL :: temp_ad87
+    REAL :: temp0
     REAL :: temp_ad88
     REAL :: temp_ad89
     REAL :: temp_ad90
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
+    REAL :: temp_ad91
     INTEGER :: branch
-#endif
     !TYPE(C_PTR) :: cptr
     !INTEGER :: unknown_shape_in_d_sw
 
@@ -3553,9 +3578,7 @@ CONTAINS
     min2 = 0
     min3 = 0
     min4 = 0
-#ifndef BPOINT
     branch = 0
-#endif
 
     is = bd%is
     ie = bd%ie
@@ -3757,27 +3780,27 @@ CONTAINS
           u2 = fy(i, j) + fy(i, j+1)
           CALL POPREALARRAY(heat_source(i, j))
           temp0 = damp*rsin2(i, j)
-          temp_ad87 = delp(i, j)*heat_source_ad(i, j)
-          temp_ad88 = -(temp0*temp_ad87)
-          temp_ad89 = 2.*temp_ad88
-          temp_ad90 = -(cosa_s(i, j)*temp_ad88)
+          temp_ad88 = delp(i, j)*heat_source_ad(i, j)
+          temp_ad89 = -(temp0*temp_ad88)
+          temp_ad90 = 2.*temp_ad89
+          temp_ad91 = -(cosa_s(i, j)*temp_ad89)
           delp_ad(i, j) = delp_ad(i, j) + (heat_source(i, j)-temp0*(ub(i&
 &           , j)**2+ub(i, j+1)**2+vb(i, j)**2+vb(i+1, j)**2+2.*(gy(i, j)&
 &           +gy(i, j+1)+gx(i, j)+gx(i+1, j))-cosa_s(i, j)*(u2*dv2+v2*du2&
 &           +du2*dv2)))*heat_source_ad(i, j)
-          ub_ad(i, j) = ub_ad(i, j) + 2*ub(i, j)*temp_ad88
-          ub_ad(i, j+1) = ub_ad(i, j+1) + 2*ub(i, j+1)*temp_ad88
-          vb_ad(i, j) = vb_ad(i, j) + 2*vb(i, j)*temp_ad88
-          vb_ad(i+1, j) = vb_ad(i+1, j) + 2*vb(i+1, j)*temp_ad88
-          gy_ad(i, j) = gy_ad(i, j) + temp_ad89
-          gy_ad(i, j+1) = gy_ad(i, j+1) + temp_ad89
-          gx_ad(i, j) = gx_ad(i, j) + temp_ad89
-          gx_ad(i+1, j) = gx_ad(i+1, j) + temp_ad89
-          u2_ad = dv2*temp_ad90
-          dv2_ad = (du2+u2)*temp_ad90
-          v2_ad = du2*temp_ad90
-          du2_ad = (dv2+v2)*temp_ad90
-          heat_source_ad(i, j) = temp_ad87
+          ub_ad(i, j) = ub_ad(i, j) + 2*ub(i, j)*temp_ad89
+          ub_ad(i, j+1) = ub_ad(i, j+1) + 2*ub(i, j+1)*temp_ad89
+          vb_ad(i, j) = vb_ad(i, j) + 2*vb(i, j)*temp_ad89
+          vb_ad(i+1, j) = vb_ad(i+1, j) + 2*vb(i+1, j)*temp_ad89
+          gy_ad(i, j) = gy_ad(i, j) + temp_ad90
+          gy_ad(i, j+1) = gy_ad(i, j+1) + temp_ad90
+          gx_ad(i, j) = gx_ad(i, j) + temp_ad90
+          gx_ad(i+1, j) = gx_ad(i+1, j) + temp_ad90
+          u2_ad = dv2*temp_ad91
+          dv2_ad = (du2+u2)*temp_ad91
+          v2_ad = du2*temp_ad91
+          du2_ad = (dv2+v2)*temp_ad91
+          heat_source_ad(i, j) = temp_ad88
           vb_ad(i, j) = vb_ad(i, j) + dv2_ad
           vb_ad(i+1, j) = vb_ad(i+1, j) + dv2_ad
           fx_ad(i, j) = fx_ad(i, j) + v2_ad
@@ -3799,9 +3822,9 @@ CONTAINS
           v_ad(i, j) = v_ad(i, j) + rdy(i, j)*fx_ad(i, j)
           fx_ad(i, j) = 0.0
           CALL POPREALARRAY(vb(i, j))
-          temp_ad86 = rdy(i, j)*vb_ad(i, j)
-          ut_ad(i, j) = ut_ad(i, j) - temp_ad86
-          vb_ad(i, j) = temp_ad86
+          temp_ad87 = rdy(i, j)*vb_ad(i, j)
+          ut_ad(i, j) = ut_ad(i, j) - temp_ad87
+          vb_ad(i, j) = temp_ad87
         END DO
       END DO
       DO j=je+1,js,-1
@@ -3814,9 +3837,9 @@ CONTAINS
           u_ad(i, j) = u_ad(i, j) + rdx(i, j)*fy_ad(i, j)
           fy_ad(i, j) = 0.0
           CALL POPREALARRAY(ub(i, j))
-          temp_ad85 = rdx(i, j)*ub_ad(i, j)
-          vt_ad(i, j) = vt_ad(i, j) + temp_ad85
-          ub_ad(i, j) = temp_ad85
+          temp_ad86 = rdx(i, j)*ub_ad(i, j)
+          vt_ad(i, j) = vt_ad(i, j) + temp_ad86
+          ub_ad(i, j) = temp_ad86
         END DO
       END DO
     ELSE
@@ -3987,9 +4010,9 @@ CONTAINS
       DO j=je,js,-1
         DO i=ie,is,-1
           CALL POPREALARRAY(w(i, j))
-          temp_ad84 = w_ad(i, j)/delp(i, j)
-          delp_ad(i, j) = delp_ad(i, j) - w(i, j)*temp_ad84/delp(i, j)
-          w_ad(i, j) = temp_ad84
+          temp_ad85 = w_ad(i, j)/delp(i, j)
+          delp_ad(i, j) = delp_ad(i, j) - w(i, j)*temp_ad85/delp(i, j)
+          w_ad(i, j) = temp_ad85
         END DO
       END DO
     END IF
@@ -3997,11 +4020,11 @@ CONTAINS
     DO j=jed,jsd,-1
       DO i=ied,isd,-1
         CALL POPREALARRAY(wk(i, j))
-        temp_ad83 = rarea(i, j)*wk_ad(i, j)
-        vt_ad(i, j) = vt_ad(i, j) + temp_ad83
-        vt_ad(i, j+1) = vt_ad(i, j+1) - temp_ad83
-        ut_ad(i+1, j) = ut_ad(i+1, j) + temp_ad83
-        ut_ad(i, j) = ut_ad(i, j) - temp_ad83
+        temp_ad84 = rarea(i, j)*wk_ad(i, j)
+        vt_ad(i, j) = vt_ad(i, j) + temp_ad84
+        vt_ad(i, j+1) = vt_ad(i, j+1) - temp_ad84
+        ut_ad(i+1, j) = ut_ad(i+1, j) + temp_ad84
+        ut_ad(i, j) = ut_ad(i, j) - temp_ad84
         wk_ad(i, j) = 0.0
       END DO
     END DO
@@ -4023,78 +4046,78 @@ CONTAINS
     IF (branch .NE. 0) THEN
       IF (branch .NE. 1) THEN
         dt6 = dt/6.
-        temp_ad79 = dt6*ke_ad(1, npy)
-        temp_ad80 = u(1, npy)*temp_ad79
-        temp_ad81 = v(1, npy-1)*temp_ad79
-        temp_ad82 = u(0, npy)*temp_ad79
-        ut_ad(1, npy) = ut_ad(1, npy) + temp_ad80
-        ut_ad(1, npy-1) = ut_ad(1, npy-1) + temp_ad82 + temp_ad80
+        temp_ad80 = dt6*ke_ad(1, npy)
+        temp_ad81 = u(1, npy)*temp_ad80
+        temp_ad82 = v(1, npy-1)*temp_ad80
+        temp_ad83 = u(0, npy)*temp_ad80
+        ut_ad(1, npy) = ut_ad(1, npy) + temp_ad81
+        ut_ad(1, npy-1) = ut_ad(1, npy-1) + temp_ad83 + temp_ad81
         u_ad(1, npy) = u_ad(1, npy) + (ut(1, npy)+ut(1, npy-1))*&
-&         temp_ad79
-        vt_ad(1, npy) = vt_ad(1, npy) + temp_ad81 - temp_ad82
-        vt_ad(0, npy) = vt_ad(0, npy) + temp_ad81
+&         temp_ad80
+        vt_ad(1, npy) = vt_ad(1, npy) + temp_ad82 - temp_ad83
+        vt_ad(0, npy) = vt_ad(0, npy) + temp_ad82
         v_ad(1, npy-1) = v_ad(1, npy-1) + (vt(1, npy)+vt(0, npy))*&
-&         temp_ad79
+&         temp_ad80
         u_ad(0, npy) = u_ad(0, npy) + (ut(1, npy-1)-vt(1, npy))*&
-&         temp_ad79
+&         temp_ad80
         ke_ad(1, npy) = 0.0
       END IF
       CALL POPCONTROL(1,branch)
       IF (branch .EQ. 0) THEN
-        temp_ad75 = dt6*ke_ad(npx, npy)
-        temp_ad76 = u(npx-1, npy)*temp_ad75
-        temp_ad77 = v(npx, npy-1)*temp_ad75
-        temp_ad78 = u(npx, npy)*temp_ad75
-        ut_ad(npx, npy) = ut_ad(npx, npy) + temp_ad76
-        ut_ad(npx, npy-1) = ut_ad(npx, npy-1) + temp_ad78 + temp_ad76
+        temp_ad76 = dt6*ke_ad(npx, npy)
+        temp_ad77 = u(npx-1, npy)*temp_ad76
+        temp_ad78 = v(npx, npy-1)*temp_ad76
+        temp_ad79 = u(npx, npy)*temp_ad76
+        ut_ad(npx, npy) = ut_ad(npx, npy) + temp_ad77
+        ut_ad(npx, npy-1) = ut_ad(npx, npy-1) + temp_ad79 + temp_ad77
         u_ad(npx-1, npy) = u_ad(npx-1, npy) + (ut(npx, npy)+ut(npx, npy-&
-&         1))*temp_ad75
-        vt_ad(npx, npy) = vt_ad(npx, npy) + temp_ad77
-        vt_ad(npx-1, npy) = vt_ad(npx-1, npy) + temp_ad78 + temp_ad77
+&         1))*temp_ad76
+        vt_ad(npx, npy) = vt_ad(npx, npy) + temp_ad78
+        vt_ad(npx-1, npy) = vt_ad(npx-1, npy) + temp_ad79 + temp_ad78
         v_ad(npx, npy-1) = v_ad(npx, npy-1) + (vt(npx, npy)+vt(npx-1, &
-&         npy))*temp_ad75
+&         npy))*temp_ad76
         u_ad(npx, npy) = u_ad(npx, npy) + (ut(npx, npy-1)+vt(npx-1, npy)&
-&         )*temp_ad75
+&         )*temp_ad76
         ke_ad(npx, npy) = 0.0
       END IF
       CALL POPCONTROL(1,branch)
       IF (branch .EQ. 0) THEN
-        temp_ad71 = dt6*ke_ad(npx, 1)
-        temp_ad72 = u(npx-1, 1)*temp_ad71
-        temp_ad73 = v(npx, 1)*temp_ad71
-        temp_ad74 = u(npx, 1)*temp_ad71
-        ut_ad(npx, 1) = ut_ad(npx, 1) + temp_ad74 + temp_ad72
-        ut_ad(npx, 0) = ut_ad(npx, 0) + temp_ad72
+        temp_ad72 = dt6*ke_ad(npx, 1)
+        temp_ad73 = u(npx-1, 1)*temp_ad72
+        temp_ad74 = v(npx, 1)*temp_ad72
+        temp_ad75 = u(npx, 1)*temp_ad72
+        ut_ad(npx, 1) = ut_ad(npx, 1) + temp_ad75 + temp_ad73
+        ut_ad(npx, 0) = ut_ad(npx, 0) + temp_ad73
         u_ad(npx-1, 1) = u_ad(npx-1, 1) + (ut(npx, 1)+ut(npx, 0))*&
-&         temp_ad71
-        vt_ad(npx, 1) = vt_ad(npx, 1) + temp_ad73
-        vt_ad(npx-1, 1) = vt_ad(npx-1, 1) + temp_ad73 - temp_ad74
+&         temp_ad72
+        vt_ad(npx, 1) = vt_ad(npx, 1) + temp_ad74
+        vt_ad(npx-1, 1) = vt_ad(npx-1, 1) + temp_ad74 - temp_ad75
         v_ad(npx, 1) = v_ad(npx, 1) + (vt(npx, 1)+vt(npx-1, 1))*&
-&         temp_ad71
+&         temp_ad72
         u_ad(npx, 1) = u_ad(npx, 1) + (ut(npx, 1)-vt(npx-1, 1))*&
-&         temp_ad71
+&         temp_ad72
         ke_ad(npx, 1) = 0.0
       END IF
       CALL POPCONTROL(1,branch)
       IF (branch .EQ. 0) THEN
-        temp_ad70 = dt6*ke_ad(1, 1)
-        ut_ad(1, 1) = ut_ad(1, 1) + (u(0, 1)+u(1, 1))*temp_ad70
-        ut_ad(1, 0) = ut_ad(1, 0) + u(1, 1)*temp_ad70
-        u_ad(1, 1) = u_ad(1, 1) + (ut(1, 1)+ut(1, 0))*temp_ad70
-        vt_ad(1, 1) = vt_ad(1, 1) + (u(0, 1)+v(1, 1))*temp_ad70
-        vt_ad(0, 1) = vt_ad(0, 1) + v(1, 1)*temp_ad70
-        v_ad(1, 1) = v_ad(1, 1) + (vt(1, 1)+vt(0, 1))*temp_ad70
-        u_ad(0, 1) = u_ad(0, 1) + (ut(1, 1)+vt(1, 1))*temp_ad70
+        temp_ad71 = dt6*ke_ad(1, 1)
+        ut_ad(1, 1) = ut_ad(1, 1) + (u(0, 1)+u(1, 1))*temp_ad71
+        ut_ad(1, 0) = ut_ad(1, 0) + u(1, 1)*temp_ad71
+        u_ad(1, 1) = u_ad(1, 1) + (ut(1, 1)+ut(1, 0))*temp_ad71
+        vt_ad(1, 1) = vt_ad(1, 1) + (u(0, 1)+v(1, 1))*temp_ad71
+        vt_ad(0, 1) = vt_ad(0, 1) + v(1, 1)*temp_ad71
+        v_ad(1, 1) = v_ad(1, 1) + (vt(1, 1)+vt(0, 1))*temp_ad71
+        u_ad(0, 1) = u_ad(0, 1) + (ut(1, 1)+vt(1, 1))*temp_ad71
         ke_ad(1, 1) = 0.0
       END IF
     END IF
     nested = gridstruct%nested
     DO j=je+1,js,-1
       DO i=ie+1,is,-1
-        temp_ad69 = 0.5*ke_ad(i, j)
-        ub_ad(i, j) = ub_ad(i, j) + vb(i, j)*temp_ad69
-        vb_ad(i, j) = vb_ad(i, j) + ub(i, j)*temp_ad69
-        ke_ad(i, j) = temp_ad69
+        temp_ad70 = 0.5*ke_ad(i, j)
+        ub_ad(i, j) = ub_ad(i, j) + vb(i, j)*temp_ad70
+        vb_ad(i, j) = vb_ad(i, j) + ub(i, j)*temp_ad70
+        ke_ad(i, j) = temp_ad70
       END DO
     END DO
     CALL POPCONTROL(1,branch)
@@ -4116,12 +4139,12 @@ CONTAINS
         DO j=je+1,js,-1
           DO i=ie1,is2,-1
             CALL POPREALARRAY(ub(i, j))
-            temp_ad64 = dt5*rsina(i, j)*ub_ad(i, j)
-            temp_ad65 = -(cosa(i, j)*temp_ad64)
-            uc_ad(i, j-1) = uc_ad(i, j-1) + temp_ad64
-            uc_ad(i, j) = uc_ad(i, j) + temp_ad64
-            vc_ad(i-1, j) = vc_ad(i-1, j) + temp_ad65
-            vc_ad(i, j) = vc_ad(i, j) + temp_ad65
+            temp_ad65 = dt5*rsina(i, j)*ub_ad(i, j)
+            temp_ad66 = -(cosa(i, j)*temp_ad65)
+            uc_ad(i, j-1) = uc_ad(i, j-1) + temp_ad65
+            uc_ad(i, j) = uc_ad(i, j) + temp_ad65
+            vc_ad(i-1, j) = vc_ad(i-1, j) + temp_ad66
+            vc_ad(i, j) = vc_ad(i, j) + temp_ad66
             ub_ad(i, j) = 0.0
           END DO
         END DO
@@ -4153,22 +4176,22 @@ CONTAINS
       IF (branch .EQ. 0) THEN
         DO i=ie1,is2,-1
           CALL POPREALARRAY(ub(i, j))
-          temp_ad67 = dt5*rsina(i, j)*ub_ad(i, j)
-          temp_ad68 = -(cosa(i, j)*temp_ad67)
-          uc_ad(i, j-1) = uc_ad(i, j-1) + temp_ad67
-          uc_ad(i, j) = uc_ad(i, j) + temp_ad67
-          vc_ad(i-1, j) = vc_ad(i-1, j) + temp_ad68
-          vc_ad(i, j) = vc_ad(i, j) + temp_ad68
+          temp_ad68 = dt5*rsina(i, j)*ub_ad(i, j)
+          temp_ad69 = -(cosa(i, j)*temp_ad68)
+          uc_ad(i, j-1) = uc_ad(i, j-1) + temp_ad68
+          uc_ad(i, j) = uc_ad(i, j) + temp_ad68
+          vc_ad(i-1, j) = vc_ad(i-1, j) + temp_ad69
+          vc_ad(i, j) = vc_ad(i, j) + temp_ad69
           ub_ad(i, j) = 0.0
         END DO
       ELSE
         DO i=ie1,is2,-1
           CALL POPREALARRAY(ub(i, j))
-          temp_ad66 = dt4*ub_ad(i, j)
-          ut_ad(i, j-1) = ut_ad(i, j-1) + 3.*temp_ad66
-          ut_ad(i, j) = ut_ad(i, j) + 3.*temp_ad66
-          ut_ad(i, j-2) = ut_ad(i, j-2) - temp_ad66
-          ut_ad(i, j+1) = ut_ad(i, j+1) - temp_ad66
+          temp_ad67 = dt4*ub_ad(i, j)
+          ut_ad(i, j-1) = ut_ad(i, j-1) + 3.*temp_ad67
+          ut_ad(i, j) = ut_ad(i, j) + 3.*temp_ad67
+          ut_ad(i, j-2) = ut_ad(i, j-2) - temp_ad67
+          ut_ad(i, j+1) = ut_ad(i, j+1) - temp_ad67
           ub_ad(i, j) = 0.0
         END DO
       END IF
@@ -4205,12 +4228,12 @@ CONTAINS
       IF (branch .EQ. 0) THEN
         DO j=je1,js2,-1
           DO i=ie1,is2,-1
-            temp_ad58 = dt5*rsina(i, j)*vb_ad(i, j)
-            temp_ad59 = -(cosa(i, j)*temp_ad58)
-            vc_ad(i-1, j) = vc_ad(i-1, j) + temp_ad58
-            vc_ad(i, j) = vc_ad(i, j) + temp_ad58
-            uc_ad(i, j-1) = uc_ad(i, j-1) + temp_ad59
-            uc_ad(i, j) = uc_ad(i, j) + temp_ad59
+            temp_ad59 = dt5*rsina(i, j)*vb_ad(i, j)
+            temp_ad60 = -(cosa(i, j)*temp_ad59)
+            vc_ad(i-1, j) = vc_ad(i-1, j) + temp_ad59
+            vc_ad(i, j) = vc_ad(i, j) + temp_ad59
+            uc_ad(i, j-1) = uc_ad(i, j-1) + temp_ad60
+            uc_ad(i, j) = uc_ad(i, j) + temp_ad60
             vb_ad(i, j) = 0.0
           END DO
         END DO
@@ -4235,29 +4258,29 @@ CONTAINS
     DO j=je1,js2,-1
       CALL POPCONTROL(1,branch)
       IF (branch .NE. 0) THEN
-        temp_ad63 = dt4*vb_ad(npx, j)
-        vt_ad(npx-1, j) = vt_ad(npx-1, j) + 3.*temp_ad63
-        vt_ad(npx, j) = vt_ad(npx, j) + 3.*temp_ad63
-        vt_ad(npx-2, j) = vt_ad(npx-2, j) - temp_ad63
-        vt_ad(npx+1, j) = vt_ad(npx+1, j) - temp_ad63
+        temp_ad64 = dt4*vb_ad(npx, j)
+        vt_ad(npx-1, j) = vt_ad(npx-1, j) + 3.*temp_ad64
+        vt_ad(npx, j) = vt_ad(npx, j) + 3.*temp_ad64
+        vt_ad(npx-2, j) = vt_ad(npx-2, j) - temp_ad64
+        vt_ad(npx+1, j) = vt_ad(npx+1, j) - temp_ad64
         vb_ad(npx, j) = 0.0
       END IF
       CALL POPCONTROL(1,branch)
       IF (branch .EQ. 0) THEN
-        temp_ad62 = dt4*vb_ad(1, j)
-        vt_ad(0, j) = vt_ad(0, j) + 3.*temp_ad62
-        vt_ad(1, j) = vt_ad(1, j) + 3.*temp_ad62
-        vt_ad(-1, j) = vt_ad(-1, j) - temp_ad62
-        vt_ad(2, j) = vt_ad(2, j) - temp_ad62
+        temp_ad63 = dt4*vb_ad(1, j)
+        vt_ad(0, j) = vt_ad(0, j) + 3.*temp_ad63
+        vt_ad(1, j) = vt_ad(1, j) + 3.*temp_ad63
+        vt_ad(-1, j) = vt_ad(-1, j) - temp_ad63
+        vt_ad(2, j) = vt_ad(2, j) - temp_ad63
         vb_ad(1, j) = 0.0
       END IF
       DO i=ie1,is2,-1
-        temp_ad60 = dt5*rsina(i, j)*vb_ad(i, j)
-        temp_ad61 = -(cosa(i, j)*temp_ad60)
-        vc_ad(i-1, j) = vc_ad(i-1, j) + temp_ad60
-        vc_ad(i, j) = vc_ad(i, j) + temp_ad60
-        uc_ad(i, j-1) = uc_ad(i, j-1) + temp_ad61
-        uc_ad(i, j) = uc_ad(i, j) + temp_ad61
+        temp_ad61 = dt5*rsina(i, j)*vb_ad(i, j)
+        temp_ad62 = -(cosa(i, j)*temp_ad61)
+        vc_ad(i-1, j) = vc_ad(i-1, j) + temp_ad61
+        vc_ad(i, j) = vc_ad(i, j) + temp_ad61
+        uc_ad(i, j-1) = uc_ad(i, j-1) + temp_ad62
+        uc_ad(i, j) = uc_ad(i, j) + temp_ad62
         vb_ad(i, j) = 0.0
       END DO
     END DO
@@ -4270,6 +4293,18 @@ CONTAINS
       END DO
     END IF
  120 CALL POPCONTROL(1,branch)
+    CALL POPCONTROL(1,branch)
+    IF (branch .EQ. 0) THEN
+      DO j=je,js,-1
+        DO i=ie,is,-1
+          temp_ad58 = rarea(i, j)*dpx_ad(i, j)
+          fx_ad(i, j) = fx_ad(i, j) + temp_ad58
+          fx_ad(i+1, j) = fx_ad(i+1, j) - temp_ad58
+          fy_ad(i, j) = fy_ad(i, j) + temp_ad58
+          fy_ad(i, j+1) = fy_ad(i, j+1) - temp_ad58
+        END DO
+      END DO
+    END IF
     CALL POPCONTROL(1,branch)
     IF (branch .EQ. 0) THEN
       DO iq=nq,1,-1
@@ -4398,7 +4433,7 @@ CONTAINS
       END DO
       CALL POPCONTROL(1,branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREALARRAY(w, (bd%ied-bd%isd+1)*(bd%ied-bd%jsd+1))
+        CALL POPREALARRAY(w, (bd%ied-bd%isd+1)*(bd%jed-bd%jsd+1))
         CALL POPREALARRAY(gx, (bd%ie-bd%is+2)*(bd%je-bd%js+1))
         CALL POPREALARRAY(gy, (bd%ie-bd%is+1)*(bd%je-bd%js+2))
         CALL FV_TP_2D_ADM(w, w_ad, crx_adv, crx_adv_ad, cry_adv, &
@@ -4945,9 +4980,9 @@ CONTAINS
 !     d_sw :: D-Grid Shallow Water Routine
   SUBROUTINE D_SW(delpc, delp, ptc, pt, u, v, w, uc, vc, ua, va, divg_d&
 &   , xflux, yflux, cx, cy, crx_adv, cry_adv, xfx_adv, yfx_adv, q_con, &
-&   z_rat, kgb, heat_source, zvir, sphum, nq, q, k, km, inline_q, dt, &
-&   hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, nord, nord_v, nord_w, &
-&   nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, damp_t, d_con, &
+&   z_rat, kgb, heat_source, dpx, zvir, sphum, nq, q, k, km, inline_q, &
+&   dt, hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, nord, nord_v, &
+&   nord_w, nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, damp_t, d_con, &
 &   hydrostatic, gridstruct, flagstruct, bd, hord_tr_pert, hord_mt_pert&
 &   , hord_vt_pert, hord_tm_pert, hord_dp_pert, split_damp, nord_pert, &
 &   nord_v_pert, nord_w_pert, nord_t_pert, dddmp_pert, d2_bg_pert, &
@@ -4978,8 +5013,8 @@ CONTAINS
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(IN) :: z_rat
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: delp&
 &   , pt, ua, va
-    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%ied), INTENT(INOUT) :: w
-    REAL, DIMENSION(bd%isd:bd%isd, bd%jsd:bd%isd), INTENT(INOUT) :: &
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: w
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: &
 &   q_con
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed+1), INTENT(INOUT) :: u&
 &   , vc
@@ -4990,6 +5025,8 @@ CONTAINS
 &   , ptc
     REAL, DIMENSION(bd%is:bd%ie, bd%js:bd%je), INTENT(OUT) :: &
 &   heat_source
+    REAL(kind=8), DIMENSION(bd%is:bd%ie, bd%js:bd%je), INTENT(INOUT) :: &
+&   dpx
 ! The flux capacitors:
     REAL, INTENT(INOUT) :: xflux(bd%is:bd%ie+1, bd%js:bd%je)
     REAL, INTENT(INOUT) :: yflux(bd%is:bd%ie, bd%js:bd%je+1)
@@ -5047,6 +5084,18 @@ CONTAINS
     INTEGER :: isd, ied, jsd, jed
     INTEGER :: npx, npy
     LOGICAL :: nested
+    REAL :: delp_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: pt_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: vort_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: wk_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: delpc_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: ptc_tj(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL :: ke_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed+1)
+    REAL :: vc_tj(bd%isd:bd%ied, bd%jsd:bd%jed+1)
+    REAL :: uc_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed)
+    REAL :: divg_d_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed+1)
+    REAL :: ut_tj(bd%isd:bd%ied+1, bd%jsd:bd%jed)
+    REAL :: vt_tj(bd%isd:bd%ied, bd%jsd:bd%jed+1)
     INTRINSIC MAX
     INTRINSIC MIN
     INTRINSIC ABS
@@ -5374,12 +5423,12 @@ CONTAINS
     END DO
     DO j=jsd,jed
       DO i=is,ie
-        ra_x(i, j) = area(i, j) + xfx_adv(i, j) - xfx_adv(i+1, j)
+        ra_x(i, j) = area(i, j) + (xfx_adv(i, j)-xfx_adv(i+1, j))
       END DO
     END DO
     DO j=js,je
       DO i=isd,ied
-        ra_y(i, j) = area(i, j) + yfx_adv(i, j) - yfx_adv(i, j+1)
+        ra_y(i, j) = area(i, j) + (yfx_adv(i, j)-yfx_adv(i, j+1))
       END DO
     END DO
     IF (hord_dp .EQ. hord_dp_pert .AND. (.NOT.split_damp)) THEN
@@ -5428,7 +5477,7 @@ CONTAINS
 &                   gridstruct, bd)
         DO j=js,je
           DO i=is,ie
-            dw(i, j) = (fx2(i, j)-fx2(i+1, j)+fy2(i, j)-fy2(i, j+1))*&
+            dw(i, j) = (fx2(i, j)-fx2(i+1, j)+(fy2(i, j)-fy2(i, j+1)))*&
 &             rarea(i, j)
 ! 0.5 * [ (w+dw)**2 - w**2 ] = w*dw + 0.5*dw*dw
 !                   heat_source(i,j) = -d_con*dw(i,j)*(w(i,j)+0.5*dw(i,j))
@@ -5447,8 +5496,8 @@ CONTAINS
       END IF
       DO j=js,je
         DO i=is,ie
-          w(i, j) = delp(i, j)*w(i, j) + (gx(i, j)-gx(i+1, j)+gy(i, j)-&
-&           gy(i, j+1))*rarea(i, j)
+          w(i, j) = delp(i, j)*w(i, j) + (gx(i, j)-gx(i+1, j)+(gy(i, j)-&
+&           gy(i, j+1)))*rarea(i, j)
         END DO
       END DO
     END IF
@@ -5472,10 +5521,10 @@ CONTAINS
       DO j=js,je
         DO i=is,ie
           wk(i, j) = delp(i, j)
-          delp(i, j) = wk(i, j) + (fx(i, j)-fx(i+1, j)+fy(i, j)-fy(i, j+&
-&           1))*rarea(i, j)
-          pt(i, j) = (pt(i, j)*wk(i, j)+(gx(i, j)-gx(i+1, j)+gy(i, j)-gy&
-&           (i, j+1))*rarea(i, j))/delp(i, j)
+          delp(i, j) = wk(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i, j&
+&           +1)))*rarea(i, j)
+          pt(i, j) = (pt(i, j)*wk(i, j)+(gx(i, j)-gx(i+1, j)+(gy(i, j)-&
+&           gy(i, j+1)))*rarea(i, j))/delp(i, j)
         END DO
       END DO
       DO iq=1,nq
@@ -5493,7 +5542,7 @@ CONTAINS
         DO j=js,je
           DO i=is,ie
             q(i, j, k, iq) = (q(i, j, k, iq)*wk(i, j)+(gx(i, j)-gx(i+1, &
-&             j)+gy(i, j)-gy(i, j+1))*rarea(i, j))/delp(i, j)
+&             j)+(gy(i, j)-gy(i, j+1)))*rarea(i, j))/delp(i, j)
           END DO
         END DO
       END DO
@@ -5507,11 +5556,19 @@ CONTAINS
 !     endif
       DO j=js,je
         DO i=is,ie
-          pt(i, j) = pt(i, j)*delp(i, j) + (gx(i, j)-gx(i+1, j)+gy(i, j)&
-&           -gy(i, j+1))*rarea(i, j)
-          delp(i, j) = delp(i, j) + (fx(i, j)-fx(i+1, j)+fy(i, j)-fy(i, &
-&           j+1))*rarea(i, j)
+          pt(i, j) = pt(i, j)*delp(i, j) + (gx(i, j)-gx(i+1, j)+(gy(i, j&
+&           )-gy(i, j+1)))*rarea(i, j)
+          delp(i, j) = delp(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i&
+&           , j+1)))*rarea(i, j)
           pt(i, j) = pt(i, j)/delp(i, j)
+        END DO
+      END DO
+    END IF
+    IF (fpp%fpp_overload_r4) THEN
+      DO j=js,je
+        DO i=is,ie
+          dpx(i, j) = dpx(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i, j&
+&           +1)))*rarea(i, j)
         END DO
       END DO
     END IF
@@ -5695,7 +5752,8 @@ CONTAINS
 ! wk is "volume-mean" relative vorticity
     DO j=jsd,jed
       DO i=isd,ied
-        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)-ut(i, j)+ut(i+1, j))
+        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)+(ut(i+1, j)-ut(i, j)&
+&         ))
       END DO
     END DO
     IF (.NOT.hydrostatic) THEN
@@ -5942,12 +6000,12 @@ CONTAINS
     END IF
     DO j=js,je+1
       DO i=is,ie
-        u(i, j) = vt(i, j) + ke(i, j) - ke(i+1, j) + fy(i, j)
+        u(i, j) = vt(i, j) + (ke(i, j)-ke(i+1, j)) + fy(i, j)
       END DO
     END DO
     DO j=js,je
       DO i=is,ie+1
-        v(i, j) = ut(i, j) + ke(i, j) - ke(i, j+1) - fx(i, j)
+        v(i, j) = ut(i, j) + (ke(i, j)-ke(i, j+1)) - fx(i, j)
       END DO
     END DO
 !--------------------------------------------------------
@@ -6009,20 +6067,20 @@ CONTAINS
 !yn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_mod.p_grad_c 
 !dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mix_dp dyn_cor
 !e_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_Super fv_dyn
-!amics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_grid_utils_mo
-!d.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_t
-!otal_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv
-!_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_map
-!z_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_ma
-!pz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer
-!2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Solver_c nh
-!_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_solver nh_u
-!tils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_nh sw_cor
-!e_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_core_mod
-!.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_mod.compu
-!te_divergence_damping_fb sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_corners 
-!tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_circle_di
-!st sw_core_mod.edge_interpolate4)):
+!amics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_uti
+!ls_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz
+!_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.sc
+!alar_profile_fb fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.s
+!teepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2
+!c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid_z main_mod.
+!compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Solv
+!er_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_solv
+!er nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_nh
+! sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_c
+!ore_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_mo
+!d.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_corn
+!ers_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_ci
+!rcle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q fy2 d2 fx2
 !   with respect to varying inputs: q fy2 d2 fx2
   SUBROUTINE DEL6_VT_FLUX_ADM(nord, npx, npy, damp, q, q_ad, d2, d2_ad, &
@@ -6262,7 +6320,7 @@ CONTAINS
         nt = nord - n
         DO j=js-nt-1,je+nt+1
           DO i=is-nt-1,ie+nt+1
-            d2(i, j) = (fx2(i, j)-fx2(i+1, j)+fy2(i, j)-fy2(i, j+1))*&
+            d2(i, j) = (fx2(i, j)-fx2(i+1, j)+(fy2(i, j)-fy2(i, j+1)))*&
 &             gridstruct%rarea(i, j)
           END DO
         END DO
@@ -6289,20 +6347,20 @@ CONTAINS
 !_edge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dy
 !n_core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_cor
 !e_mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.R
-!ayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_g
-!eos fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian f
-!v_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_m
-!od.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mo
-!d.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_map
-!z_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod
-!.tracer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_
-!mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mo
-!d.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod
-!.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2
-!a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v_
-!fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_
-!mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils
-!_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
+!ayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.
+!c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz
+!_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.rem
+!ap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_li
+!miters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cub
+!ic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv
+!_subgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh
+!_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_u
+!tils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_ut
+!ils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core
+!_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod
+!.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d t
+!p_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_gri
+!d_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v ua va divg_d
 !   with respect to varying inputs: u v ua va divg_d
   SUBROUTINE DIVERGENCE_CORNER_FWD(u, v, ua, va, divg_d, gridstruct, &
@@ -6383,8 +6441,8 @@ CONTAINS
       END DO
       DO j=js-1,je+2
         DO i=is-1,ie+2
-          divg_d(i, j) = gridstruct%rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+&
-&           uf(i-1, j)-uf(i, j))
+          divg_d(i, j) = gridstruct%rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+(&
+&           uf(i-1, j)-uf(i, j)))
         END DO
       END DO
       CALL PUSHINTEGER(je)
@@ -6439,7 +6497,7 @@ CONTAINS
       END DO
       DO j=js,je+1
         DO i=is,ie+1
-          divg_d(i, j) = vf(i, j-1) - vf(i, j) + uf(i-1, j) - uf(i, j)
+          divg_d(i, j) = vf(i, j-1) - vf(i, j) + (uf(i-1, j)-uf(i, j))
         END DO
       END DO
 ! Remove the extra term at the corners:
@@ -6491,20 +6549,20 @@ CONTAINS
 !b_edge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe d
 !yn_core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_co
 !re_mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.
-!Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_
-!geos fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian 
-!fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_
-!mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_m
-!od.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_ma
-!pz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mo
-!d.tracer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils
-!_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_m
-!od.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mo
-!d.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d
-!2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v
-!_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core
-!_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_util
-!s_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
+!Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod
+!.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_map
+!z_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.re
+!map_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_l
+!imiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cu
+!bic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.f
+!v_subgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d n
+!h_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_
+!utils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_u
+!tils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_cor
+!e_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mo
+!d.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d 
+!tp_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_gr
+!id_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v ua va divg_d
 !   with respect to varying inputs: u v ua va divg_d
   SUBROUTINE DIVERGENCE_CORNER_BWD(u, u_ad, v, v_ad, ua, ua_ad, va, &
@@ -6541,11 +6599,7 @@ CONTAINS
     REAL :: temp_ad1
     REAL :: temp_ad2
     REAL :: temp_ad3
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
     !TYPE(C_PTR) :: cptr
     !INTEGER :: unknown_shape_in_divergence_corner
 
@@ -6559,9 +6613,7 @@ CONTAINS
     je = 0
     npx = 0
     npy = 0
-#ifndef BPOINT
     branch = 0
-#endif
 
     is = bd%is
     ie = bd%ie
@@ -6574,7 +6626,6 @@ CONTAINS
     cos_sg => gridstruct%cos_sg
     dxc => gridstruct%dxc
     dyc => gridstruct%dyc
-
     CALL POPCONTROL(1,branch)
     IF (branch .EQ. 0) THEN
       CALL POPINTEGER(js)
@@ -6775,8 +6826,8 @@ CONTAINS
       END DO
       DO j=js-1,je+2
         DO i=is-1,ie+2
-          divg_d(i, j) = gridstruct%rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+&
-&           uf(i-1, j)-uf(i, j))
+          divg_d(i, j) = gridstruct%rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+(&
+&           uf(i-1, j)-uf(i, j)))
         END DO
       END DO
     ELSE
@@ -6812,7 +6863,7 @@ CONTAINS
       END DO
       DO j=js,je+1
         DO i=is,ie+1
-          divg_d(i, j) = vf(i, j-1) - vf(i, j) + uf(i-1, j) - uf(i, j)
+          divg_d(i, j) = vf(i, j-1) - vf(i, j) + (uf(i-1, j)-uf(i, j))
         END DO
       END DO
 ! Remove the extra term at the corners:
@@ -6834,20 +6885,20 @@ CONTAINS
 !b a2b_edge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_
 !pe dyn_core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dy
 !n_core_mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_
-!mod.Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3
-!_to_geos fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Euler
-!ian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_m
-!apz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_ma
-!pz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm f
-!v_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2
-!d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_u
-!tils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_uti
-!ls_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_util
-!s_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_m
-!od.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.y
-!tp_v_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_
-!core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_
-!utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
+!mod.Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils
+!_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv
+!_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mo
+!d.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.p
+!pm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map
+!1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_m
+!od.fv_subgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz
+!_d nh_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver
+! nh_utils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile 
+!nh_utils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw
+!_core_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_cor
+!e_mod.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d
+!_fb tp_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner f
+!v_grid_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v ua va divg_d
 !   with respect to varying inputs: u v ua va
   SUBROUTINE DIVERGENCE_CORNER_NEST_FWD(u, v, ua, va, divg_d, gridstruct&
@@ -6926,8 +6977,8 @@ CONTAINS
       END DO
       DO j=jsd+1,jed
         DO i=isd+1,ied
-          divg_d(i, j) = rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+uf(i-1, j)-&
-&           uf(i, j))
+          divg_d(i, j) = rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+(uf(i-1, j)-&
+&           uf(i, j)))
         END DO
       END DO
       CALL PUSHINTEGER(jed)
@@ -6955,7 +7006,7 @@ CONTAINS
       END DO
       DO j=jsd+1,jed
         DO i=isd+1,ied
-          divg_d(i, j) = (vf(i, j-1)-vf(i, j)+uf(i-1, j)-uf(i, j))*&
+          divg_d(i, j) = (vf(i, j-1)-vf(i, j)+(uf(i-1, j)-uf(i, j)))*&
 &           rarea_c(i, j)
         END DO
       END DO
@@ -6975,20 +7026,20 @@ CONTAINS
 !fb a2b_edge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv
 !_pe dyn_core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update d
 !yn_core_mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics
-!_mod.Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv
-!3_to_geos fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eule
-!rian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_
-!mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_m
-!apz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm 
-!fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer
-!2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_
-!utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_ut
-!ils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_uti
-!ls_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_
-!mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.
-!ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp
-!_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid
-!_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
+!_mod.Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_util
+!s_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez f
+!v_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_m
+!od.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.
+!ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.ma
+!p1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_
+!mod.fv_subgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_d
+!z_d nh_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solve
+!r nh_utils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile
+! nh_utils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest s
+!w_core_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_co
+!re_mod.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2
+!d_fb tp_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner 
+!fv_grid_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v ua va divg_d
 !   with respect to varying inputs: u v ua va
   SUBROUTINE DIVERGENCE_CORNER_NEST_BWD(u, u_ad, v, v_ad, ua, ua_ad, va&
@@ -7045,11 +7096,7 @@ CONTAINS
     REAL :: temp_ad2
     REAL :: temp_ad3
     REAL :: temp_ad4
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
     !TYPE(C_PTR) :: cptr
     !INTEGER :: unknown_shape_in_divergence_corner_nest
 
@@ -7061,9 +7108,7 @@ CONTAINS
     jed = 0
     npx = 0
     npy = 0
-#ifndef BPOINT
     branch = 0
-#endif
 
     isd = bd%isd
     ied = bd%ied
@@ -7243,8 +7288,8 @@ CONTAINS
       END DO
       DO j=jsd+1,jed
         DO i=isd+1,ied
-          divg_d(i, j) = rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+uf(i-1, j)-&
-&           uf(i, j))
+          divg_d(i, j) = rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+(uf(i-1, j)-&
+&           uf(i, j)))
         END DO
       END DO
     ELSE
@@ -7264,7 +7309,7 @@ CONTAINS
       END DO
       DO j=jsd+1,jed
         DO i=isd+1,ied
-          divg_d(i, j) = (vf(i, j-1)-vf(i, j)+uf(i-1, j)-uf(i, j))*&
+          divg_d(i, j) = (vf(i, j-1)-vf(i, j)+(uf(i-1, j)-uf(i, j)))*&
 &           rarea_c(i, j)
         END DO
       END DO
@@ -7336,8 +7381,8 @@ CONTAINS
     END DO
     DO j=js,je+1
       DO i=is,ie+1
-        smag_c(i, j) = rarea_c(i, j)*(vt(i, j-1)-vt(i, j)-ut(i-1, j)+ut(&
-&         i, j))
+        smag_c(i, j) = rarea_c(i, j)*(vt(i, j-1)-vt(i, j)+(ut(i, j)-ut(i&
+&         -1, j)))
       END DO
     END DO
 ! Fix the corners?? if grid_type /= 4
@@ -7354,7 +7399,8 @@ CONTAINS
     END DO
     DO j=jsd,jed
       DO i=isd,ied
-        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)+ut(i, j)-ut(i+1, j))
+        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)+(ut(i, j)-ut(i+1, j)&
+&         ))
       END DO
     END DO
     CALL A2B_ORD4(wk, sh, gridstruct, npx, npy, is, ie, js, je, ng, &
@@ -7369,20 +7415,20 @@ CONTAINS
 !_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_mod.p_grad_c dyn_cor
 !e_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mix_dp dyn_core_mod.g
 !eopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_Super fv_dynamics_m
-!od.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_grid_utils_mod.cubed
-!_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_en
-!ergy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_m
-!od.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.p
-!pm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.
-!moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.
-!tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Solver_c nh_utils_
-!mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_solver nh_utils_mo
-!d.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_nh sw_core_mod.c
-!_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_core_mod.fill3_
-!4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_mod.compute_dive
-!rgence_damping_fb sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_corners tp_core
-!_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_circle_dist sw_c
-!ore_mod.edge_interpolate4)):
+!od.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.
+!c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.ma
+!p_scalar_fb fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_pr
+!ofile_fb fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz f
+!v_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup
+! fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid_z main_mod.compute
+!_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Solver_c nh
+!_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_solver nh_u
+!tils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_nh sw_cor
+!e_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_core_mod
+!.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_mod.compu
+!te_divergence_damping_fb sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_corners 
+!tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_circle_di
+!st sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: flux u c
 !   with respect to varying inputs: flux u c
   SUBROUTINE XTP_U_ADM(is, ie, js, je, isd, ied, jsd, jed, c, c_ad, u, &
@@ -10097,20 +10143,20 @@ CONTAINS
 !_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_mod.p_grad_c dyn_cor
 !e_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mix_dp dyn_core_mod.g
 !eopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_Super fv_dynamics_m
-!od.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_grid_utils_mod.cubed
-!_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_en
-!ergy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_m
-!od.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.p
-!pm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.
-!moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.
-!tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Solver_c nh_utils_
-!mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_solver nh_utils_mo
-!d.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_nh sw_core_mod.c
-!_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_core_mod.fill3_
-!4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_mod.compute_dive
-!rgence_damping_fb sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_corners tp_core
-!_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_circle_dist sw_c
-!ore_mod.edge_interpolate4)):
+!od.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.
+!c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.ma
+!p_scalar_fb fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_pr
+!ofile_fb fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz f
+!v_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup
+! fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid_z main_mod.compute
+!_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Solver_c nh
+!_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_solver nh_u
+!tils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_nh sw_cor
+!e_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_core_mod
+!.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_mod.compu
+!te_divergence_damping_fb sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_corners 
+!tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_circle_di
+!st sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: flux v c
 !   with respect to varying inputs: v c
   SUBROUTINE YTP_V_ADM(is, ie, js, je, isd, ied, jsd, jed, c, c_ad, u, v&
@@ -12985,20 +13031,20 @@ CONTAINS
 !od.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_
 !mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.m
 !ix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh
-!_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_
-!grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_
-!mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn
-!_tracer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_li
-!miters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.m
-!oist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer
-!_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Rie
-!m_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p
-!0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_h
-!alo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vec
-!t sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_c
-!ore_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.cop
-!y_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.gr
-!eat_circle_dist sw_core_mod.edge_interpolate4)):
+!_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord
+!4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.re
+!map_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d f
+!v_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters 
+!fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_r
+!estart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgri
+!d_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_
+!mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mo
+!d.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod
+!.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2
+!a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v_
+!fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_
+!mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils
+!_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v ua uc ut va vc vt
 !   with respect to varying inputs: u v ua uc ut va vc vt
 !There is a limit to how far this routine can fill uc and vc in the
@@ -13631,20 +13677,20 @@ CONTAINS
 !mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core
 !_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.
 !mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleig
-!h_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv
-!_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz
-!_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.map
-!n_tracer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_l
-!imiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.
-!moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.trace
-!r_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Ri
-!em_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3
-!p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_
-!halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_ve
-!ct sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_
-!core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.co
-!py_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.g
-!reat_circle_dist sw_core_mod.edge_interpolate4)):
+!h_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_or
+!d4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.r
+!emap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d 
+!fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters
+! fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_
+!restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgr
+!id_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils
+!_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_m
+!od.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mo
+!d.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d
+!2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v
+!_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core
+!_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_util
+!s_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v ua uc ut va vc vt
 !   with respect to varying inputs: u v ua uc ut va vc vt
 !There is a limit to how far this routine can fill uc and vc in the
@@ -13713,11 +13759,7 @@ CONTAINS
     INTEGER :: ad_to
     INTEGER :: ad_from0
     INTEGER :: ad_to0
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
     !TYPE(C_PTR) :: cptr
     !INTEGER :: unknown_shape_in_d2a2c_vect
 
@@ -13751,9 +13793,7 @@ CONTAINS
     ad_from0 = 0
     ad_to = 0
     ad_to0 = 0
-#ifndef BPOINT
     branch = 0
-#endif
 
     is = bd%is
     ie = bd%ie
@@ -14715,20 +14755,20 @@ CONTAINS
 !_edge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dy
 !n_core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_cor
 !e_mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.R
-!ayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_g
-!eos fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian f
-!v_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_m
-!od.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mo
-!d.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_map
-!z_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod
-!.tracer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_
-!mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mo
-!d.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod
-!.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2
-!a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v_
-!fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_
-!mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils
-!_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
+!ayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.
+!c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz
+!_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.rem
+!ap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_li
+!miters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cub
+!ic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv
+!_subgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh
+!_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_u
+!tils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_ut
+!ils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core
+!_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod
+!.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d t
+!p_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_gri
+!d_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: ua edge_interpolate4
 !   with respect to varying inputs: ua
   REAL FUNCTION EDGE_INTERPOLATE4_FWD(ua, dxa)
@@ -14747,20 +14787,20 @@ CONTAINS
 !b_edge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe d
 !yn_core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_co
 !re_mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.
-!Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_
-!geos fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian 
-!fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_
-!mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_m
-!od.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_ma
-!pz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mo
-!d.tracer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils
-!_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_m
-!od.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mo
-!d.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d
-!2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v
-!_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core
-!_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_util
-!s_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
+!Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod
+!.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_map
+!z_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.re
+!map_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_l
+!imiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cu
+!bic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.f
+!v_subgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d n
+!h_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_
+!utils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_u
+!tils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_cor
+!e_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mo
+!d.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d 
+!tp_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_gr
+!id_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: ua edge_interpolate4
 !   with respect to varying inputs: ua
   SUBROUTINE EDGE_INTERPOLATE4_BWD(ua, ua_ad, dxa, edge_interpolate4_ad)
@@ -14910,20 +14950,20 @@ CONTAINS
 !ge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_c
 !ore_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_m
 !od.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayl
-!eigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos
-! fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_m
-!apz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.
-!mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.c
-!s_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_m
-!od.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tr
-!acer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod
-!.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.S
-!IM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.ne
-!st_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c
-!_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v 
-!sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod
-!.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mo
-!d.great_circle_dist sw_core_mod.edge_interpolate4)):
+!eigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l
+!_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mo
+!d.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_
+!2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limit
+!ers fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic 
+!fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_su
+!bgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_ut
+!ils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_util
+!s_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils
+!_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mo
+!d.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.yt
+!p_v_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_c
+!ore_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_u
+!tils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q1 q2
 !   with respect to varying inputs: q1 q2
   SUBROUTINE FILL2_4CORNERS_FWD(q1, q2, dir, bd, npx, npy, sw_corner, &
@@ -15064,20 +15104,20 @@ CONTAINS
 !dge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_
 !core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_
 !mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Ray
-!leigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geo
-!s fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_
-!mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod
-!.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.
-!cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_
-!mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.t
-!racer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mo
-!d.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.
-!SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.n
-!est_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2
-!c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v
-! sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mo
-!d.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_m
-!od.great_circle_dist sw_core_mod.edge_interpolate4)):
+!leigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2
+!l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_m
+!od.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap
+!_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limi
+!ters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic
+! fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_s
+!ubgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_u
+!tils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_uti
+!ls_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_util
+!s_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_m
+!od.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.y
+!tp_v_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_
+!core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_
+!utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q1 q2
 !   with respect to varying inputs: q1 q2
   SUBROUTINE FILL2_4CORNERS_BWD(q1, q1_ad, q2, q2_ad, dir, bd, npx, npy&
@@ -15093,11 +15133,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: npx, npy
     INTEGER :: is, ie, js, je
     INTEGER :: isd, ied, jsd, jed
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
 
     is = 0
     ie = 0
@@ -15107,9 +15143,7 @@ CONTAINS
     ied = 0
     jsd = 0
     jed = 0
-#ifndef BPOINT
     branch = 0
-#endif
 
     CALL POPCONTROL(3,branch)
     IF (branch .LT. 2) THEN
@@ -15314,20 +15348,20 @@ CONTAINS
 !e_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_co
 !re_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mo
 !d.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayle
-!igh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos 
-!fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_ma
-!pz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.m
-!apn_tracer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs
-!_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mo
-!d.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tra
-!cer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.
-!Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SI
-!M3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nes
-!t_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_
-!vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v s
-!w_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.
-!copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod
-!.great_circle_dist sw_core_mod.edge_interpolate4)):
+!igh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_
+!ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod
+!.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2
+!d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limite
+!rs fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic f
+!v_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_sub
+!grid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_uti
+!ls_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils
+!_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_
+!mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod
+!.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp
+!_v_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_co
+!re_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_ut
+!ils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q
 !   with respect to varying inputs: q
   SUBROUTINE FILL_4CORNERS_FWD(q, dir, bd, npx, npy, sw_corner, &
@@ -15435,20 +15469,20 @@ CONTAINS
 !ge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_c
 !ore_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_m
 !od.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayl
-!eigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos
-! fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_m
-!apz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.
-!mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.c
-!s_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_m
-!od.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tr
-!acer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod
-!.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.S
-!IM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.ne
-!st_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c
-!_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v 
-!sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod
-!.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mo
-!d.great_circle_dist sw_core_mod.edge_interpolate4)):
+!eigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l
+!_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mo
+!d.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_
+!2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limit
+!ers fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic 
+!fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_su
+!bgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_ut
+!ils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_util
+!s_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils
+!_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mo
+!d.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.yt
+!p_v_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_c
+!ore_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_u
+!tils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: q
 !   with respect to varying inputs: q
   SUBROUTINE FILL_4CORNERS_BWD(q, q_ad, dir, bd, npx, npy, sw_corner, &
@@ -15462,11 +15496,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: npx, npy
     INTEGER :: is, ie, js, je
     INTEGER :: isd, ied, jsd, jed
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
 
     is = 0
     ie = 0
@@ -15476,9 +15506,7 @@ CONTAINS
     ied = 0
     jsd = 0
     jed = 0
-#ifndef BPOINT
     branch = 0
-#endif
 
     CALL POPCONTROL(3,branch)
     IF (branch .LT. 2) THEN
@@ -15618,20 +15646,20 @@ CONTAINS
 !.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_mo
 !d.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mix
 !_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_S
-!uper fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_gr
-!id_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mo
-!d.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_t
-!racer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limi
-!ters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moi
-!st_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2
-!d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_
-!Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_
-!solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_hal
-!o_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect 
-!sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_cor
-!e_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_
-!corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.grea
-!t_circle_dist sw_core_mod.edge_interpolate4)):
+!uper fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 
+!fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.rema
+!p_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_
+!mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv
+!_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_res
+!tart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid_
+!z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mo
+!d.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.
+!SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.n
+!est_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2
+!c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v
+! sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mo
+!d.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_m
+!od.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: flux u c
 !   with respect to varying inputs: flux u c
   SUBROUTINE XTP_U_FWD(is, ie, js, je, isd, ied, jsd, jed, c, u, v, &
@@ -15870,20 +15898,20 @@ CONTAINS
 !d.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_m
 !od.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mi
 !x_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_
-!Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_g
-!rid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_m
-!od.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_
-!tracer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_lim
-!iters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.mo
-!ist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_
-!2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem
-!_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0
-!_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_ha
-!lo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect
-! sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_co
-!re_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy
-!_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.gre
-!at_circle_dist sw_core_mod.edge_interpolate4)):
+!Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4
+! fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.rem
+!ap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv
+!_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters f
+!v_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_re
+!start_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid
+!_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_m
+!od.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod
+!.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.
+!nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a
+!2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v_f
+!b sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_m
+!od.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_
+!mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: flux u c
 !   with respect to varying inputs: flux u c
   SUBROUTINE XTP_U_BWD(is, ie, js, je, isd, ied, jsd, jed, c, c_ad, u&
@@ -15924,11 +15952,7 @@ CONTAINS
     REAL :: temp_ad2
     REAL :: temp_ad3
     REAL :: temp_ad4
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
     REAL :: temp_ad5
     REAL :: temp_ad6
     REAL :: temp_ad7
@@ -15965,9 +15989,7 @@ CONTAINS
     ie3 = 0
     is2 = 0
     ie2 = 0
-#ifndef BPOINT
     branch = 0
-#endif
 
     CALL POPCONTROL(2,branch)
     IF (branch .LT. 2) THEN
@@ -16193,20 +16215,20 @@ CONTAINS
 !.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_mo
 !d.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mix
 !_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_S
-!uper fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_gr
-!id_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mo
-!d.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_t
-!racer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limi
-!ters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moi
-!st_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2
-!d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_
-!Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_
-!solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_hal
-!o_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect 
-!sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_cor
-!e_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_
-!corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.grea
-!t_circle_dist sw_core_mod.edge_interpolate4)):
+!uper fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 
+!fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.rema
+!p_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_
+!mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv
+!_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_res
+!tart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid_
+!z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mo
+!d.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.
+!SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.n
+!est_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2
+!c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v
+! sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mo
+!d.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_m
+!od.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: flux v c
 !   with respect to varying inputs: v c
   SUBROUTINE YTP_V_FWD(is, ie, js, je, isd, ied, jsd, jed, c, u, v, &
@@ -16462,20 +16484,20 @@ CONTAINS
 !d.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_m
 !od.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mi
 !x_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_
-!Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_g
-!rid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_m
-!od.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_
-!tracer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_lim
-!iters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.mo
-!ist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_
-!2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem
-!_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0
-!_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_ha
-!lo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect
-! sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_co
-!re_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy
-!_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.gre
-!at_circle_dist sw_core_mod.edge_interpolate4)):
+!Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4
+! fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.rem
+!ap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv
+!_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters f
+!v_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_re
+!start_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid
+!_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_m
+!od.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod
+!.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.
+!nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a
+!2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v_f
+!b sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_m
+!od.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_
+!mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: flux v c
 !   with respect to varying inputs: v c
   SUBROUTINE YTP_V_BWD(is, ie, js, je, isd, ied, jsd, jed, c, c_ad, u&
@@ -16516,11 +16538,7 @@ CONTAINS
     REAL :: temp_ad2
     REAL :: temp_ad3
     REAL :: temp_ad4
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
     REAL :: temp_ad5
     REAL :: temp_ad6
     REAL :: temp_ad7
@@ -16557,9 +16575,7 @@ CONTAINS
     ie1 = 0
     js3 = 0
     je3 = 0
-#ifndef BPOINT
     branch = 0
-#endif
 
     CALL POPCONTROL(3,branch)
     IF (branch .LT. 2) THEN
@@ -16579,8 +16595,16 @@ CONTAINS
       ELSE
         CALL POPREALARRAY(c, (ie-is+2)*(je-js+2))
         DO j=js,je+1
+          DO i=is,ie+1
+            IF (c(i, j) .GT. 0.) THEN
+              CALL PUSHCONTROL(1,1)
+            ELSE
+              CALL PUSHCONTROL(1,0)
+            END IF
+          END DO
           DO i=ie+1,is,-1
-            IF (c(i, j) .LE. 0.) THEN
+            CALL POPCONTROL(1,branch)
+            IF (branch .EQ. 0) THEN
               temp_ad10 = flux_ad(i, j)/6.0
               temp_ad11 = -(rdy(i, j)*0.5*flux_ad(i, j))
               temp_ad12 = c(i, j)*temp_ad11
@@ -16784,20 +16808,20 @@ CONTAINS
 !mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core
 !_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.
 !mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleig
-!h_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv
-!_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz
-!_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.map
-!n_tracer_fb fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_l
-!imiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.
-!moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.trace
-!r_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Ri
-!em_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3
-!p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_
-!halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_ve
-!ct sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_
-!core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.co
-!py_corners_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.g
-!reat_circle_dist sw_core_mod.edge_interpolate4)):
+!h_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_or
+!d4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.r
+!emap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d 
+!fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters
+! fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_
+!restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgr
+!id_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils
+!_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_m
+!od.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mo
+!d.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d
+!2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v
+!_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core
+!_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_util
+!s_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v ke ua uc ptc delpc va vc
 !                vort divg_d wk
 !   with respect to varying inputs: u v ke ua uc ptc delpc va vc
@@ -17530,20 +17554,20 @@ CONTAINS
 !n_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_mod.p_grad_c d
 !yn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_mod.mix_dp dyn_core
 !_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayleigh_Super fv_dyna
-!mics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos fv_grid_utils_mod
-!.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_to
-!tal_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_
-!mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz
-!_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_map
-!z_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2
-!d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Solver_c nh_
-!utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_solver nh_ut
-!ils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_nh sw_core
-!_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_core_mod.
-!fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_mod.comput
-!e_divergence_damping_fb sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_corners t
-!p_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_circle_dis
-!t sw_core_mod.edge_interpolate4)):
+!mics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_util
+!s_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_
+!mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.sca
+!lar_profile_fb fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.st
+!eepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c
+!_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_subgrid_z main_mod.c
+!ompute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod.Riem_Solve
+!r_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.SIM3p0_solve
+!r nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.nest_halo_nh 
+!sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c_vect sw_co
+!re_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v sw_core_mod
+!.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod.copy_corne
+!rs_fb tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mod.great_cir
+!cle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: smag_c u v
 !   with respect to varying inputs: u v
   SUBROUTINE SMAG_CORNER_ADM(dt, u, u_ad, v, v_ad, ua, va, smag_c, &
@@ -17612,8 +17636,8 @@ CONTAINS
     END DO
     DO j=js,je+1
       DO i=is,ie+1
-        smag_c(i, j) = rarea_c(i, j)*(vt(i, j-1)-vt(i, j)-ut(i-1, j)+ut(&
-&         i, j))
+        smag_c(i, j) = rarea_c(i, j)*(vt(i, j-1)-vt(i, j)+(ut(i, j)-ut(i&
+&         -1, j)))
       END DO
     END DO
 ! Fix the corners?? if grid_type /= 4
@@ -17630,7 +17654,8 @@ CONTAINS
     END DO
     DO j=jsd,jed
       DO i=isd,ied
-        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)+ut(i, j)-ut(i+1, j))
+        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)+(ut(i, j)-ut(i+1, j)&
+&         ))
       END DO
     END DO
     CALL A2B_ORD4(wk, sh, gridstruct, npx, npy, is, ie, js, je, ng, &
@@ -18007,20 +18032,20 @@ CONTAINS
 !_ord4_fb a2b_edge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_m
 !od.adv_pe dyn_core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_up
 !date dyn_core_mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dy
-!namics_mod.Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_
-!mod.fv3_to_geos fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_t
-!o_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm_
-!fb fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile_f
-!b fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.
-!mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_
-!tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz
-!_d nh_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver
-! nh_utils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile 
-!nh_utils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw
-!_core_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_cor
-!e_mod.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d
-!_fb tp_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner f
-!v_grid_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
+!namics_mod.Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_gri
+!d_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.
+!pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_
+!mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_map
+!z_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_
+!mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested 
+!fv_sg_mod.fv_subgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.up
+!date_dz_d nh_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3
+!_solver nh_utils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_p
+!rofile nh_utils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_
+!nest sw_core_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u
+! sw_core_mod.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.f
+!v_tp_2d_fb tp_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corn
+!er_fb fv_grid_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v ke ua uc ptc delpc va vc
 !                vort divg_d wk
 !   with respect to varying inputs: u v ke ua uc ptc delpc va vc
@@ -18120,30 +18145,15 @@ CONTAINS
     y2 = 0.0
     y1 = 0.0
 
-    area => gridstruct%area
-    rarea => gridstruct%rarea
     sin_sg => gridstruct%sin_sg
     cosa_u => gridstruct%cosa_u
     cosa_v => gridstruct%cosa_v
-    cosa_s => gridstruct%cosa_s
     sina_u => gridstruct%sina_u
     sina_v => gridstruct%sina_v
-    rsin_u => gridstruct%rsin_u
-    rsin_v => gridstruct%rsin_v
-    rsina => gridstruct%rsina
-    f0 => gridstruct%f0
-    rsin2 => gridstruct%rsin2
     divg_u => gridstruct%divg_u
     divg_v => gridstruct%divg_v
-    cosa => gridstruct%cosa
-    dx => gridstruct%dx
-    dy => gridstruct%dy
     dxc => gridstruct%dxc
     dyc => gridstruct%dyc
-    rdxa => gridstruct%rdxa
-    rdya => gridstruct%rdya
-    rdx => gridstruct%rdx
-    rdy => gridstruct%rdy
     sw_corner = gridstruct%sw_corner
     se_corner = gridstruct%se_corner
     nw_corner = gridstruct%nw_corner
@@ -18251,8 +18261,8 @@ CONTAINS
       DO j=js,je+1
         DO i=is,ie+1
           CALL PUSHREALARRAY(delpc(i, j))
-          delpc(i, j) = vort(i, j-1) - vort(i, j) + ptc(i-1, j) - ptc(i&
-&           , j)
+          delpc(i, j) = vort(i, j-1) - vort(i, j) + (ptc(i-1, j)-ptc(i, &
+&           j))
         END DO
       END DO
 ! Remove the extra term at the corners:
@@ -18396,7 +18406,7 @@ CONTAINS
         DO j=ad_from4,je+1+nt
           ad_from3 = is - nt
           DO i=ad_from3,ie+1+nt
-            divg_d(i, j) = uc(i, j-1) - uc(i, j) + vc(i-1, j) - vc(i, j)
+            divg_d(i, j) = uc(i, j-1) - uc(i, j) + (vc(i-1, j)-vc(i, j))
           END DO
           CALL PUSHINTEGER(i - 1)
           CALL PUSHINTEGER(ad_from3)
@@ -18525,20 +18535,20 @@ CONTAINS
 !b_ord4_fb a2b_edge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_
 !mod.adv_pe dyn_core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_u
 !pdate dyn_core_mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_d
-!ynamics_mod.Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics
-!_mod.fv3_to_geos fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_
-!to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm
-!_fb fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile_
-!fb fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod
-!.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv
-!_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_d
-!z_d nh_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solve
-!r nh_utils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile
-! nh_utils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest s
-!w_core_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_co
-!re_mod.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2
-!d_fb tp_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner 
-!fv_grid_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
+!ynamics_mod.Rayleigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_gr
+!id_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod
+!.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv
+!_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_ma
+!pz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz
+!_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested
+! fv_sg_mod.fv_subgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.u
+!pdate_dz_d nh_utils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM
+!3_solver nh_utils_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_
+!profile nh_utils_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner
+!_nest sw_core_mod.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u_f
+!b sw_core_mod.ytp_v sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.
+!fv_tp_2d tp_core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_cor
+!ner_fb fv_grid_utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: u v ke ua uc ptc delpc va vc
 !                vort divg_d wk
 !   with respect to varying inputs: u v ke ua uc ptc delpc va vc
@@ -18625,11 +18635,7 @@ CONTAINS
     REAL :: temp_ad8
     REAL :: temp_ad9
     REAL :: y2_ad
-#ifdef BPOINT
-    INTEGER, POINTER :: branch
-#else
     INTEGER :: branch
-#endif
     INTEGER :: ad_from
     INTEGER :: ad_to
     INTEGER :: ad_from0
@@ -18693,34 +18699,17 @@ CONTAINS
     y3 = 0.0
     y2 = 0.0
     y1 = 0.0
-#ifndef BPOINT
     branch = 0
-#endif
 
-    area => gridstruct%area
-    rarea => gridstruct%rarea
     sin_sg => gridstruct%sin_sg
     cosa_u => gridstruct%cosa_u
     cosa_v => gridstruct%cosa_v
-    cosa_s => gridstruct%cosa_s
     sina_u => gridstruct%sina_u
     sina_v => gridstruct%sina_v
-    rsin_u => gridstruct%rsin_u
-    rsin_v => gridstruct%rsin_v
-    rsina => gridstruct%rsina
-    f0 => gridstruct%f0
-    rsin2 => gridstruct%rsin2
     divg_u => gridstruct%divg_u
     divg_v => gridstruct%divg_v
-    cosa => gridstruct%cosa
-    dx => gridstruct%dx
-    dy => gridstruct%dy
     dxc => gridstruct%dxc
     dyc => gridstruct%dyc
-    rdxa => gridstruct%rdxa
-    rdya => gridstruct%rdya
-    rdx => gridstruct%rdx
-    rdy => gridstruct%rdy
     sw_corner = gridstruct%sw_corner
     se_corner = gridstruct%se_corner
     nw_corner = gridstruct%nw_corner
@@ -18729,6 +18718,9 @@ CONTAINS
     ie = bd%ie
     js = bd%js
     je = bd%je
+    npx = flagstruct%npx
+    npy = flagstruct%npy
+    nested = gridstruct%nested
     CALL POPCONTROL(1,branch)
     IF (branch .EQ. 0) THEN
       CALL POPINTEGER(js)
@@ -19062,20 +19054,20 @@ CONTAINS
 !ge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_c
 !ore_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_m
 !od.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Rayl
-!eigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geos
-! fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_m
-!apz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.
-!mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.c
-!s_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_m
-!od.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tr
-!acer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mod
-!.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.S
-!IM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.ne
-!st_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2c
-!_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v 
-!sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mod
-!.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_mo
-!d.great_circle_dist sw_core_mod.edge_interpolate4)):
+!eigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l
+!_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mo
+!d.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_
+!2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limit
+!ers fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic 
+!fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_su
+!bgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_ut
+!ils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_util
+!s_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils
+!_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mo
+!d.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.yt
+!p_v_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_c
+!ore_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_u
+!tils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: smag_c u v
 !   with respect to varying inputs: u v
   SUBROUTINE SMAG_CORNER_FWD(dt, u, v, ua, va, smag_c, bd, npx, npy, &
@@ -19197,20 +19189,20 @@ CONTAINS
 !dge_mod.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_
 !core_mod.p_grad_c dyn_core_mod.nh_p_grad dyn_core_mod.split_p_grad dyn_core_mod.one_grad_p dyn_core_mod.grad1_p_update dyn_core_
 !mod.mix_dp dyn_core_mod.geopk dyn_core_mod.del2_cubed dyn_core_mod.Rayleigh_fast fv_dynamics_mod.fv_dynamics fv_dynamics_mod.Ray
-!leigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_dynamics_mod.geos_to_fv3 fv_dynamics_mod.fv3_to_geo
-!s fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_
-!mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_mod.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod
-!.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.
-!cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limiters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_
-!mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.t
-!racer_2d fv_tracer2d_mod.tracer_2d_nested nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_utils_mo
-!d.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_utils_mod.
-!SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_utils_mod.n
-!est_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_mod.d2a2
-!c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.ytp_v
-! sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_core_mo
-!d.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_utils_m
-!od.great_circle_dist sw_core_mod.edge_interpolate4)):
+!leigh_Super fv_dynamics_mod.Rayleigh_Friction fv_dynamics_mod.compute_aam fv_grid_utils_mod.cubed_to_latlon fv_grid_utils_mod.c2
+!l_ord4 fv_grid_utils_mod.c2l_ord2 fv_mapz_mod.Lagrangian_to_Eulerian fv_mapz_mod.compute_total_energy fv_mapz_mod.pkez fv_mapz_m
+!od.remap_z fv_mapz_mod.map_scalar fv_mapz_mod.map1_ppm fv_mapz_mod.mapn_tracer fv_mapz_mod.map1_q2 fv_mapz_mod.remap
+!_2d fv_mapz_mod.scalar_profile fv_mapz_mod.cs_profile fv_mapz_mod.cs_limiters fv_mapz_mod.ppm_profile fv_mapz_mod.ppm_limi
+!ters fv_mapz_mod.steepz fv_mapz_mod.rst_remap fv_mapz_mod.mappm fv_mapz_mod.moist_cv fv_mapz_mod.moist_cp fv_mapz_mod.map1_cubic
+! fv_restart_mod.d2c_setup fv_tracer2d_mod.tracer_2d_1L fv_tracer2d_mod.tracer_2d fv_tracer2d_mod.tracer_2d_nested fv_sg_mod.fv_s
+!ubgrid_z main_mod.compute_pressures main_mod.run nh_core_mod.Riem_Solver3 nh_utils_mod.update_dz_c nh_utils_mod.update_dz_d nh_u
+!tils_mod.Riem_Solver_c nh_utils_mod.Riem_Solver3test nh_utils_mod.imp_diff_w nh_utils_mod.RIM_2D nh_utils_mod.SIM3_solver nh_uti
+!ls_mod.SIM3p0_solver nh_utils_mod.SIM1_solver nh_utils_mod.SIM_solver nh_utils_mod.edge_scalar nh_utils_mod.edge_profile nh_util
+!s_mod.nest_halo_nh sw_core_mod.c_sw sw_core_mod.d_sw  sw_core_mod.divergence_corner sw_core_mod.divergence_corner_nest sw_core_m
+!od.d2a2c_vect sw_core_mod.fill3_4corners sw_core_mod.fill2_4corners sw_core_mod.fill_4corners sw_core_mod.xtp_u sw_core_mod.y
+!tp_v_fb sw_core_mod.compute_divergence_damping sw_core_mod.smag_corner tp_core_mod.mp_ghost_ew tp_core_mod.fv_tp_2d tp_
+!core_mod.copy_corners tp_core_mod.xppm tp_core_mod.yppm tp_core_mod.deln_flux a2b_edge_mod.extrap_corner fv_grid_
+!utils_mod.great_circle_dist sw_core_mod.edge_interpolate4)):
 !   gradient     of useful results: smag_c u v
 !   with respect to varying inputs: u v
   SUBROUTINE SMAG_CORNER_BWD(dt, u, u_ad, v, v_ad, ua, va, smag_c, &
@@ -19280,7 +19272,6 @@ CONTAINS
     dy => gridstruct%dy
     rarea => gridstruct%rarea
     rarea_c => gridstruct%rarea_c
-
     CALL POPINTEGER(js)
     !CALL POPPOINTER8(cptr)
     dxc => gridstruct%dxc ! (/unknown_shape_in_smag_corner/))

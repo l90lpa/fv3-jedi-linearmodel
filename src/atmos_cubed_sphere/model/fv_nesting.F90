@@ -65,8 +65,8 @@ private
 public :: twoway_nesting, setup_nested_grid_BCs
 
 !---- version number -----
-   character(len=128) :: version = '$Id$'
-   character(len=128) :: tagname = '$Name$'
+   character(len=128) :: version = '$Id: fv_nesting.F90,v 1.4 2018/03/15 14:02:27 drholdaw Exp $'
+   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains
 
@@ -1378,7 +1378,7 @@ subroutine twoway_nesting(Atm, ngrids, grids_on_this_pe, zvir)
          !(In LtE typically we use remap_t = .true.: remapping t is better (except in
          !idealized simulations with a background uniform theta) since near the top
          !boundary theta is exponential, which is hard to accurately interpolate with a spline
-         if (.not. parent_grid%flagstruct%remap_t) then
+         if (parent_grid%flagstruct%remap_option /= 0) then
 !$OMP parallel do default(none) shared(npz,jsc_p,jec_p,isc_p,iec_p,parent_grid,zvir,sphum)
             do k=1,npz
                do j=jsc_p,jec_p
@@ -1398,7 +1398,7 @@ subroutine twoway_nesting(Atm, ngrids, grids_on_this_pe, zvir)
               parent_grid%flagstruct%kord_tm, parent_grid%flagstruct%kord_tr, &
               parent_grid%flagstruct%kord_wz, &
               isc_p, iec_p, jsc_p, jec_p, isd_p, ied_p, jsd_p, jed_p, .false. ) !neststruct%nestupdate < 7)
-         if (.not. parent_grid%flagstruct%remap_t) then
+         if (parent_grid%flagstruct%remap_option /= 0) then
 !$OMP parallel do default(none) shared(npz,jsc_p,jec_p,isc_p,iec_p,parent_grid,zvir,sphum)
             do k=1,npz
                do j=jsc_p,jec_p

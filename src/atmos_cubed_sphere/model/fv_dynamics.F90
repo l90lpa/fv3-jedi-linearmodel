@@ -39,10 +39,18 @@ module fv_dynamics_mod
    use boundary_mod,        only: nested_grid_BC_apply_intT
    use fv_arrays_mod,       only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_grid_bounds_type
    use fv_nwp_nudge_mod,    only: do_adiabatic_init
+#ifdef MAPL_MODE
+   use fv_control_mod,      only: dyn_timer, comm_timer
+#endif
 
 implicit none
+
+#ifdef MAPL_MODE
+  ! Include the MPI library definitons:
+  include 'mpif.h'
+#endif
+
    logical :: RF_initialized = .false.
-   logical :: pt_initialized = .false.
    logical :: bad_range = .false.
    real, allocatable ::  rf(:)
    integer :: kmax=1
@@ -54,8 +62,8 @@ private
 public :: fv_dynamics
 
 !---- version number -----
-   character(len=128) :: version = '$Id$'
-   character(len=128) :: tagname = '$Name$'
+   character(len=128) :: version = '$Id: fv_dynamics.F90,v 1.4 2018/03/15 14:02:27 drholdaw Exp $'
+   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains
 
@@ -148,6 +156,8 @@ contains
       real:: pfull(npz)
       real, dimension(bd%is:bd%ie):: cvm
       real, allocatable :: dp1(:,:,:), dtdt_m(:,:,:), cappa(:,:,:)
+      real(kind=8), allocatable :: psx(:,:)
+      real(kind=8), allocatable :: dpx(:,:)
       real:: akap, rdg, ph1, ph2, mdt, gam, amdt, u0
       integer:: kord_tracer(ncnst)
       integer :: i,j,k, n, iq, n_map, nq, nwat, k_split
@@ -160,6 +170,8 @@ contains
       integer :: is,  ie,  js,  je
       integer :: isd, ied, jsd, jed
       real :: dt2
+      real(kind=8) :: t1, t2
+      integer :: status
 
       is  = bd%is
       ie  = bd%ie
@@ -170,6 +182,9 @@ contains
       jsd = bd%jsd
       jed = bd%jed
 
+      dyn_timer = 0
+      comm_timer = 0
+
 !     cv_air =  cp_air - rdgas
       agrav = 1. / grav
         dt2 = 0.5*bdt
@@ -179,7 +194,10 @@ contains
       rdg = -rdgas * agrav
       allocate ( dp1(isd:ied, jsd:jed, 1:npz) )
       
-      
+#ifdef MAPL_MODE
+! Begin Dynamics timer for GEOS history processing
+      t1 = MPI_Wtime(status)
+#endif
 #ifdef MOIST_CAPPA
       allocate ( cappa(isd:ied,jsd:jed,npz) )
       call init_ijk_mem(isd,ied, jsd,jed, npz, cappa, 0.)
@@ -227,6 +245,31 @@ contains
          goto 911
       endif
 
+#ifdef MAPL_MODE
+      select case (nwat)
+       case (0)
+             sphum = 1
+           cld_amt = -1   ! to cause trouble if (mis)used
+       case (1)
+             sphum = 1
+           liq_wat = -1   ! to cause trouble if (mis)used
+           ice_wat = -1   ! to cause trouble if (mis)used
+           rainwat = -1   ! to cause trouble if (mis)used
+           snowwat = -1   ! to cause trouble if (mis)used
+           graupel = -1   ! to cause trouble if (mis)used
+           cld_amt = -1   ! to cause trouble if (mis)used
+           theta_d = -1   ! to cause trouble if (mis)used
+       case (3)
+             sphum = 1
+           liq_wat = 2
+           ice_wat = 3
+           rainwat = -1   ! to cause trouble if (mis)used
+           snowwat = -1   ! to cause trouble if (mis)used
+           graupel = -1   ! to cause trouble if (mis)used
+           cld_amt = -1   ! to cause trouble if (mis)used
+           theta_d = -1   ! to cause trouble if (mis)used
+      end select
+#else
       if ( nwat==0 ) then
              sphum = 1
            cld_amt = -1   ! to cause trouble if (mis)used
@@ -239,8 +282,8 @@ contains
            graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
            cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
       endif
-
       theta_d = get_tracer_index (MODEL_ATMOS, 'theta_d')
+#endif
 
 #ifdef SW_DYNAMICS
       akap  = 1.
@@ -356,8 +399,7 @@ contains
 
 #ifndef SW_DYNAMICS
 ! Convert pt to virtual potential temperature on the first timestep
-  if ( flagstruct%adiabatic .and. flagstruct%kord_tm>0 ) then
-     if ( .not.pt_initialized )then
+  if ( flagstruct%adiabatic ) then
 !$OMP parallel do default(none) shared(theta_d,is,ie,js,je,npz,pt,pkz,q)
        do k=1,npz
           do j=js,je
@@ -373,8 +415,6 @@ contains
              enddo
           endif
        enddo
-       pt_initialized = .true.
-     endif
   else
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,dp1,pkz,q_con)
   do k=1,npz
@@ -406,7 +446,16 @@ contains
        enddo
   endif
 
-
+!DryMassRoundoffControl
+      allocate(psx(isd:ied,jsd:jed),dpx(is:ie,js:je))
+#ifdef OVERLOAD_R4
+      do j=js,je
+         do i=is,ie
+            psx(i,j) = pe(i,npz+1,j)
+            dpx(i,j) = 0.0
+         enddo
+      enddo
+#endif  
                                                   call timing_on('FV_DYN_LOOP')
   do n_map=1, k_split   ! first level of time-split
                                            call timing_on('COMM_TOTAL')
@@ -445,11 +494,31 @@ contains
                                            call timing_on('DYN_CORE')
       call dyn_core(npx, npy, npz, ng, sphum, nq, mdt, n_split, zvir, cp_air, akap, cappa, grav, hydrostatic, &
                     u, v, w, delz, pt, q, delp, pe, pk, phis, ws, omga, ptop, pfull, ua, va,           & 
-                    uc, vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, ks, &
+                    uc, vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, dpx, ks, &
                     gridstruct, flagstruct, neststruct, idiag, bd, &
                     domain, n_map==1, i_pack, last_step, time_total)
                                            call timing_off('DYN_CORE')
 
+
+!DryMassRoundoffControl
+      if(last_step) then
+#ifdef OVERLOAD_R4
+         do j=js,je
+            do i=is,ie
+               psx(i,j) = psx(i,j) + dpx(i,j)
+            enddo
+         enddo
+                                        call timing_on('COMM_TOTAL')
+         call mpp_update_domains(psx, domain)
+                                        call timing_off('COMM_TOTAL')
+         do j=js-1,je+1
+            do i=is-1,ie+1
+               pe(i,npz+1,j) = psx(i,j)
+            enddo
+         enddo
+#endif
+         deallocate(psx,dpx)
+      end if
 
 #ifdef SW_DYNAMICS
 !$OMP parallel do default(none) shared(is,ie,js,je,delp,agrav)
@@ -529,9 +598,10 @@ contains
                      zvir, cp_air, akap, cappa, flagstruct%kord_mt, flagstruct%kord_wz, &
                      kord_tracer, flagstruct%kord_tm, peln, te_2d,               &
                      ng, ua, va, omga, dp1, ws, fill, reproduce_sum,             &
-                     idiag%id_mdt>0, dtdt_m, ptop, ak, bk, pfull, gridstruct, domain,   &
+                     idiag%id_mdt>0, dtdt_m, ptop, ak, bk, pfull, flagstruct, gridstruct, domain,   &
                      flagstruct%do_sat_adj, hydrostatic, hybrid_z, do_omega,     &
-                     flagstruct%adiabatic, do_adiabatic_init)
+                     flagstruct%adiabatic, do_adiabatic_init, &
+                     mfx, mfy, flagstruct%remap_option)
 
 #ifdef AVEC_TIMERS
                                                   call avec_timer_stop(6)
@@ -694,6 +764,10 @@ contains
                          -50., 100., bad_range)
   endif
 
+#ifdef MAPL_MODE
+  t2 = MPI_Wtime(status)
+  dyn_timer = dyn_timer + (t2-t1)
+#endif
   end subroutine fv_dynamics
 
 

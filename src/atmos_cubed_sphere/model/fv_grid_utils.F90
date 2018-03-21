@@ -74,8 +74,8 @@
  END INTERFACE
 
 !---- version number -----
- character(len=128) :: version = '$Id$'
- character(len=128) :: tagname = '$Name$'
+ character(len=128) :: version = '$Id: fv_grid_utils.F90,v 1.4 2018/03/15 14:02:27 drholdaw Exp $'
+ character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
  contains
 
