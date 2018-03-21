@@ -47,17 +47,17 @@ module fv_dynamics_tlm_mod
    use boundary_tlm_mod,        only: nested_grid_BC_apply_intT_tlm
    use fv_arrays_mod,           only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_grid_bounds_type
    use fv_nwp_nudge_mod,        only: do_adiabatic_init
-#ifdef MAPL_MODE
-   use fv_control_mod,          only: dyn_timer, comm_timer
-#endif
+!#ifdef MAPL_MODE
+!   use fv_control_mod,          only: dyn_timer, comm_timer
+!#endif
    use fv_arrays_nlm_mod,       only: fv_flags_pert_type, fpp
 
 implicit none
 
-#ifdef MAPL_MODE
-  ! Include the MPI library definitons:
-  include 'mpif.h'
-#endif
+!#ifdef MAPL_MODE
+!  ! Include the MPI library definitons:
+!  include 'mpif.h'
+!#endif
 
    logical :: RF_initialized = .false.
    logical :: pt_initialized = .false.
@@ -318,8 +318,8 @@ CONTAINS
     ied = bd%ied
     jsd = bd%jsd
     jed = bd%jed
-    dyn_timer = 0
-    comm_timer = 0
+!    dyn_timer = 0
+!    comm_timer = 0
 !     cv_air =  cp_air - rdgas
     agrav = 1./grav
     dt2 = 0.5*bdt
@@ -994,7 +994,7 @@ CONTAINS
 &                                      , ng, npz, gridstruct%agrid, -50.&
 &                                      , 100., bad_range)
     END IF
-    IF (fpp%fpp_mapl_mode) dyn_timer = dyn_timer + (t2-t1)
+!    IF (fpp%fpp_mapl_mode) dyn_timer = dyn_timer + (t2-t1)
 !t2 = MPI_Wtime(status)
   END SUBROUTINE FV_DYNAMICS_TLM
 !-----------------------------------------------------------------------
@@ -1176,8 +1176,8 @@ CONTAINS
     ied = bd%ied
     jsd = bd%jsd
     jed = bd%jed
-    dyn_timer = 0
-    comm_timer = 0
+!    dyn_timer = 0
+!    comm_timer = 0
 !     cv_air =  cp_air - rdgas
     agrav = 1./grav
     dt2 = 0.5*bdt
@@ -1744,7 +1744,7 @@ CONTAINS
 &                                      , ng, npz, gridstruct%agrid, -50.&
 &                                      , 100., bad_range)
     END IF
-    IF (fpp%fpp_mapl_mode) dyn_timer = dyn_timer + (t2-t1)
+!    IF (fpp%fpp_mapl_mode) dyn_timer = dyn_timer + (t2-t1)
 !t2 = MPI_Wtime(status)
   END SUBROUTINE FV_DYNAMICS
 !  Differentiation of rayleigh_super in forward (tangent) mode:

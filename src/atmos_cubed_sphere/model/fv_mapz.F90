@@ -33,7 +33,7 @@ module fv_mapz_mod
   use fv_timing_mod,     only: timing_on, timing_off
   use fv_mp_mod,         only: is_master
   use fv_cmp_mod,        only: qs_init, fv_sat_adj
-  use fv_diagnostics_mod, only: prt_mxm
+!  use fv_diagnostics_mod, only: prt_mxm
 
   implicit none
   real, parameter:: consv_min= 0.001   ! below which no correction applies
@@ -184,7 +184,7 @@ contains
   endif
 
     if ( flagstruct%fv_debug ) then
-         call prt_mxm('remap-0  PT',  pt, is, ie, js, je, ng, km, 1., gridstruct%area_64, domain)
+         !call prt_mxm('remap-0  PT',  pt, is, ie, js, je, ng, km, 1., gridstruct%area_64, domain)
     endif
 
        k1k = rdgas/cv_air   ! akap / (1.-akap) = rg/Cv=0.4
@@ -628,9 +628,9 @@ contains
 
     if ( flagstruct%fv_debug ) then
       if (kord_tm < 0) then
-         call prt_mxm('remap-1  TV',  pt, is, ie, js, je, ng, km, 1., gridstruct%area_64, domain)
+         !call prt_mxm('remap-1  TV',  pt, is, ie, js, je, ng, km, 1., gridstruct%area_64, domain)
       else
-         call prt_mxm('remap-1  PT',  pt, is, ie, js, je, ng, km, 1., gridstruct%area_64, domain)
+         !call prt_mxm('remap-1  PT',  pt, is, ie, js, je, ng, km, 1., gridstruct%area_64, domain)
       endif
     endif
 
@@ -921,7 +921,7 @@ endif        ! end last_step check
          enddo
       endif
       if ( flagstruct%fv_debug ) then
-         call prt_mxm('remap-3  TA',  pt, is, ie, js, je, ng, km, 1., gridstruct%area_64, domain)
+         !call prt_mxm('remap-3  TA',  pt, is, ie, js, je, ng, km, 1., gridstruct%area_64, domain)
       endif
     else  ! not last_step
       if (remap_t) then
@@ -953,7 +953,7 @@ endif        ! end last_step check
          enddo
       endif
       if ( flagstruct%fv_debug ) then
-         call prt_mxm('remap-3  PT',  pt, is, ie, js, je, ng, km, 1., gridstruct%area_64, domain)
+         !call prt_mxm('remap-3  PT',  pt, is, ie, js, je, ng, km, 1., gridstruct%area_64, domain)
       endif
     endif ! last_step
 !$OMP end parallel

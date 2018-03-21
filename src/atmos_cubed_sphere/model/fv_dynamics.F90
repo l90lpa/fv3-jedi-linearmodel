@@ -39,16 +39,16 @@ module fv_dynamics_mod
    use boundary_mod,        only: nested_grid_BC_apply_intT
    use fv_arrays_mod,       only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_grid_bounds_type
    use fv_nwp_nudge_mod,    only: do_adiabatic_init
-#ifdef MAPL_MODE
-   use fv_control_mod,      only: dyn_timer, comm_timer
-#endif
+!#ifdef MAPL_MODE
+!   use fv_control_mod,      only: dyn_timer, comm_timer
+!#endif
 
 implicit none
 
-#ifdef MAPL_MODE
-  ! Include the MPI library definitons:
-  include 'mpif.h'
-#endif
+!#ifdef MAPL_MODE
+!  ! Include the MPI library definitons:
+!  include 'mpif.h'
+!#endif
 
    logical :: RF_initialized = .false.
    logical :: bad_range = .false.
@@ -182,8 +182,8 @@ contains
       jsd = bd%jsd
       jed = bd%jed
 
-      dyn_timer = 0
-      comm_timer = 0
+!      dyn_timer = 0
+!      comm_timer = 0
 
 !     cv_air =  cp_air - rdgas
       agrav = 1. / grav
@@ -764,10 +764,10 @@ contains
                          -50., 100., bad_range)
   endif
 
-#ifdef MAPL_MODE
-  t2 = MPI_Wtime(status)
-  dyn_timer = dyn_timer + (t2-t1)
-#endif
+!#ifdef MAPL_MODE
+!  t2 = MPI_Wtime(status)
+!  dyn_timer = dyn_timer + (t2-t1)
+!#endif
   end subroutine fv_dynamics
 
 
