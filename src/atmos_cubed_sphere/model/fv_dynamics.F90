@@ -194,10 +194,10 @@ contains
       rdg = -rdgas * agrav
       allocate ( dp1(isd:ied, jsd:jed, 1:npz) )
       
-#ifdef MAPL_MODE
-! Begin Dynamics timer for GEOS history processing
-      t1 = MPI_Wtime(status)
-#endif
+!#ifdef MAPL_MODE
+!! Begin Dynamics timer for GEOS history processing
+!      t1 = MPI_Wtime(status)
+!#endif
 #ifdef MOIST_CAPPA
       allocate ( cappa(isd:ied,jsd:jed,npz) )
       call init_ijk_mem(isd,ied, jsd,jed, npz, cappa, 0.)
