@@ -119,11 +119,11 @@ contains
       if ( present(use_geos_latlon_restart)) then
          if (allocated(Atm(1)%q)) deallocate( Atm(1)%q )
          allocate  ( Atm(1)%q(isd:ied,jsd:jed,Atm(1)%npz,Atm(1)%ncnst) )
-         call get_geos_latlon_ic( Atm, fv_domain, Atm(1)%ncnst, ntracers )
+         !call get_geos_latlon_ic( Atm, fv_domain, Atm(1)%ncnst, ntracers )
       elseif ( present(use_geos_cubed_restart)) then
          if (allocated(Atm(1)%q)) deallocate( Atm(1)%q )
          allocate  ( Atm(1)%q(isd:ied,jsd:jed,Atm(1)%npz,Atm(1)%ncnst) )
-         call get_geos_cubed_ic( Atm, fv_domain, Atm(1)%ncnst, ntracers )
+         !call get_geos_cubed_ic( Atm, fv_domain, Atm(1)%ncnst, ntracers )
       else
          if ( Atm(1)%flagstruct%ncep_ic ) then
             nq = 1
