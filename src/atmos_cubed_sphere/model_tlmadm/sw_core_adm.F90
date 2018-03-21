@@ -85,11 +85,6 @@
 & divergence_corner_nest_bwd
   PUBLIC d2a2c_vect
   PUBLIC d2a2c_vect_fwd, d2a2c_vect_bwd
-  EXTERNAL D_SW_ADM
-  EXTERNAL DIVERGENCE_CORNER_NEST_ADM
-  EXTERNAL DIVERGENCE_CORNER_ADM
-  EXTERNAL C_SW_ADM
-  EXTERNAL FILL_4CORNERS_ADM
 
 CONTAINS
 !  Differentiation of c_sw in reverse (adjoint) mode, forward sweep (with options split(a2b_edge_mod.a2b_ord4 a2b_edge_mod.a2b
