@@ -37,8 +37,6 @@ atmos_cubed_sphere/model_tlmadm/fv_mp_adm.F90
 atmos_cubed_sphere/model_tlmadm/fv_mp_tlm.F90
 atmos_cubed_sphere/model_tlmadm/fv_nesting_adm.F90
 atmos_cubed_sphere/model_tlmadm/fv_nesting_tlm.F90
-atmos_cubed_sphere/model_tlmadm/fv_pressures_adm.F90
-atmos_cubed_sphere/model_tlmadm/fv_pressures_tlm.F90
 atmos_cubed_sphere/model_tlmadm/fv_restart_adm.F90
 atmos_cubed_sphere/model_tlmadm/fv_restart_tlm.F90
 atmos_cubed_sphere/model_tlmadm/fv_sg_adm.F90
