@@ -42,8 +42,8 @@ public :: tracer_2d_tlm, tracer_2d_nested_tlm, tracer_2d_1L_tlm
 real, allocatable, dimension(:,:,:) :: nest_fx_west_accum, nest_fx_east_accum, nest_fx_south_accum, nest_fx_north_accum
 
 !---- version number -----
-   character(len=128) :: version = '$Id: fv_tracer2d_tlm.F90,v 1.3 2017/11/13 21:58:44 drholdaw Exp $'
-   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_18_0_vlabfv3pert $'
+   character(len=128) :: version = '$Id: fv_tracer2d_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
+   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of tracer_2d_1l in forward (tangent) mode:
@@ -291,12 +291,12 @@ CONTAINS
       DO j=jsd,jed
         DO i=is,ie
           ra_x_tl(i, j) = xfx_tl(i, j, k) - xfx_tl(i+1, j, k)
-          ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+          ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
         END DO
         IF (j .GE. js .AND. j .LE. je) THEN
           DO i=isd,ied
             ra_y_tl(i, j) = yfx_tl(i, j, k) - yfx_tl(i, j+1, k)
-            ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+            ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
           END DO
         END IF
       END DO
@@ -307,8 +307,8 @@ CONTAINS
           DO i=is,ie
             dp2_tl(i, j) = dp1_tl(i, j, k) + rarea(i, j)*(mfx_tl(i, j, k&
 &             )-mfx_tl(i+1, j, k)+mfy_tl(i, j, k)-mfy_tl(i, j+1, k))
-            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+mfy(&
-&             i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(mfy&
+&             (i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
           END DO
         END DO
 !$OMP parallel do default(none) shared(k,nsplt,it,is,ie,js,je,isd,ied,jsd,jed,npx,npy,cx,xfx,hord,trdm, &
@@ -360,12 +360,12 @@ CONTAINS
                   qn2_tl(i, j, iq) = ((qn2_tl(i, j, iq)*dp1(i, j, k)+qn2&
 &                   (i, j, iq)*dp1_tl(i, j, k)+rarea(i, j)*(fx_tl(i, j)-&
 &                   fx_tl(i+1, j)+fy_tl(i, j)-fy_tl(i, j+1)))*dp2(i, j)-&
-&                   (qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)-fx(i+1, j)+fy(&
-&                   i, j)-fy(i, j+1))*rarea(i, j))*dp2_tl(i, j))/dp2(i, &
-&                   j)**2
+&                   (qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)-fx(i+1, j)+(fy&
+&                   (i, j)-fy(i, j+1)))*rarea(i, j))*dp2_tl(i, j))/dp2(i&
+&                   , j)**2
                   qn2(i, j, iq) = (qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                   fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, &
-&                   j)
+&                   fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i&
+&                   , j)
                 END DO
               END DO
             ELSE
@@ -375,11 +375,11 @@ CONTAINS
 &                   qn2(i, j, iq)*dp1_tl(i, j, k)+rarea(i, j)*(fx_tl(i, &
 &                   j)-fx_tl(i+1, j)+fy_tl(i, j)-fy_tl(i, j+1)))*dp2(i, &
 &                   j)-(qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)-fx(i+1, j)+&
-&                   fy(i, j)-fy(i, j+1))*rarea(i, j))*dp2_tl(i, j))/dp2(&
-&                   i, j)**2
+&                   (fy(i, j)-fy(i, j+1)))*rarea(i, j))*dp2_tl(i, j))/&
+&                   dp2(i, j)**2
                   q(i, j, k, iq) = (qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)&
-&                   -fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i&
-&                   , j)
+&                   -fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(&
+&                   i, j)
                 END DO
               END DO
             END IF
@@ -418,10 +418,12 @@ CONTAINS
                 q_tl(i, j, k, iq) = ((q_tl(i, j, k, iq)*dp1(i, j, k)+q(i&
 &                 , j, k, iq)*dp1_tl(i, j, k)+rarea(i, j)*(fx_tl(i, j)-&
 &                 fx_tl(i+1, j)+fy_tl(i, j)-fy_tl(i, j+1)))*dp2(i, j)-(q&
-&                 (i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-fx(i+1, j)+fy(i, &
-&                 j)-fy(i, j+1))*rarea(i, j))*dp2_tl(i, j))/dp2(i, j)**2
+&                 (i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-fx(i+1, j)+(fy(i&
+&                 , j)-fy(i, j+1)))*rarea(i, j))*dp2_tl(i, j))/dp2(i, j)&
+&                 **2
                 q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                 fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&                 fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, &
+&                 j)
               END DO
             END DO
           END IF
@@ -652,11 +654,11 @@ CONTAINS
 !$OMP parallel do default(none) shared(k,is,ie,js,je,isd,ied,jsd,jed,xfx,area,yfx,ra_x,ra_y)
       DO j=jsd,jed
         DO i=is,ie
-          ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+          ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
         END DO
         IF (j .GE. js .AND. j .LE. je) THEN
           DO i=isd,ied
-            ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+            ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
           END DO
         END IF
       END DO
@@ -665,8 +667,8 @@ CONTAINS
 !$OMP parallel do default(none) shared(k,is,ie,js,je,rarea,mfx,mfy,dp1,dp2)
         DO j=js,je
           DO i=is,ie
-            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+mfy(&
-&             i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(mfy&
+&             (i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
           END DO
         END DO
 !$OMP parallel do default(none) shared(k,nsplt,it,is,ie,js,je,isd,ied,jsd,jed,npx,npy,cx,xfx,hord,trdm, &
@@ -698,16 +700,16 @@ CONTAINS
               DO j=js,je
                 DO i=is,ie
                   qn2(i, j, iq) = (qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                   fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, &
-&                   j)
+&                   fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i&
+&                   , j)
                 END DO
               END DO
             ELSE
               DO j=js,je
                 DO i=is,ie
                   q(i, j, k, iq) = (qn2(i, j, iq)*dp1(i, j, k)+(fx(i, j)&
-&                   -fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i&
-&                   , j)
+&                   -fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(&
+&                   i, j)
                 END DO
               END DO
             END IF
@@ -727,7 +729,8 @@ CONTAINS
             DO j=js,je
               DO i=is,ie
                 q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                 fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&                 fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, &
+&                 j)
               END DO
             END DO
           END IF
@@ -1027,25 +1030,25 @@ CONTAINS
               dp2_tl(i, j) = dp1_tl(i, j, k) + rarea(i, j)*(mfx_tl(i, j&
 &               , k)-mfx_tl(i+1, j, k)+mfy_tl(i, j, k)-mfy_tl(i, j+1, k)&
 &               )
-              dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+&
-&               mfy(i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+              dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(&
+&               mfy(i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
             END DO
           END DO
           DO j=jsd,jed
             DO i=is,ie
               ra_x_tl(i, j) = xfx_tl(i, j, k) - xfx_tl(i+1, j, k)
-              ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+              ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
             END DO
           END DO
           DO j=js,je
             DO i=isd,ied
               ra_y_tl(i, j) = yfx_tl(i, j, k) - yfx_tl(i, j+1, k)
-              ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+              ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
             END DO
           END DO
           DO iq=1,nq
-            IF (hord .EQ. hord_pert .AND. (.NOT.split_damp_tr)) THEN
-              IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+            IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+              IF (hord .EQ. hord_pert) THEN
                 CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(&
 &                              isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd&
 &                              :jed, k), cx_tl(is:ie+1, jsd:jed, k), cy(&
@@ -1062,69 +1065,65 @@ CONTAINS
 &                              , k), mass_tl=dp1_tl(isd:ied, jsd:jed, k)&
 &                              , nord=nord_tr, damp_c=trdm)
               ELSE
-                CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(&
-&                              isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd&
-&                              :jed, k), cx_tl(is:ie+1, jsd:jed, k), cy(&
-&                              isd:ied, js:je+1, k), cy_tl(isd:ied, js:&
-&                              je+1, k), npx, npy, hord, fx, fx_tl, fy, &
-&                              fy_tl, xfx(is:ie+1, jsd:jed, k), xfx_tl(&
-&                              is:ie+1, jsd:jed, k), yfx(isd:ied, js:je+&
-&                              1, k), yfx_tl(isd:ied, js:je+1, k), &
-&                              gridstruct, bd, ra_x, ra_x_tl, ra_y, &
-&                              ra_y_tl, mfx=mfx(is:ie+1, js:je, k), &
-&                              mfx_tl=mfx_tl(is:ie+1, js:je, k), mfy=mfy&
-&                              (is:ie, js:je+1, k), mfy_tl=mfy_tl(is:ie&
-&                              , js:je+1, k))
+                CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:&
+&                           ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k&
+&                           ), cx_tl(is:ie+1, jsd:jed, k), cy(isd:ied, &
+&                           js:je+1, k), cy_tl(isd:ied, js:je+1, k), npx&
+&                           , npy, hord_pert, fx, fx_tl, fy, fy_tl, xfx(&
+&                           is:ie+1, jsd:jed, k), xfx_tl(is:ie+1, jsd:&
+&                           jed, k), yfx(isd:ied, js:je+1, k), yfx_tl(&
+&                           isd:ied, js:je+1, k), gridstruct, bd, ra_x, &
+&                           ra_x_tl, ra_y, ra_y_tl, mfx=mfx(is:ie+1, js:&
+&                           je, k), mfx_tl=mfx_tl(is:ie+1, js:je, k), &
+&                           mfy=mfy(is:ie, js:je+1, k), mfy_tl=mfy_tl(is&
+&                           :ie, js:je+1, k), mass=dp1(isd:ied, jsd:jed&
+&                           , k), mass_tl=dp1_tl(isd:ied, jsd:jed, k), &
+&                           nord=nord_tr_pert, damp_c=trdm_pert)
+      call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
+                    npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
+                    gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k),   &
+                    mass=dp1(isd:ied,jsd:jed,k), nord=nord_tr, damp_c=trdm)
               END IF
-            ELSE 
-              IF (it .EQ. 1 .AND. trdm_pert .GT. 1.e-4) THEN
-                CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:ied&
-&                           , jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k), &
-&                           cx_tl(is:ie+1, jsd:jed, k), cy(isd:ied, js:je+&
-&                           1, k), cy_tl(isd:ied, js:je+1, k), npx, npy, &
-&                           hord_pert, fx, fx_tl, fy, fy_tl, xfx(is:ie+1, &
-&                           jsd:jed, k), xfx_tl(is:ie+1, jsd:jed, k), yfx(&
-&                           isd:ied, js:je+1, k), yfx_tl(isd:ied, js:je+1&
-&                           , k), gridstruct, bd, ra_x, ra_x_tl, ra_y, &
-&                           ra_y_tl, mfx=mfx(is:ie+1, js:je, k), mfx_tl=&
-&                           mfx_tl(is:ie+1, js:je, k), mfy=mfy(is:ie, js:&
-&                           je+1, k), mfy_tl=mfy_tl(is:ie, js:je+1, k), &
-&                           mass=dp1(isd:ied, jsd:jed, k), mass_tl=dp1_tl(&
-&                           isd:ied, jsd:jed, k), nord=nord_tr_pert, &
-&                           damp_c=trdm_pert)
-              ELSE
-                CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:ied&
-&                           , jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k), &
-&                           cx_tl(is:ie+1, jsd:jed, k), cy(isd:ied, js:je+&
-&                           1, k), cy_tl(isd:ied, js:je+1, k), npx, npy, &
-&                           hord_pert, fx, fx_tl, fy, fy_tl, xfx(is:ie+1, &
-&                           jsd:jed, k), xfx_tl(is:ie+1, jsd:jed, k), yfx(&
-&                           isd:ied, js:je+1, k), yfx_tl(isd:ied, js:je+1&
-&                           , k), gridstruct, bd, ra_x, ra_x_tl, ra_y, &
-&                           ra_y_tl, mfx=mfx(is:ie+1, js:je, k), mfx_tl=&
-&                           mfx_tl(is:ie+1, js:je, k), mfy=mfy(is:ie, js:&
-&                           je+1, k), mfy_tl=mfy_tl(is:ie, js:je+1, k))
-              END IF
-              if ( it==1 .and. trdm>1.e-4 ) then
-                 call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
-                               npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
-                               gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k),   &
-                               mass=dp1(isd:ied,jsd:jed,k), nord=nord_tr, damp_c=trdm)
-              else
-                 call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
-                               npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
-                               gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k))
-              endif
+            ELSE IF (hord .EQ. hord_pert) THEN
+              CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:&
+&                            ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, &
+&                            k), cx_tl(is:ie+1, jsd:jed, k), cy(isd:ied&
+&                            , js:je+1, k), cy_tl(isd:ied, js:je+1, k), &
+&                            npx, npy, hord, fx, fx_tl, fy, fy_tl, xfx(&
+&                            is:ie+1, jsd:jed, k), xfx_tl(is:ie+1, jsd:&
+&                            jed, k), yfx(isd:ied, js:je+1, k), yfx_tl(&
+&                            isd:ied, js:je+1, k), gridstruct, bd, ra_x&
+&                            , ra_x_tl, ra_y, ra_y_tl, mfx=mfx(is:ie+1, &
+&                            js:je, k), mfx_tl=mfx_tl(is:ie+1, js:je, k)&
+&                            , mfy=mfy(is:ie, js:je+1, k), mfy_tl=mfy_tl&
+&                            (is:ie, js:je+1, k))
+            ELSE
+              CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:ied&
+&                         , jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k), &
+&                         cx_tl(is:ie+1, jsd:jed, k), cy(isd:ied, js:je+&
+&                         1, k), cy_tl(isd:ied, js:je+1, k), npx, npy, &
+&                         hord_pert, fx, fx_tl, fy, fy_tl, xfx(is:ie+1, &
+&                         jsd:jed, k), xfx_tl(is:ie+1, jsd:jed, k), yfx(&
+&                         isd:ied, js:je+1, k), yfx_tl(isd:ied, js:je+1&
+&                         , k), gridstruct, bd, ra_x, ra_x_tl, ra_y, &
+&                         ra_y_tl, mfx=mfx(is:ie+1, js:je, k), mfx_tl=&
+&                         mfx_tl(is:ie+1, js:je, k), mfy=mfy(is:ie, js:&
+&                         je+1, k), mfy_tl=mfy_tl(is:ie, js:je+1, k))
+      call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
+                    npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
+                    gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k))
             END IF
             DO j=js,je
               DO i=is,ie
                 q_tl(i, j, k, iq) = ((q_tl(i, j, k, iq)*dp1(i, j, k)+q(i&
 &                 , j, k, iq)*dp1_tl(i, j, k)+rarea(i, j)*(fx_tl(i, j)-&
 &                 fx_tl(i+1, j)+fy_tl(i, j)-fy_tl(i, j+1)))*dp2(i, j)-(q&
-&                 (i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-fx(i+1, j)+fy(i, &
-&                 j)-fy(i, j+1))*rarea(i, j))*dp2_tl(i, j))/dp2(i, j)**2
+&                 (i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-fx(i+1, j)+(fy(i&
+&                 , j)-fy(i, j+1)))*rarea(i, j))*dp2_tl(i, j))/dp2(i, j)&
+&                 **2
                 q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                 fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&                 fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, &
+&                 j)
               END DO
             END DO
           END DO
@@ -1378,23 +1377,23 @@ CONTAINS
         IF (it .LE. ksplt(k)) THEN
           DO j=js,je
             DO i=is,ie
-              dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+&
-&               mfy(i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+              dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(&
+&               mfy(i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
             END DO
           END DO
           DO j=jsd,jed
             DO i=is,ie
-              ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+              ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
             END DO
           END DO
           DO j=js,je
             DO i=isd,ied
-              ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+              ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
             END DO
           END DO
           DO iq=1,nq
-            IF (hord .EQ. hord_pert .AND. (.NOT.split_damp_tr)) THEN
-              IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+            IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+              IF (hord .EQ. hord_pert) THEN
                 CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1&
 &                          , jsd:jed, k), cy(isd:ied, js:je+1, k), npx, &
 &                          npy, hord, fx, fy, xfx(is:ie+1, jsd:jed, k), &
@@ -1403,27 +1402,28 @@ CONTAINS
 &                          , js:je+1, k), dp1(isd:ied, jsd:jed, k), &
 &                          nord_tr, trdm)
               ELSE
-                CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1&
-&                          , jsd:jed, k), cy(isd:ied, js:je+1, k), npx, &
-&                          npy, hord, fx, fy, xfx(is:ie+1, jsd:jed, k), &
-&                          yfx(isd:ied, js:je+1, k), gridstruct, bd, &
-&                          ra_x, ra_y, mfx=mfx(is:ie+1, js:je, k), mfy=&
-&                          mfy(is:ie, js:je+1, k))
+      call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
+                    npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
+                    gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k),   &
+                    mass=dp1(isd:ied,jsd:jed,k), nord=nord_tr, damp_c=trdm)
               END IF
-            ELSE if ( it==1 .and. trdm>1.e-4 ) then
-              call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
-                            npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
-                            gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k),   &
-                            mass=dp1(isd:ied,jsd:jed,k), nord=nord_tr, damp_c=trdm)
-            else
-              call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
-                            npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
-                            gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k))
-            endif
+            ELSE IF (hord .EQ. hord_pert) THEN
+              CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, &
+&                        jsd:jed, k), cy(isd:ied, js:je+1, k), npx, npy&
+&                        , hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
+&                        isd:ied, js:je+1, k), gridstruct, bd, ra_x, &
+&                        ra_y, mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie&
+&                        , js:je+1, k))
+            ELSE
+      call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
+                    npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
+                    gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k))
+            END IF
             DO j=js,je
               DO i=is,ie
                 q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-&
-&                 fx(i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&                 fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, &
+&                 j)
               END DO
             END DO
           END DO
@@ -1739,25 +1739,25 @@ CONTAINS
           DO i=is,ie
             dp2_tl(i, j) = dp1_tl(i, j, k) + rarea(i, j)*(mfx_tl(i, j, k&
 &             )-mfx_tl(i+1, j, k)+mfy_tl(i, j, k)-mfy_tl(i, j+1, k))
-            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+mfy(&
-&             i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(mfy&
+&             (i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
           END DO
         END DO
         DO j=jsd,jed
           DO i=is,ie
             ra_x_tl(i, j) = xfx_tl(i, j, k) - xfx_tl(i+1, j, k)
-            ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+            ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
           END DO
         END DO
         DO j=js,je
           DO i=isd,ied
             ra_y_tl(i, j) = yfx_tl(i, j, k) - yfx_tl(i, j+1, k)
-            ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+            ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
           END DO
         END DO
         DO iq=1,nq
-          IF (hord .EQ. hord_pert .AND. (.NOT.split_damp_tr)) THEN
-            IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+          IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+            IF (hord .EQ. hord_pert) THEN
               CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:&
 &                            ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, &
 &                            k), cx_tl(is:ie+1, jsd:jed, k), cy(isd:ied&
@@ -1773,67 +1773,62 @@ CONTAINS
 &                            jed, k), mass_tl=dp1_tl(isd:ied, jsd:jed, k&
 &                            ), nord=nord_tr, damp_c=trdm)
             ELSE
-              CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:&
-&                            ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, &
-&                            k), cx_tl(is:ie+1, jsd:jed, k), cy(isd:ied&
-&                            , js:je+1, k), cy_tl(isd:ied, js:je+1, k), &
-&                            npx, npy, hord, fx, fx_tl, fy, fy_tl, xfx(&
-&                            is:ie+1, jsd:jed, k), xfx_tl(is:ie+1, jsd:&
-&                            jed, k), yfx(isd:ied, js:je+1, k), yfx_tl(&
-&                            isd:ied, js:je+1, k), gridstruct, bd, ra_x&
-&                            , ra_x_tl, ra_y, ra_y_tl, mfx=mfx(is:ie+1, &
-&                            js:je, k), mfx_tl=mfx_tl(is:ie+1, js:je, k)&
-&                            , mfy=mfy(is:ie, js:je+1, k), mfy_tl=mfy_tl&
-&                            (is:ie, js:je+1, k))
+              CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:ied&
+&                         , jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k), &
+&                         cx_tl(is:ie+1, jsd:jed, k), cy(isd:ied, js:je+&
+&                         1, k), cy_tl(isd:ied, js:je+1, k), npx, npy, &
+&                         hord_pert, fx, fx_tl, fy, fy_tl, xfx(is:ie+1, &
+&                         jsd:jed, k), xfx_tl(is:ie+1, jsd:jed, k), yfx(&
+&                         isd:ied, js:je+1, k), yfx_tl(isd:ied, js:je+1&
+&                         , k), gridstruct, bd, ra_x, ra_x_tl, ra_y, &
+&                         ra_y_tl, mfx=mfx(is:ie+1, js:je, k), mfx_tl=&
+&                         mfx_tl(is:ie+1, js:je, k), mfy=mfy(is:ie, js:&
+&                         je+1, k), mfy_tl=mfy_tl(is:ie, js:je+1, k), &
+&                         mass=dp1(isd:ied, jsd:jed, k), mass_tl=dp1_tl(&
+&                         isd:ied, jsd:jed, k), nord=nord_tr_pert, &
+&                         damp_c=trdm_pert)
+       call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
+                    npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
+                    gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k),   &
+                    mass=dp1(isd:ied,jsd:jed,k), nord=nord_tr, damp_c=trdm) 
             END IF
+          ELSE IF (hord .EQ. hord_pert) THEN
+            CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:&
+&                          ied, jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k)&
+&                          , cx_tl(is:ie+1, jsd:jed, k), cy(isd:ied, js:&
+&                          je+1, k), cy_tl(isd:ied, js:je+1, k), npx, &
+&                          npy, hord, fx, fx_tl, fy, fy_tl, xfx(is:ie+1&
+&                          , jsd:jed, k), xfx_tl(is:ie+1, jsd:jed, k), &
+&                          yfx(isd:ied, js:je+1, k), yfx_tl(isd:ied, js:&
+&                          je+1, k), gridstruct, bd, ra_x, ra_x_tl, ra_y&
+&                          , ra_y_tl, mfx=mfx(is:ie+1, js:je, k), mfx_tl&
+&                          =mfx_tl(is:ie+1, js:je, k), mfy=mfy(is:ie, js&
+&                          :je+1, k), mfy_tl=mfy_tl(is:ie, js:je+1, k))
           ELSE
-            IF (it .EQ. 1 .AND. trdm_pert .GT. 1.e-4) THEN
-              CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:ied, &
-&                         jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k), cx_tl(&
-&                         is:ie+1, jsd:jed, k), cy(isd:ied, js:je+1, k), &
-&                         cy_tl(isd:ied, js:je+1, k), npx, npy, hord_pert&
-&                         , fx, fx_tl, fy, fy_tl, xfx(is:ie+1, jsd:jed, k)&
-&                         , xfx_tl(is:ie+1, jsd:jed, k), yfx(isd:ied, js:&
-&                         je+1, k), yfx_tl(isd:ied, js:je+1, k), &
-&                         gridstruct, bd, ra_x, ra_x_tl, ra_y, ra_y_tl, &
-&                         mfx=mfx(is:ie+1, js:je, k), mfx_tl=mfx_tl(is:ie+&
-&                         1, js:je, k), mfy=mfy(is:ie, js:je+1, k), mfy_tl&
-&                         =mfy_tl(is:ie, js:je+1, k), mass=dp1(isd:ied, &
-&                         jsd:jed, k), mass_tl=dp1_tl(isd:ied, jsd:jed, k)&
-&                         , nord=nord_tr_pert, damp_c=trdm_pert)
-            ELSE
-              CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:ied, &
-&                         jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k), cx_tl(&
-&                         is:ie+1, jsd:jed, k), cy(isd:ied, js:je+1, k), &
-&                         cy_tl(isd:ied, js:je+1, k), npx, npy, hord_pert&
-&                         , fx, fx_tl, fy, fy_tl, xfx(is:ie+1, jsd:jed, k)&
-&                         , xfx_tl(is:ie+1, jsd:jed, k), yfx(isd:ied, js:&
-&                         je+1, k), yfx_tl(isd:ied, js:je+1, k), &
-&                         gridstruct, bd, ra_x, ra_x_tl, ra_y, ra_y_tl, &
-&                         mfx=mfx(is:ie+1, js:je, k), mfx_tl=mfx_tl(is:ie+&
-&                         1, js:je, k), mfy=mfy(is:ie, js:je+1, k), mfy_tl&
-&                         =mfy_tl(is:ie, js:je+1, k))
-            END IF
-            if ( it==1 .and. trdm>1.e-4 ) then
-               call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
-                             npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
-                             gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k),   &
-                             mass=dp1(isd:ied,jsd:jed,k), nord=nord_tr, damp_c=trdm)
-            else
-               call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
-                             npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
-                             gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k))
-            endif
+            CALL FV_TP_2D_TLM(q(isd:ied, jsd:jed, k, iq), q_tl(isd:ied, &
+&                       jsd:jed, k, iq), cx(is:ie+1, jsd:jed, k), cx_tl(&
+&                       is:ie+1, jsd:jed, k), cy(isd:ied, js:je+1, k), &
+&                       cy_tl(isd:ied, js:je+1, k), npx, npy, hord_pert&
+&                       , fx, fx_tl, fy, fy_tl, xfx(is:ie+1, jsd:jed, k)&
+&                       , xfx_tl(is:ie+1, jsd:jed, k), yfx(isd:ied, js:&
+&                       je+1, k), yfx_tl(isd:ied, js:je+1, k), &
+&                       gridstruct, bd, ra_x, ra_x_tl, ra_y, ra_y_tl, &
+&                       mfx=mfx(is:ie+1, js:je, k), mfx_tl=mfx_tl(is:ie+&
+&                       1, js:je, k), mfy=mfy(is:ie, js:je+1, k), mfy_tl&
+&                       =mfy_tl(is:ie, js:je+1, k))
+      call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
+                   npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
+                   gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k)) 
           END IF
           DO j=js,je
             DO i=is,ie
               q_tl(i, j, k, iq) = ((q_tl(i, j, k, iq)*dp1(i, j, k)+q(i, &
 &               j, k, iq)*dp1_tl(i, j, k)+rarea(i, j)*(fx_tl(i, j)-fx_tl&
 &               (i+1, j)+fy_tl(i, j)-fy_tl(i, j+1)))*dp2(i, j)-(q(i, j, &
-&               k, iq)*dp1(i, j, k)+(fx(i, j)-fx(i+1, j)+fy(i, j)-fy(i, &
-&               j+1))*rarea(i, j))*dp2_tl(i, j))/dp2(i, j)**2
+&               k, iq)*dp1(i, j, k)+(fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i&
+&               , j+1)))*rarea(i, j))*dp2_tl(i, j))/dp2(i, j)**2
               q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-fx&
-&               (i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&               (i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, j)
             END DO
           END DO
         END DO
@@ -1868,8 +1863,8 @@ CONTAINS
           DO i=is,ie
             dp1_tl(i, j, k) = rarea(i, j)*rdt*(xfx_tl(i+1, j, k)-xfx_tl(&
 &             i, j, k)+yfx_tl(i, j+1, k)-yfx_tl(i, j, k))
-            dp1(i, j, k) = (xfx(i+1, j, k)-xfx(i, j, k)+yfx(i, j+1, k)-&
-&             yfx(i, j, k))*rarea(i, j)*rdt
+            dp1(i, j, k) = (xfx(i+1, j, k)-xfx(i, j, k)+(yfx(i, j+1, k)-&
+&             yfx(i, j, k)))*rarea(i, j)*rdt
           END DO
         END DO
       END DO
@@ -2119,23 +2114,23 @@ CONTAINS
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
-            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+mfy(&
-&             i, j, k)-mfy(i, j+1, k))*rarea(i, j)
+            dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(mfy&
+&             (i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
           END DO
         END DO
         DO j=jsd,jed
           DO i=is,ie
-            ra_x(i, j) = area(i, j) + xfx(i, j, k) - xfx(i+1, j, k)
+            ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
           END DO
         END DO
         DO j=js,je
           DO i=isd,ied
-            ra_y(i, j) = area(i, j) + yfx(i, j, k) - yfx(i, j+1, k)
+            ra_y(i, j) = area(i, j) + (yfx(i, j, k)-yfx(i, j+1, k))
           END DO
         END DO
         DO iq=1,nq
-          IF (hord .EQ. hord_pert .AND. (.NOT.split_damp_tr)) THEN
-            IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+          IF (it .EQ. 1 .AND. trdm .GT. 1.e-4) THEN
+            IF (hord .EQ. hord_pert) THEN
               CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, &
 &                        jsd:jed, k), cy(isd:ied, js:je+1, k), npx, npy&
 &                        , hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
@@ -2143,27 +2138,26 @@ CONTAINS
 &                        ra_y, mfx(is:ie+1, js:je, k), mfy(is:ie, js:je+&
 &                        1, k), dp1(isd:ied, jsd:jed, k), nord_tr, trdm)
             ELSE
-              CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, &
-&                        jsd:jed, k), cy(isd:ied, js:je+1, k), npx, npy&
-&                        , hord, fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(&
-&                        isd:ied, js:je+1, k), gridstruct, bd, ra_x, &
-&                        ra_y, mfx=mfx(is:ie+1, js:je, k), mfy=mfy(is:ie&
-&                        , js:je+1, k))
+       call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
+                    npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
+                    gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k),   &
+                    mass=dp1(isd:ied,jsd:jed,k), nord=nord_tr, damp_c=trdm) 
             END IF
-          ELSE if ( it==1 .and. trdm>1.e-4 ) then
-            call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
-                          npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
-                          gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k),   &
-                          mass=dp1(isd:ied,jsd:jed,k), nord=nord_tr, damp_c=trdm)
-          else
-            call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
-                          npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
-                          gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k))
-          endif
+          ELSE IF (hord .EQ. hord_pert) THEN
+            CALL FV_TP_2D(q(isd:ied, jsd:jed, k, iq), cx(is:ie+1, jsd&
+&                      :jed, k), cy(isd:ied, js:je+1, k), npx, npy, hord&
+&                      , fx, fy, xfx(is:ie+1, jsd:jed, k), yfx(isd:ied, &
+&                      js:je+1, k), gridstruct, bd, ra_x, ra_y, mfx=mfx(&
+&                      is:ie+1, js:je, k), mfy=mfy(is:ie, js:je+1, k))
+          ELSE
+      call fv_tp_2d(q(isd:ied,jsd:jed,k,iq), cx(is:ie+1,jsd:jed,k), cy(isd:ied,js:je+1,k), &
+                   npx, npy, hord, fx, fy, xfx(is:ie+1,jsd:jed,k), yfx(isd:ied,js:je+1,k), &
+                   gridstruct, bd, ra_x, ra_y, mfx=mfx(is:ie+1,js:je,k), mfy=mfy(is:ie,js:je+1,k)) 
+          END IF
           DO j=js,je
             DO i=is,ie
               q(i, j, k, iq) = (q(i, j, k, iq)*dp1(i, j, k)+(fx(i, j)-fx&
-&               (i+1, j)+fy(i, j)-fy(i, j+1))*rarea(i, j))/dp2(i, j)
+&               (i+1, j)+(fy(i, j)-fy(i, j+1)))*rarea(i, j))/dp2(i, j)
             END DO
           END DO
         END DO
@@ -2194,8 +2188,8 @@ CONTAINS
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
-            dp1(i, j, k) = (xfx(i+1, j, k)-xfx(i, j, k)+yfx(i, j+1, k)-&
-&             yfx(i, j, k))*rarea(i, j)*rdt
+            dp1(i, j, k) = (xfx(i+1, j, k)-xfx(i, j, k)+(yfx(i, j+1, k)-&
+&             yfx(i, j, k)))*rarea(i, j)*rdt
           END DO
         END DO
       END DO

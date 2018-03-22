@@ -45,8 +45,8 @@ module a2b_edge_tlm_mod
   public :: a2b_ord2_tlm, a2b_ord4_tlm
 
 !---- version number -----
-  character(len=128) :: version = '$Id: a2b_edge_tlm.F90,v 1.2 2017/11/13 21:58:43 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_18_0_vlabfv3pert $'
+  character(len=128) :: version = '$Id: a2b_edge_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
   SUBROUTINE A2B_ORD4(qin, qout, gridstruct, npx, npy, is, ie, js, je, &

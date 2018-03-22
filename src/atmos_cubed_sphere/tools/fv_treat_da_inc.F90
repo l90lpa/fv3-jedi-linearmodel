@@ -28,12 +28,16 @@ module fv_treat_da_inc_mod
                                get_tracer_index
   use field_manager_mod, only: MODEL_ATMOS
 
+#ifndef MAPL_MODE
   use constants_mod,     only: pi=>pi_8, omega, grav, kappa, &
                                rdgas, rvgas, cp_air
+#else
+  use MAPL_MOD
+#endif
   use fv_arrays_mod,     only: fv_atmos_type, &
                                fv_grid_type, &
                                fv_grid_bounds_type, &
-                               R_GRID
+                               R_GRID,FVPRC
   use fv_grid_utils_mod, only: ptop_min, g_sum, &
                                mid_pt_sphere, get_unit_vect2, &
                                get_latlon_vector, inner_prod, &
@@ -44,6 +48,7 @@ module fv_treat_da_inc_mod
                                YDir, &
                                mp_reduce_min, &
                                mp_reduce_max
+#ifndef MAPL_MODE
   use sim_nc_mod,        only: open_ncfile, &
                                close_ncfile, &
                                get_ncdim1, &
@@ -51,12 +56,246 @@ module fv_treat_da_inc_mod
                                get_var2_real,   &
                                get_var3_r4, &
                                get_var1_real
+#endif
   implicit none
   private
 
-  public :: read_da_inc,remap_coef
+#ifdef MAPL_MODE
+  real, parameter :: RADIUS       = MAPL_RADIUS
+  real, parameter :: PI           = MAPL_PI_R8
+  real, parameter :: RDGAS        = MAPL_RGAS
+  real, parameter :: GRAV         = MAPL_GRAV
+  real, parameter :: HLV          = MAPL_ALHL
+  real, parameter :: CP_AIR       = MAPL_CP
+  real, parameter :: RVGAS        = MAPL_RVAP
+  real, parameter :: OMEGA        = MAPL_OMEGA
+  real, parameter :: KAPPA        = MAPL_KAPPA
+#endif
+
+#ifndef MAPL_MODE
+  public :: read_da_inc
+#else
+  public :: geos_get_da_increments
+#endif
 
 contains
+
+  subroutine geos_get_da_increments(Atm, fv_domain, lon,lat,im,jm,km, &
+                  u_amb, v_amb, t_amb, dp_amb, q_amb, o3_amb,  &
+                  u_inc, v_inc, t_inc, dp_inc, q_inc, o3_inc) 
+    type(fv_atmos_type), intent(inout) :: Atm(:)
+    type(domain2d),      intent(inout) :: fv_domain
+    real,                      intent(inout) :: lon(im), lat(jm)
+    real, dimension(im,jm,km), intent(inout) :: u_amb, v_amb, t_amb, dp_amb, q_amb, o3_amb
+    real, dimension(Atm(1)%bd%is:Atm(1)%bd%ie,Atm(1)%bd%js:Atm(1)%bd%je,Atm(1)%npz), intent(inout):: &
+                                                u_inc, v_inc, t_inc, dp_inc, q_inc, o3_inc
+
+    real, dimension(:,:)  , allocatable:: ut_inc, vt_inc
+    real, dimension(:,:,:), allocatable:: ud_inc, vd_inc, ua_inc, va_inc
+
+    real, allocatable:: pt_c(:,:,:), pt_d(:,:,:)
+    real:: s2c(Atm(1)%bd%is:Atm(1)%bd%ie,Atm(1)%bd%js:Atm(1)%bd%je,4)
+    real:: s2c_c(Atm(1)%bd%is:Atm(1)%bd%ie+1,Atm(1)%bd%js:Atm(1)%bd%je,4)
+    real:: s2c_d(Atm(1)%bd%is:Atm(1)%bd%ie,Atm(1)%bd%js:Atm(1)%bd%je+1,4)
+    integer, dimension(Atm(1)%bd%is:Atm(1)%bd%ie,Atm(1)%bd%js:Atm(1)%bd%je):: &
+        id1, id2, jdc
+    integer, dimension(Atm(1)%bd%is:Atm(1)%bd%ie+1,Atm(1)%bd%js:Atm(1)%bd%je)::&
+        id1_c, id2_c, jdc_c
+    integer, dimension(Atm(1)%bd%is:Atm(1)%bd%ie,Atm(1)%bd%js:Atm(1)%bd%je+1)::&
+        id1_d, id2_d, jdc_d
+    integer, parameter :: update_uv_ghost_cells=1
+    real :: tmp1d(im)
+
+    integer:: i, j, k, im, jm, km, npz
+    integer:: i1, i2, j1, IMsplit
+    real(kind=R_GRID), dimension(2):: p1, p2, p3
+    real(kind=R_GRID), dimension(3):: e1, e2, ex, ey
+
+    integer :: is,  ie,  js,  je
+    integer :: isd, ied, jsd, jed
+
+    is  = Atm(1)%bd%is
+    ie  = Atm(1)%bd%ie
+    js  = Atm(1)%bd%js
+    je  = Atm(1)%bd%je
+    isd = Atm(1)%bd%isd
+    ied = Atm(1)%bd%ied
+    jsd = Atm(1)%bd%jsd
+    jed = Atm(1)%bd%jed
+    npz = Atm(1)%npz
+
+  ! FV3 code wants lon 0:360
+    IMsplit = IM/2
+  ! Lons
+    tmp1d(        1:IMsplit) =          lon(IMsplit+1:IM     )    
+    tmp1d(IMsplit+1:IM     ) = 2.0*PI + lon(        1:IMsplit)
+    lon = tmp1d
+  ! ANA-BKG
+    do k=1,km
+      do j=1,jm
+      ! U
+        tmp1d(        1:IMsplit) = u_amb(IMsplit+1:IM     ,j,k)
+        tmp1d(IMsplit+1:IM     ) = u_amb(        1:IMsplit,j,k)
+        u_amb(:,j,k) = tmp1d
+      ! V
+        tmp1d(        1:IMsplit) = v_amb(IMsplit+1:IM     ,j,k)
+        tmp1d(IMsplit+1:IM     ) = v_amb(        1:IMsplit,j,k)
+        v_amb(:,j,k) = tmp1d
+      ! T
+        tmp1d(        1:IMsplit) = t_amb(IMsplit+1:IM     ,j,k)
+        tmp1d(IMsplit+1:IM     ) = t_amb(        1:IMsplit,j,k)
+        t_amb(:,j,k) = tmp1d
+      ! DP
+        tmp1d(        1:IMsplit) = dp_amb(IMsplit+1:IM     ,j,k)
+        tmp1d(IMsplit+1:IM     ) = dp_amb(        1:IMsplit,j,k)
+        dp_amb(:,j,k) = tmp1d
+      ! Q
+        tmp1d(        1:IMsplit) = q_amb(IMsplit+1:IM     ,j,k)
+        tmp1d(IMsplit+1:IM     ) = q_amb(        1:IMsplit,j,k)
+        q_amb(:,j,k) = tmp1d
+      ! O3
+        tmp1d(        1:IMsplit) = o3_amb(IMsplit+1:IM     ,j,k)
+        tmp1d(IMsplit+1:IM     ) = o3_amb(        1:IMsplit,j,k)
+        o3_amb(:,j,k) = tmp1d
+      enddo
+    enddo
+
+    ! Initialize lat-lon to Cubed bi-linear interpolation coeff:
+    call remap_coef( is, ie, js, je, isd, ied, jsd, jed, &
+        im, jm, lon, lat, id1, id2, jdc, s2c, &
+        Atm(1)%gridstruct%agrid)
+
+    ! perform increments on scalars
+    call get_inc_on_3d_scalar( t_amb, t_inc)
+    call get_inc_on_3d_scalar(dp_amb,dp_inc)
+    call get_inc_on_3d_scalar( q_amb, q_inc)
+    call get_inc_on_3d_scalar(o3_amb,o3_inc)
+
+    ! perform increments on winds
+    allocate (ud_inc(isd:ied  , jsd:jed+1, km))
+    allocate (vd_inc(isd:ied+1, jsd:jed  , km))
+    allocate (  pt_c(isd:ied+1, jsd:jed  ,  2))
+    allocate (  pt_d(isd:ied  , jsd:jed+1,  2))
+    allocate (ut_inc(is :ie+1 , js :je       ))
+    allocate (vt_inc(is :ie+1 , js :je       ))
+
+    call get_staggered_grid( &
+        is, ie, js, je, &
+        isd, ied, jsd, jed, &
+        Atm(1)%gridstruct%grid, pt_c, pt_d)
+
+    !------ pt_c part ------
+    ! Initialize lat-lon to Cubed bi-linear interpolation coeff:
+    call remap_coef( is, ie+1, js, je, isd, ied+1, jsd, jed, &
+        im, jm, lon, lat, id1_c, id2_c, jdc_c, s2c_c, &
+        pt_c)
+
+    do k=1,km
+      do j=js,je
+        do i=is,ie+1
+          i1 = id1_c(i,j)
+          i2 = id2_c(i,j)
+          j1 = jdc_c(i,j)
+          ut_inc(i,j) = s2c_c(i,j,1)*u_amb(i1,j1  ,k) + &
+                        s2c_c(i,j,2)*u_amb(i2,j1  ,k) + &
+                        s2c_c(i,j,3)*u_amb(i2,j1+1,k) + &
+                        s2c_c(i,j,4)*u_amb(i1,j1+1,k)
+          vt_inc(i,j) = s2c_c(i,j,1)*v_amb(i1,j1  ,k) + &
+                        s2c_c(i,j,2)*v_amb(i2,j1  ,k) + &
+                        s2c_c(i,j,3)*v_amb(i2,j1+1,k) + &
+                        s2c_c(i,j,4)*v_amb(i1,j1+1,k)
+          p1(:) = Atm(1)%gridstruct%grid(i,j  ,1:2)
+          p2(:) = Atm(1)%gridstruct%grid(i,j+1,1:2)
+          call  mid_pt_sphere(p1, p2, p3)
+          call get_unit_vect2(p1, p2, e2)
+          call get_latlon_vector(p3, ex, ey)
+          vd_inc(i,j,k) = ut_inc(i,j)*inner_prod(e2,ex) + &
+                          vt_inc(i,j)*inner_prod(e2,ey)
+        enddo
+      enddo
+    enddo
+
+    deallocate ( ut_inc, vt_inc )
+
+    !------ pt_d part ------
+    ! Initialize lat-lon to Cubed bi-linear interpolation coeff:
+    call remap_coef( is, ie, js, je+1, isd, ied, jsd, jed+1, &
+        im, jm, lon, lat, id1_d, id2_d, jdc_d, s2c_d, &
+        pt_d)
+
+    allocate (  ut_inc(is:ie,js:je+1) )
+    allocate (  vt_inc(is:ie,js:je+1) )
+
+    do k=1,km
+      do j=js,je+1
+        do i=is,ie
+          i1 = id1_d(i,j)
+          i2 = id2_d(i,j)
+          j1 = jdc_d(i,j)
+          ut_inc(i,j) = s2c_d(i,j,1)*u_amb(i1,j1  ,k) + &
+                        s2c_d(i,j,2)*u_amb(i2,j1  ,k) + &
+                        s2c_d(i,j,3)*u_amb(i2,j1+1,k) + &
+                        s2c_d(i,j,4)*u_amb(i1,j1+1,k)
+          vt_inc(i,j) = s2c_d(i,j,1)*v_amb(i1,j1  ,k) + &
+                        s2c_d(i,j,2)*v_amb(i2,j1  ,k) + &
+                        s2c_d(i,j,3)*v_amb(i2,j1+1,k) + &
+                        s2c_d(i,j,4)*v_amb(i1,j1+1,k)
+          p1(:) = Atm(1)%gridstruct%grid(i,  j,1:2)
+          p2(:) = Atm(1)%gridstruct%grid(i+1,j,1:2)
+          call  mid_pt_sphere(p1, p2, p3)
+          call get_unit_vect2(p1, p2, e1)
+          call get_latlon_vector(p3, ex, ey)
+          ud_inc(i,j,k) = ut_inc(i,j)*inner_prod(e1,ex) + &
+                          vt_inc(i,j)*inner_prod(e1,ey)
+        enddo
+      enddo
+    enddo
+
+    deallocate ( ut_inc, vt_inc )
+
+#if 0
+    allocate (ua_inc(isd:ied  , jsd:jed  , km))
+    allocate (va_inc(isd:ied  , jsd:jed  , km))
+    call cubed_to_latlon(ud_inc, vd_inc, ua_inc, va_inc, Atm(1)%gridstruct,   &
+          Atm(1)%npx, Atm(1)%npy, Atm(1)%npz, update_uv_ghost_cells, Atm(1)%gridstruct%grid_type, &
+          fv_domain, Atm(1)%gridstruct%nested, Atm(1)%flagstruct%c2l_ord, Atm(1)%bd)
+    u_inc(is:ie,js:je,1:npz) = ua_inc(is:ie,js:je,1:npz)
+    v_inc(is:ie,js:je,1:npz) = va_inc(is:ie,js:je,1:npz)
+    deallocate ( ua_inc, va_inc )
+#else
+    u_inc(is:ie,js:je,1:npz) = ud_inc(is:ie,js:je,1:npz)
+    v_inc(is:ie,js:je,1:npz) = vd_inc(is:ie,js:je,1:npz)
+#endif
+
+    !------ winds clean up ------
+    deallocate ( pt_c, pt_d )
+    deallocate ( ud_inc, vd_inc )
+
+  contains
+    !---------------------------------------------------------------------------
+    subroutine get_inc_on_3d_scalar(amb,inc)
+      real, dimension(1:im, 1:jm, 1:km), intent(in   ) :: amb
+      real, dimension(is:ie,js:je,1:km), intent(  out) :: inc
+
+      do k=1,km
+        do j=js,je
+          do i=is,ie
+            i1 = id1(i,j)
+            i2 = id2(i,j)
+            j1 = jdc(i,j)
+            inc(i,j,k) = s2c(i,j,1)*amb(i1,j1  ,k) + &
+                         s2c(i,j,2)*amb(i2,j1  ,k) + &
+                         s2c(i,j,3)*amb(i2,j1+1,k) + &
+                         s2c(i,j,4)*amb(i1,j1+1,k)
+          enddo
+        enddo
+      enddo
+
+    end subroutine get_inc_on_3d_scalar
+    !---------------------------------------------------------------------------
+  end subroutine geos_get_da_increments
+
+#ifndef MAPL_MODE
   !=============================================================================
   !> @brief description
   !> @author Xi.Chen <xi.chen@noaa.gov>
@@ -315,7 +554,6 @@ contains
       real, dimension(isd:ied,jsd:jed,1:km), intent(inout) :: var
 
       call get_var3_r4( ncid, field_name, 1,im, jbeg,jend, 1,km, wk3 )
-      print*,trim(field_name),'before=',var(4,4,30)
 
       do k=1,km
         do j=js,je
@@ -329,11 +567,12 @@ contains
           enddo
         enddo
       enddo
-      print*,trim(field_name),'after=',var(4,4,30),tp(4,4,30)
 
     end subroutine apply_inc_on_3d_scalar
     !---------------------------------------------------------------------------
   end subroutine read_da_inc
+#endif
+
   !=============================================================================
   subroutine remap_coef( is, ie, js, je, isd, ied, jsd, jed, &
       im, jm, lon, lat, id1, id2, jdc, s2c, agrid )
@@ -349,6 +588,7 @@ contains
     real :: rdlat(jm)
     real:: a1, b1
     integer i,j, i1, i2, jc, i0, j0
+  
     do i=1,im-1
       rdlon(i) = 1. / (lon(i+1) - lon(i))
     enddo

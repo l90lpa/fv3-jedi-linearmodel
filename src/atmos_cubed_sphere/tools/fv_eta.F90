@@ -26,8 +26,8 @@ module fv_eta_mod
  public set_eta, get_eta_level, compute_dz_var, compute_dz_L32, compute_dz_L101, set_hybrid_z, compute_dz, gw_1d, sm1_edge, hybrid_z_dz
 
 !---- version number -----
- character(len=128) :: version = '$Id$'
- character(len=128) :: tagname = '$Name$'
+ character(len=128) :: version = '$Id: fv_eta.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $'
+ character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 ! Developer: Shian-Jiann Lin, NOAA/GFDL
 
  contains
@@ -1501,7 +1501,7 @@ module fv_eta_mod
   real ep, es, alpha, beta, gama
   real, parameter:: akap = 2./7.
 !---- Tunable parameters:
-  integer:: k_inc = 10   ! # of layers from bottom up to near const dz region
+  real:: k_inc = 10   ! # of layers from bottom up to near const dz region
   real:: s0 = 0.8     ! lowest layer stretch factor
 !-----------------------
   real:: s_inc

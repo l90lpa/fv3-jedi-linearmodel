@@ -41,8 +41,8 @@ module sim_nc_mod
          handle_err, check_var, get_var1_real, get_var_att_double
 
 !---- version number -----
- character(len=128) :: version = '$Id$'
- character(len=128) :: tagname = '$Name$'
+ character(len=128) :: version = '$Id: sim_nc_mod.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $'
+ character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
  contains
 

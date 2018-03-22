@@ -28,6 +28,7 @@
  use fv_arrays_mod,    only: fv_grid_type, fv_grid_bounds_type, fv_flags_type, r_grid
  use a2b_edge_tlm_mod, only: a2b_ord4
  use a2b_edge_tlm_mod, only: a2b_ord4_tlm
+ use fv_arrays_nlm_mod,only: fpp
 
 #ifdef SW_DYNAMICS
  use test_cases_mod,   only: test_case
@@ -73,8 +74,8 @@
 
 
 !---- version number -----
-  character(len=128) :: version = '$Id: sw_core_tlm.F90,v 1.2 2017/11/13 21:58:44 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_18_0_vlabfv3pert $'
+  character(len=128) :: version = '$Id: sw_core_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
       private
       public :: c_sw, d_sw, fill_4corners, del6_vt_flux, divergence_corner, divergence_corner_nest
@@ -305,15 +306,15 @@ CONTAINS
         DO i=is-1,iep1
           delpc_tl(i, j) = delp_tl(i, j) + gridstruct%rarea(i, j)*(&
 &           fx1_tl(i, j)-fx1_tl(i+1, j)+fy1_tl(i, j)-fy1_tl(i, j+1))
-          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+fy1(i, j)-&
-&           fy1(i, j+1))*gridstruct%rarea(i, j)
+          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+(fy1(i, j)-&
+&           fy1(i, j+1)))*gridstruct%rarea(i, j)
           ptc_tl(i, j) = ((pt_tl(i, j)*delp(i, j)+pt(i, j)*delp_tl(i, j)&
 &           +gridstruct%rarea(i, j)*(fx_tl(i, j)-fx_tl(i+1, j)+fy_tl(i, &
 &           j)-fy_tl(i, j+1)))*delpc(i, j)-(pt(i, j)*delp(i, j)+(fx(i, j&
-&           )-fx(i+1, j)+fy(i, j)-fy(i, j+1))*gridstruct%rarea(i, j))*&
+&           )-fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*gridstruct%rarea(i, j))*&
 &           delpc_tl(i, j))/delpc(i, j)**2
-          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+fy(i, j)&
-&           -fy(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
+          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+(fy(i, j&
+&           )-fy(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
         END DO
       END DO
     ELSE
@@ -357,22 +358,22 @@ CONTAINS
         DO i=is-1,ie+1
           delpc_tl(i, j) = delp_tl(i, j) + gridstruct%rarea(i, j)*(&
 &           fx1_tl(i, j)-fx1_tl(i+1, j)+fy1_tl(i, j)-fy1_tl(i, j+1))
-          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+fy1(i, j)-&
-&           fy1(i, j+1))*gridstruct%rarea(i, j)
+          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+(fy1(i, j)-&
+&           fy1(i, j+1)))*gridstruct%rarea(i, j)
           ptc_tl(i, j) = ((pt_tl(i, j)*delp(i, j)+pt(i, j)*delp_tl(i, j)&
 &           +gridstruct%rarea(i, j)*(fx_tl(i, j)-fx_tl(i+1, j)+fy_tl(i, &
 &           j)-fy_tl(i, j+1)))*delpc(i, j)-(pt(i, j)*delp(i, j)+(fx(i, j&
-&           )-fx(i+1, j)+fy(i, j)-fy(i, j+1))*gridstruct%rarea(i, j))*&
+&           )-fx(i+1, j)+(fy(i, j)-fy(i, j+1)))*gridstruct%rarea(i, j))*&
 &           delpc_tl(i, j))/delpc(i, j)**2
-          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+fy(i, j)&
-&           -fy(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
+          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+(fy(i, j&
+&           )-fy(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
           wc_tl(i, j) = ((w_tl(i, j)*delp(i, j)+w(i, j)*delp_tl(i, j)+&
 &           gridstruct%rarea(i, j)*(fx2_tl(i, j)-fx2_tl(i+1, j)+fy2_tl(i&
 &           , j)-fy2_tl(i, j+1)))*delpc(i, j)-(w(i, j)*delp(i, j)+(fx2(i&
-&           , j)-fx2(i+1, j)+fy2(i, j)-fy2(i, j+1))*gridstruct%rarea(i, &
-&           j))*delpc_tl(i, j))/delpc(i, j)**2
-          wc(i, j) = (w(i, j)*delp(i, j)+(fx2(i, j)-fx2(i+1, j)+fy2(i, j&
-&           )-fy2(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
+&           , j)-fx2(i+1, j)+(fy2(i, j)-fy2(i, j+1)))*gridstruct%rarea(i&
+&           , j))*delpc_tl(i, j))/delpc(i, j)**2
+          wc(i, j) = (w(i, j)*delp(i, j)+(fx2(i, j)-fx2(i+1, j)+(fy2(i, &
+&           j)-fy2(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
         END DO
       END DO
     END IF
@@ -506,9 +507,9 @@ CONTAINS
     END DO
     DO j=js,je+1
       DO i=is,ie+1
-        vort_tl(i, j) = fx_tl(i, j-1) - fx_tl(i, j) - fy_tl(i-1, j) + &
-&         fy_tl(i, j)
-        vort(i, j) = fx(i, j-1) - fx(i, j) - fy(i-1, j) + fy(i, j)
+        vort_tl(i, j) = fx_tl(i, j-1) - fx_tl(i, j) + fy_tl(i, j) - &
+&         fy_tl(i-1, j)
+        vort(i, j) = fx(i, j-1) - fx(i, j) + (fy(i, j)-fy(i-1, j))
       END DO
     END DO
 ! Remove the extra term at the corners:
@@ -804,10 +805,10 @@ CONTAINS
       END DO
       DO j=js-1,jep1
         DO i=is-1,iep1
-          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+fy1(i, j)-&
-&           fy1(i, j+1))*gridstruct%rarea(i, j)
-          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+fy(i, j)&
-&           -fy(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
+          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+(fy1(i, j)-&
+&           fy1(i, j+1)))*gridstruct%rarea(i, j)
+          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+(fy(i, j&
+&           )-fy(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
         END DO
       END DO
     ELSE
@@ -833,12 +834,12 @@ CONTAINS
       END DO
       DO j=js-1,je+1
         DO i=is-1,ie+1
-          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+fy1(i, j)-&
-&           fy1(i, j+1))*gridstruct%rarea(i, j)
-          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+fy(i, j)&
-&           -fy(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
-          wc(i, j) = (w(i, j)*delp(i, j)+(fx2(i, j)-fx2(i+1, j)+fy2(i, j&
-&           )-fy2(i, j+1))*gridstruct%rarea(i, j))/delpc(i, j)
+          delpc(i, j) = delp(i, j) + (fx1(i, j)-fx1(i+1, j)+(fy1(i, j)-&
+&           fy1(i, j+1)))*gridstruct%rarea(i, j)
+          ptc(i, j) = (pt(i, j)*delp(i, j)+(fx(i, j)-fx(i+1, j)+(fy(i, j&
+&           )-fy(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
+          wc(i, j) = (w(i, j)*delp(i, j)+(fx2(i, j)-fx2(i+1, j)+(fy2(i, &
+&           j)-fy2(i, j+1)))*gridstruct%rarea(i, j))/delpc(i, j)
         END DO
       END DO
     END IF
@@ -940,7 +941,7 @@ CONTAINS
     END DO
     DO j=js,je+1
       DO i=is,ie+1
-        vort(i, j) = fx(i, j-1) - fx(i, j) - fy(i-1, j) + fy(i, j)
+        vort(i, j) = fx(i, j-1) - fx(i, j) + (fy(i, j)-fy(i-1, j))
       END DO
     END DO
 ! Remove the extra term at the corners:
@@ -1043,22 +1044,22 @@ CONTAINS
 !  Differentiation of d_sw in forward (tangent) mode:
 !   variations   of useful results: yfx_adv q crx_adv u v w delp
 !                xfx_adv uc ptc xflux cry_adv delpc vc yflux divg_d
-!                heat_source pt cx cy
+!                heat_source pt cx cy dpx
 !   with respect to varying inputs: yfx_adv q crx_adv u v w delp
 !                ua xfx_adv uc ptc xflux cry_adv delpc va vc yflux
-!                divg_d z_rat heat_source pt cx cy
+!                divg_d z_rat heat_source pt cx cy dpx
 !     d_sw :: D-Grid Shallow Water Routine
   SUBROUTINE D_SW_TLM(delpc, delpc_tl, delp, delp_tl, ptc, ptc_tl, pt, &
 &   pt_tl, u, u_tl, v, v_tl, w, w_tl, uc, uc_tl, vc, vc_tl, ua, ua_tl, &
 &   va, va_tl, divg_d, divg_d_tl, xflux, xflux_tl, yflux, yflux_tl, cx, &
 &   cx_tl, cy, cy_tl, crx_adv, crx_adv_tl, cry_adv, cry_adv_tl, xfx_adv&
 &   , xfx_adv_tl, yfx_adv, yfx_adv_tl, q_con, z_rat, z_rat_tl, kgb, &
-&   heat_source, heat_source_tl, zvir, sphum, nq, q, q_tl, k, km, &
-&   inline_q, dt, hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, nord, &
-&   nord_v, nord_w, nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, damp_t&
-&   , d_con, hydrostatic, gridstruct, flagstruct, bd, hord_tr_pert, &
-&   hord_mt_pert, hord_vt_pert, hord_tm_pert, hord_dp_pert, split_damp, &
-&   nord_pert, nord_v_pert, nord_w_pert, nord_t_pert, dddmp_pert, &
+&   heat_source, heat_source_tl, dpx, dpx_tl, zvir, sphum, nq, q, q_tl, &
+&   k, km, inline_q, dt, hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, &
+&   nord, nord_v, nord_w, nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, &
+&   damp_t, d_con, hydrostatic, gridstruct, flagstruct, bd, hord_tr_pert&
+&   , hord_mt_pert, hord_vt_pert, hord_tm_pert, hord_dp_pert, split_damp&
+&   , nord_pert, nord_v_pert, nord_w_pert, nord_t_pert, dddmp_pert, &
 &   d2_bg_pert, d4_bg_pert, damp_v_pert, damp_w_pert, damp_t_pert)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: hord_tr, hord_mt, hord_vt, hord_tm, hord_dp
@@ -1091,9 +1092,9 @@ CONTAINS
 &   , pt, ua, va
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: &
 &   delp_tl, pt_tl, ua_tl, va_tl
-    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%ied), INTENT(INOUT) :: w
-    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%ied), INTENT(INOUT) :: w_tl
-    REAL, DIMENSION(bd%isd:bd%isd, bd%jsd:bd%isd), INTENT(INOUT) :: &
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: w
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: w_tl
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: &
 &   q_con
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed+1), INTENT(INOUT) :: u&
 &   , vc
@@ -1113,6 +1114,10 @@ CONTAINS
 &   heat_source
     REAL, DIMENSION(bd%is:bd%ie, bd%js:bd%je), INTENT(OUT) :: &
 &   heat_source_tl
+    REAL(kind=8), DIMENSION(bd%is:bd%ie, bd%js:bd%je), INTENT(INOUT) :: &
+&   dpx
+    REAL(kind=8), DIMENSION(bd%is:bd%ie, bd%js:bd%je), INTENT(INOUT) :: &
+&   dpx_tl
 ! The flux capacitors:
     REAL, INTENT(INOUT) :: xflux(bd%is:bd%ie+1, bd%js:bd%je)
     REAL, INTENT(INOUT) :: xflux_tl(bd%is:bd%ie+1, bd%js:bd%je)
@@ -1651,14 +1656,14 @@ CONTAINS
     DO j=jsd,jed
       DO i=is,ie
         ra_x_tl(i, j) = xfx_adv_tl(i, j) - xfx_adv_tl(i+1, j)
-        ra_x(i, j) = area(i, j) + xfx_adv(i, j) - xfx_adv(i+1, j)
+        ra_x(i, j) = area(i, j) + (xfx_adv(i, j)-xfx_adv(i+1, j))
       END DO
     END DO
     ra_y_tl = 0.0
     DO j=js,je
       DO i=isd,ied
         ra_y_tl(i, j) = yfx_adv_tl(i, j) - yfx_adv_tl(i, j+1)
-        ra_y(i, j) = area(i, j) + yfx_adv(i, j) - yfx_adv(i, j+1)
+        ra_y(i, j) = area(i, j) + (yfx_adv(i, j)-yfx_adv(i, j+1))
       END DO
     END DO
     IF (hord_dp .EQ. hord_dp_pert .AND. (.NOT.split_damp)) THEN
@@ -1730,7 +1735,7 @@ CONTAINS
           DO i=is,ie
             dw_tl(i, j) = rarea(i, j)*(fx2_tl(i, j)-fx2_tl(i+1, j)+&
 &             fy2_tl(i, j)-fy2_tl(i, j+1))
-            dw(i, j) = (fx2(i, j)-fx2(i+1, j)+fy2(i, j)-fy2(i, j+1))*&
+            dw(i, j) = (fx2(i, j)-fx2(i+1, j)+(fy2(i, j)-fy2(i, j+1)))*&
 &             rarea(i, j)
 ! 0.5 * [ (w+dw)**2 - w**2 ] = w*dw + 0.5*dw*dw
 !                   heat_source(i,j) = -d_con*dw(i,j)*(w(i,j)+0.5*dw(i,j))
@@ -1767,8 +1772,8 @@ CONTAINS
           w_tl(i, j) = delp_tl(i, j)*w(i, j) + delp(i, j)*w_tl(i, j) + &
 &           rarea(i, j)*(gx_tl(i, j)-gx_tl(i+1, j)+gy_tl(i, j)-gy_tl(i, &
 &           j+1))
-          w(i, j) = delp(i, j)*w(i, j) + (gx(i, j)-gx(i+1, j)+gy(i, j)-&
-&           gy(i, j+1))*rarea(i, j)
+          w(i, j) = delp(i, j)*w(i, j) + (gx(i, j)-gx(i+1, j)+(gy(i, j)-&
+&           gy(i, j+1)))*rarea(i, j)
         END DO
       END DO
     ELSE
@@ -1809,14 +1814,15 @@ CONTAINS
           wk(i, j) = delp(i, j)
           delp_tl(i, j) = wk_tl(i, j) + rarea(i, j)*(fx_tl(i, j)-fx_tl(i&
 &           +1, j)+fy_tl(i, j)-fy_tl(i, j+1))
-          delp(i, j) = wk(i, j) + (fx(i, j)-fx(i+1, j)+fy(i, j)-fy(i, j+&
-&           1))*rarea(i, j)
+          delp(i, j) = wk(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i, j&
+&           +1)))*rarea(i, j)
           pt_tl(i, j) = ((pt_tl(i, j)*wk(i, j)+pt(i, j)*wk_tl(i, j)+&
 &           rarea(i, j)*(gx_tl(i, j)-gx_tl(i+1, j)+gy_tl(i, j)-gy_tl(i, &
-&           j+1)))*delp(i, j)-(pt(i, j)*wk(i, j)+(gx(i, j)-gx(i+1, j)+gy&
-&           (i, j)-gy(i, j+1))*rarea(i, j))*delp_tl(i, j))/delp(i, j)**2
-          pt(i, j) = (pt(i, j)*wk(i, j)+(gx(i, j)-gx(i+1, j)+gy(i, j)-gy&
-&           (i, j+1))*rarea(i, j))/delp(i, j)
+&           j+1)))*delp(i, j)-(pt(i, j)*wk(i, j)+(gx(i, j)-gx(i+1, j)+(&
+&           gy(i, j)-gy(i, j+1)))*rarea(i, j))*delp_tl(i, j))/delp(i, j)&
+&           **2
+          pt(i, j) = (pt(i, j)*wk(i, j)+(gx(i, j)-gx(i+1, j)+(gy(i, j)-&
+&           gy(i, j+1)))*rarea(i, j))/delp(i, j)
         END DO
       END DO
       DO iq=1,nq
@@ -1847,10 +1853,10 @@ CONTAINS
             q_tl(i, j, k, iq) = ((q_tl(i, j, k, iq)*wk(i, j)+q(i, j, k, &
 &             iq)*wk_tl(i, j)+rarea(i, j)*(gx_tl(i, j)-gx_tl(i+1, j)+&
 &             gy_tl(i, j)-gy_tl(i, j+1)))*delp(i, j)-(q(i, j, k, iq)*wk(&
-&             i, j)+(gx(i, j)-gx(i+1, j)+gy(i, j)-gy(i, j+1))*rarea(i, j&
-&             ))*delp_tl(i, j))/delp(i, j)**2
+&             i, j)+(gx(i, j)-gx(i+1, j)+(gy(i, j)-gy(i, j+1)))*rarea(i&
+&             , j))*delp_tl(i, j))/delp(i, j)**2
             q(i, j, k, iq) = (q(i, j, k, iq)*wk(i, j)+(gx(i, j)-gx(i+1, &
-&             j)+gy(i, j)-gy(i, j+1))*rarea(i, j))/delp(i, j)
+&             j)+(gy(i, j)-gy(i, j+1)))*rarea(i, j))/delp(i, j)
           END DO
         END DO
       END DO
@@ -1867,15 +1873,25 @@ CONTAINS
           pt_tl(i, j) = pt_tl(i, j)*delp(i, j) + pt(i, j)*delp_tl(i, j) &
 &           + rarea(i, j)*(gx_tl(i, j)-gx_tl(i+1, j)+gy_tl(i, j)-gy_tl(i&
 &           , j+1))
-          pt(i, j) = pt(i, j)*delp(i, j) + (gx(i, j)-gx(i+1, j)+gy(i, j)&
-&           -gy(i, j+1))*rarea(i, j)
+          pt(i, j) = pt(i, j)*delp(i, j) + (gx(i, j)-gx(i+1, j)+(gy(i, j&
+&           )-gy(i, j+1)))*rarea(i, j)
           delp_tl(i, j) = delp_tl(i, j) + rarea(i, j)*(fx_tl(i, j)-fx_tl&
 &           (i+1, j)+fy_tl(i, j)-fy_tl(i, j+1))
-          delp(i, j) = delp(i, j) + (fx(i, j)-fx(i+1, j)+fy(i, j)-fy(i, &
-&           j+1))*rarea(i, j)
+          delp(i, j) = delp(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i&
+&           , j+1)))*rarea(i, j)
           pt_tl(i, j) = (pt_tl(i, j)*delp(i, j)-pt(i, j)*delp_tl(i, j))/&
 &           delp(i, j)**2
           pt(i, j) = pt(i, j)/delp(i, j)
+        END DO
+      END DO
+    END IF
+    IF (fpp%fpp_overload_r4) THEN
+      DO j=js,je
+        DO i=is,ie
+          dpx_tl(i, j) = dpx_tl(i, j) + rarea(i, j)*(fx_tl(i, j)-fx_tl(i&
+&           +1, j)+fy_tl(i, j)-fy_tl(i, j+1))
+          dpx(i, j) = dpx(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i, j&
+&           +1)))*rarea(i, j)
         END DO
       END DO
     END IF
@@ -2126,9 +2142,10 @@ CONTAINS
 ! wk is "volume-mean" relative vorticity
     DO j=jsd,jed
       DO i=isd,ied
-        wk_tl(i, j) = rarea(i, j)*(vt_tl(i, j)-vt_tl(i, j+1)-ut_tl(i, j)&
-&         +ut_tl(i+1, j))
-        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)-ut(i, j)+ut(i+1, j))
+        wk_tl(i, j) = rarea(i, j)*(vt_tl(i, j)-vt_tl(i, j+1)+ut_tl(i+1, &
+&         j)-ut_tl(i, j))
+        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)+(ut(i+1, j)-ut(i, j)&
+&         ))
       END DO
     END DO
     IF (.NOT.hydrostatic) THEN
@@ -2409,14 +2426,14 @@ CONTAINS
       DO i=is,ie
         u_tl(i, j) = vt_tl(i, j) + ke_tl(i, j) - ke_tl(i+1, j) + fy_tl(i&
 &         , j)
-        u(i, j) = vt(i, j) + ke(i, j) - ke(i+1, j) + fy(i, j)
+        u(i, j) = vt(i, j) + (ke(i, j)-ke(i+1, j)) + fy(i, j)
       END DO
     END DO
     DO j=js,je
       DO i=is,ie+1
         v_tl(i, j) = ut_tl(i, j) + ke_tl(i, j) - ke_tl(i, j+1) - fx_tl(i&
 &         , j)
-        v(i, j) = ut(i, j) + ke(i, j) - ke(i, j+1) - fx(i, j)
+        v(i, j) = ut(i, j) + (ke(i, j)-ke(i, j+1)) - fx(i, j)
       END DO
     END DO
 !--------------------------------------------------------
@@ -2520,9 +2537,9 @@ CONTAINS
 !     d_sw :: D-Grid Shallow Water Routine
   SUBROUTINE D_SW(delpc, delp, ptc, pt, u, v, w, uc, vc, ua, va, divg_d&
 &   , xflux, yflux, cx, cy, crx_adv, cry_adv, xfx_adv, yfx_adv, q_con, &
-&   z_rat, kgb, heat_source, zvir, sphum, nq, q, k, km, inline_q, dt, &
-&   hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, nord, nord_v, nord_w, &
-&   nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, damp_t, d_con, &
+&   z_rat, kgb, heat_source, dpx, zvir, sphum, nq, q, k, km, inline_q, &
+&   dt, hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, nord, nord_v, &
+&   nord_w, nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, damp_t, d_con, &
 &   hydrostatic, gridstruct, flagstruct, bd, hord_tr_pert, hord_mt_pert&
 &   , hord_vt_pert, hord_tm_pert, hord_dp_pert, split_damp, nord_pert, &
 &   nord_v_pert, nord_w_pert, nord_t_pert, dddmp_pert, d2_bg_pert, &
@@ -2553,8 +2570,8 @@ CONTAINS
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(IN) :: z_rat
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: delp&
 &   , pt, ua, va
-    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%ied), INTENT(INOUT) :: w
-    REAL, DIMENSION(bd%isd:bd%isd, bd%jsd:bd%isd), INTENT(INOUT) :: &
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: w
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed), INTENT(INOUT) :: &
 &   q_con
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed+1), INTENT(INOUT) :: u&
 &   , vc
@@ -2565,6 +2582,8 @@ CONTAINS
 &   , ptc
     REAL, DIMENSION(bd%is:bd%ie, bd%js:bd%je), INTENT(OUT) :: &
 &   heat_source
+    REAL(kind=8), DIMENSION(bd%is:bd%ie, bd%js:bd%je), INTENT(INOUT) :: &
+&   dpx
 ! The flux capacitors:
     REAL, INTENT(INOUT) :: xflux(bd%is:bd%ie+1, bd%js:bd%je)
     REAL, INTENT(INOUT) :: yflux(bd%is:bd%ie, bd%js:bd%je+1)
@@ -2963,12 +2982,12 @@ CONTAINS
     END DO
     DO j=jsd,jed
       DO i=is,ie
-        ra_x(i, j) = area(i, j) + xfx_adv(i, j) - xfx_adv(i+1, j)
+        ra_x(i, j) = area(i, j) + (xfx_adv(i, j)-xfx_adv(i+1, j))
       END DO
     END DO
     DO j=js,je
       DO i=isd,ied
-        ra_y(i, j) = area(i, j) + yfx_adv(i, j) - yfx_adv(i, j+1)
+        ra_y(i, j) = area(i, j) + (yfx_adv(i, j)-yfx_adv(i, j+1))
       END DO
     END DO
     IF (hord_dp .EQ. hord_dp_pert .AND. (.NOT.split_damp)) THEN
@@ -3018,7 +3037,7 @@ CONTAINS
 &                   gridstruct, bd)
         DO j=js,je
           DO i=is,ie
-            dw(i, j) = (fx2(i, j)-fx2(i+1, j)+fy2(i, j)-fy2(i, j+1))*&
+            dw(i, j) = (fx2(i, j)-fx2(i+1, j)+(fy2(i, j)-fy2(i, j+1)))*&
 &             rarea(i, j)
 ! 0.5 * [ (w+dw)**2 - w**2 ] = w*dw + 0.5*dw*dw
 !                   heat_source(i,j) = -d_con*dw(i,j)*(w(i,j)+0.5*dw(i,j))
@@ -3036,8 +3055,8 @@ CONTAINS
       END IF
       DO j=js,je
         DO i=is,ie
-          w(i, j) = delp(i, j)*w(i, j) + (gx(i, j)-gx(i+1, j)+gy(i, j)-&
-&           gy(i, j+1))*rarea(i, j)
+          w(i, j) = delp(i, j)*w(i, j) + (gx(i, j)-gx(i+1, j)+(gy(i, j)-&
+&           gy(i, j+1)))*rarea(i, j)
         END DO
       END DO
     END IF
@@ -3061,10 +3080,10 @@ CONTAINS
       DO j=js,je
         DO i=is,ie
           wk(i, j) = delp(i, j)
-          delp(i, j) = wk(i, j) + (fx(i, j)-fx(i+1, j)+fy(i, j)-fy(i, j+&
-&           1))*rarea(i, j)
-          pt(i, j) = (pt(i, j)*wk(i, j)+(gx(i, j)-gx(i+1, j)+gy(i, j)-gy&
-&           (i, j+1))*rarea(i, j))/delp(i, j)
+          delp(i, j) = wk(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i, j&
+&           +1)))*rarea(i, j)
+          pt(i, j) = (pt(i, j)*wk(i, j)+(gx(i, j)-gx(i+1, j)+(gy(i, j)-&
+&           gy(i, j+1)))*rarea(i, j))/delp(i, j)
         END DO
       END DO
       DO iq=1,nq
@@ -3081,7 +3100,7 @@ CONTAINS
         DO j=js,je
           DO i=is,ie
             q(i, j, k, iq) = (q(i, j, k, iq)*wk(i, j)+(gx(i, j)-gx(i+1, &
-&             j)+gy(i, j)-gy(i, j+1))*rarea(i, j))/delp(i, j)
+&             j)+(gy(i, j)-gy(i, j+1)))*rarea(i, j))/delp(i, j)
           END DO
         END DO
       END DO
@@ -3095,11 +3114,19 @@ CONTAINS
 !     endif
       DO j=js,je
         DO i=is,ie
-          pt(i, j) = pt(i, j)*delp(i, j) + (gx(i, j)-gx(i+1, j)+gy(i, j)&
-&           -gy(i, j+1))*rarea(i, j)
-          delp(i, j) = delp(i, j) + (fx(i, j)-fx(i+1, j)+fy(i, j)-fy(i, &
-&           j+1))*rarea(i, j)
+          pt(i, j) = pt(i, j)*delp(i, j) + (gx(i, j)-gx(i+1, j)+(gy(i, j&
+&           )-gy(i, j+1)))*rarea(i, j)
+          delp(i, j) = delp(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i&
+&           , j+1)))*rarea(i, j)
           pt(i, j) = pt(i, j)/delp(i, j)
+        END DO
+      END DO
+    END IF
+    IF (fpp%fpp_overload_r4) THEN
+      DO j=js,je
+        DO i=is,ie
+          dpx(i, j) = dpx(i, j) + (fx(i, j)-fx(i+1, j)+(fy(i, j)-fy(i, j&
+&           +1)))*rarea(i, j)
         END DO
       END DO
     END IF
@@ -3281,7 +3308,8 @@ CONTAINS
 ! wk is "volume-mean" relative vorticity
     DO j=jsd,jed
       DO i=isd,ied
-        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)-ut(i, j)+ut(i+1, j))
+        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)+(ut(i+1, j)-ut(i, j)&
+&         ))
       END DO
     END DO
     IF (.NOT.hydrostatic) THEN
@@ -3527,12 +3555,12 @@ CONTAINS
     END IF
     DO j=js,je+1
       DO i=is,ie
-        u(i, j) = vt(i, j) + ke(i, j) - ke(i+1, j) + fy(i, j)
+        u(i, j) = vt(i, j) + (ke(i, j)-ke(i+1, j)) + fy(i, j)
       END DO
     END DO
     DO j=js,je
       DO i=is,ie+1
-        v(i, j) = ut(i, j) + ke(i, j) - ke(i, j+1) - fx(i, j)
+        v(i, j) = ut(i, j) + (ke(i, j)-ke(i, j+1)) - fx(i, j)
       END DO
     END DO
 !--------------------------------------------------------
@@ -3666,7 +3694,7 @@ CONTAINS
           DO i=is-nt-1,ie+nt+1
             d2_tl(i, j) = gridstruct%rarea(i, j)*(fx2_tl(i, j)-fx2_tl(i+&
 &             1, j)+fy2_tl(i, j)-fy2_tl(i, j+1))
-            d2(i, j) = (fx2(i, j)-fx2(i+1, j)+fy2(i, j)-fy2(i, j+1))*&
+            d2(i, j) = (fx2(i, j)-fx2(i+1, j)+(fy2(i, j)-fy2(i, j+1)))*&
 &             gridstruct%rarea(i, j)
           END DO
         END DO
@@ -3753,7 +3781,7 @@ CONTAINS
         nt = nord - n
         DO j=js-nt-1,je+nt+1
           DO i=is-nt-1,ie+nt+1
-            d2(i, j) = (fx2(i, j)-fx2(i+1, j)+fy2(i, j)-fy2(i, j+1))*&
+            d2(i, j) = (fx2(i, j)-fx2(i+1, j)+(fy2(i, j)-fy2(i, j+1)))*&
 &             gridstruct%rarea(i, j)
           END DO
         END DO
@@ -3855,8 +3883,8 @@ CONTAINS
         DO i=is-1,ie+2
           divg_d_tl(i, j) = gridstruct%rarea_c(i, j)*(vf_tl(i, j-1)-&
 &           vf_tl(i, j)+uf_tl(i-1, j)-uf_tl(i, j))
-          divg_d(i, j) = gridstruct%rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+&
-&           uf(i-1, j)-uf(i, j))
+          divg_d(i, j) = gridstruct%rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+(&
+&           uf(i-1, j)-uf(i, j)))
         END DO
       END DO
     ELSE
@@ -3912,7 +3940,7 @@ CONTAINS
         DO i=is,ie+1
           divg_d_tl(i, j) = vf_tl(i, j-1) - vf_tl(i, j) + uf_tl(i-1, j) &
 &           - uf_tl(i, j)
-          divg_d(i, j) = vf(i, j-1) - vf(i, j) + uf(i-1, j) - uf(i, j)
+          divg_d(i, j) = vf(i, j-1) - vf(i, j) + (uf(i-1, j)-uf(i, j))
         END DO
       END DO
 ! Remove the extra term at the corners:
@@ -4002,8 +4030,8 @@ CONTAINS
       END DO
       DO j=js-1,je+2
         DO i=is-1,ie+2
-          divg_d(i, j) = gridstruct%rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+&
-&           uf(i-1, j)-uf(i, j))
+          divg_d(i, j) = gridstruct%rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+(&
+&           uf(i-1, j)-uf(i, j)))
         END DO
       END DO
     ELSE
@@ -4039,7 +4067,7 @@ CONTAINS
       END DO
       DO j=js,je+1
         DO i=is,ie+1
-          divg_d(i, j) = vf(i, j-1) - vf(i, j) + uf(i-1, j) - uf(i, j)
+          divg_d(i, j) = vf(i, j-1) - vf(i, j) + (uf(i-1, j)-uf(i, j))
         END DO
       END DO
 ! Remove the extra term at the corners:
@@ -4147,8 +4175,8 @@ CONTAINS
         DO i=isd+1,ied
           divg_d_tl(i, j) = rarea_c(i, j)*(vf_tl(i, j-1)-vf_tl(i, j)+&
 &           uf_tl(i-1, j)-uf_tl(i, j))
-          divg_d(i, j) = rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+uf(i-1, j)-&
-&           uf(i, j))
+          divg_d(i, j) = rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+(uf(i-1, j)-&
+&           uf(i, j)))
         END DO
       END DO
     ELSE
@@ -4179,7 +4207,7 @@ CONTAINS
         DO i=isd+1,ied
           divg_d_tl(i, j) = rarea_c(i, j)*(vf_tl(i, j-1)-vf_tl(i, j)+&
 &           uf_tl(i-1, j)-uf_tl(i, j))
-          divg_d(i, j) = (vf(i, j-1)-vf(i, j)+uf(i-1, j)-uf(i, j))*&
+          divg_d(i, j) = (vf(i, j-1)-vf(i, j)+(uf(i-1, j)-uf(i, j)))*&
 &           rarea_c(i, j)
         END DO
       END DO
@@ -4257,8 +4285,8 @@ CONTAINS
       END DO
       DO j=jsd+1,jed
         DO i=isd+1,ied
-          divg_d(i, j) = rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+uf(i-1, j)-&
-&           uf(i, j))
+          divg_d(i, j) = rarea_c(i, j)*(vf(i, j-1)-vf(i, j)+(uf(i-1, j)-&
+&           uf(i, j)))
         END DO
       END DO
     ELSE
@@ -4278,7 +4306,7 @@ CONTAINS
       END DO
       DO j=jsd+1,jed
         DO i=isd+1,ied
-          divg_d(i, j) = (vf(i, j-1)-vf(i, j)+uf(i-1, j)-uf(i, j))*&
+          divg_d(i, j) = (vf(i, j-1)-vf(i, j)+(uf(i-1, j)-uf(i, j)))*&
 &           rarea_c(i, j)
         END DO
       END DO
@@ -8115,8 +8143,8 @@ CONTAINS
     END DO
     DO j=js,je+1
       DO i=is,ie+1
-        smag_c(i, j) = rarea_c(i, j)*(vt(i, j-1)-vt(i, j)-ut(i-1, j)+ut(&
-&         i, j))
+        smag_c(i, j) = rarea_c(i, j)*(vt(i, j-1)-vt(i, j)+(ut(i, j)-ut(i&
+&         -1, j)))
       END DO
     END DO
 ! Fix the corners?? if grid_type /= 4
@@ -8133,7 +8161,8 @@ CONTAINS
     END DO
     DO j=jsd,jed
       DO i=isd,ied
-        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)+ut(i, j)-ut(i+1, j))
+        wk(i, j) = rarea(i, j)*(vt(i, j)-vt(i, j+1)+(ut(i, j)-ut(i+1, j)&
+&         ))
       END DO
     END DO
     CALL A2B_ORD4(wk, sh, gridstruct, npx, npy, is, ie, js, je, ng, &
@@ -8369,8 +8398,8 @@ CONTAINS
         DO i=is,ie+1
           delpc_tl(i, j) = vort_tl(i, j-1) - vort_tl(i, j) + ptc_tl(i-1&
 &           , j) - ptc_tl(i, j)
-          delpc(i, j) = vort(i, j-1) - vort(i, j) + ptc(i-1, j) - ptc(i&
-&           , j)
+          delpc(i, j) = vort(i, j-1) - vort(i, j) + (ptc(i-1, j)-ptc(i, &
+&           j))
         END DO
       END DO
 ! Remove the extra term at the corners:
@@ -8467,7 +8496,7 @@ CONTAINS
           DO i=is-nt,ie+1+nt
             divg_d_tl(i, j) = uc_tl(i, j-1) - uc_tl(i, j) + vc_tl(i-1, j&
 &             ) - vc_tl(i, j)
-            divg_d(i, j) = uc(i, j-1) - uc(i, j) + vc(i-1, j) - vc(i, j)
+            divg_d(i, j) = uc(i, j-1) - uc(i, j) + (vc(i-1, j)-vc(i, j))
           END DO
         END DO
 ! Remove the extra term at the corners:

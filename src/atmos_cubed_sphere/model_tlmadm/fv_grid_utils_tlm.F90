@@ -78,10 +78,22 @@ public c2l_ord2_tlm, g_sum_tlm
 ! END INTERFACE
 
 !---- version number -----
- character(len=128) :: version = '$Id: fv_grid_utils_tlm.F90,v 1.3 2017/11/13 21:58:44 drholdaw Exp $'
- character(len=128) :: tagname = '$Name: drh-GEOSadas-5_18_0_vlabfv3pert $'
+ character(len=128) :: version = '$Id: fv_grid_utils_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
+ character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
+  SUBROUTINE GRID_UTILS_INIT(atm, npx, npy, npz, non_ortho, grid_type, &
+&   c2l_order)
+    IMPLICIT NONE
+! Initialize 2D memory and geometrical factors
+    TYPE(FV_ATMOS_TYPE), INTENT(INOUT), TARGET :: atm
+    LOGICAL, INTENT(IN) :: non_ortho
+    INTEGER, INTENT(IN) :: npx, npy, npz
+    INTEGER, INTENT(IN) :: grid_type, c2l_order
+  END SUBROUTINE GRID_UTILS_INIT
+  SUBROUTINE GRID_UTILS_END()
+    IMPLICIT NONE
+  END SUBROUTINE GRID_UTILS_END
   REAL FUNCTION GREAT_CIRCLE_DIST(q1, q2, radius)
     IMPLICIT NONE
     REAL(kind=r_grid), INTENT(IN) :: q1(2), q2(2)

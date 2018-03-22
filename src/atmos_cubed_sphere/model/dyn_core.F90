@@ -19,6 +19,7 @@
 !***********************************************************************
 module dyn_core_mod
 
+  use platform_mod,       only: r8_kind
   use constants_mod,      only: rdgas, radius, cp_air, pi
   use mpp_mod,            only: mpp_pe 
   use mpp_domains_mod,    only: CGRID_NE, DGRID_NE, mpp_get_boundary, mpp_update_domains,  &
@@ -69,8 +70,8 @@ public :: dyn_core, del2_cubed, init_ijk_mem
   integer :: kmax=1
 
 !---- version number -----
-  character(len=128) :: version = '$Id$'
-  character(len=128) :: tagname = '$Name$'
+  character(len=128) :: version = '$Id: dyn_core.F90,v 1.4 2018/03/15 14:02:27 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains
 
@@ -80,7 +81,7 @@ contains
  
  subroutine dyn_core(npx, npy, npz, ng, sphum, nq, bdt, n_split, zvir, cp, akap, cappa, grav, hydrostatic,  &
                      u,  v,  w, delz, pt, q, delp, pe, pk, phis, ws, omga, ptop, pfull, ua, va, & 
-                     uc, vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, &
+                     uc, vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, dpx, &
                      ks, gridstruct, flagstruct, neststruct, idiag, bd, domain, &
                      init_step, i_pack, end_step, time_total)
     integer, intent(IN) :: npx
@@ -117,6 +118,7 @@ contains
     real, intent(inout):: pe(bd%is-1:bd%ie+1, npz+1,bd%js-1:bd%je+1)  ! edge pressure (pascal)
     real, intent(inout):: peln(bd%is:bd%ie,npz+1,bd%js:bd%je)          ! ln(pe)
     real, intent(inout):: pk(bd%is:bd%ie,bd%js:bd%je, npz+1)        ! pe**kappa
+    real(kind=8), intent(inout) :: dpx(bd%is:bd%ie,bd%js:bd%je)
 
 !-----------------------------------------------------------------------
 ! Others:
@@ -153,7 +155,6 @@ contains
     real, dimension(bd%isd:bd%ied,bd%jsd:bd%jed):: ws3, z_rat
     real:: dp_ref(npz)
     real:: zs(bd%isd:bd%ied,bd%jsd:bd%jed)        ! surface height (m)
-    real:: p1d(bd%is:bd%ie)
     real:: om2d(bd%is:bd%ie,npz)
     real wbuffer(npy+2,npz)
     real ebuffer(npy+2,npz)
@@ -218,7 +219,7 @@ contains
 
 !$OMP parallel do default(none) shared(npz,dp_ref,ak,bk)
        do k=1,npz
-          dp_ref(k) = ak(k+1)-ak(k) + (bk(k+1)-bk(k))*1.E5  
+          dp_ref(k) = (ak(k+1)-ak(k)) + (bk(k+1)-bk(k))*1.E5  
        enddo
 
 !$OMP parallel do default(none) shared(isd,ied,jsd,jed,zs,phis,rgrav)
@@ -304,6 +305,7 @@ contains
           if(is_master()) write(*,*) 'n_split loop, it=', it
           if ( .not. flagstruct%hydrostatic )    &
           call prt_mxm('delz',  delz, is, ie, js, je, ng, npz, 1., gridstruct%area_64, domain)
+          call prt_mxm('PT',  pt, is, ie, js, je, ng, npz, 1., gridstruct%area_64, domain)
      endif
 
      if (gridstruct%nested) then
@@ -613,7 +615,7 @@ contains
 #endif
                    endif
                    d_con_k = 0.
-              elseif ( k==2 .and. flagstruct%d2_bg_k2>0.01 ) then
+              elseif ( k==MAX(2,flagstruct%n_sponge-1) .and. flagstruct%d2_bg_k2>0.01 ) then
                    nord_k=0; d2_divg = max(flagstruct%d2_bg, flagstruct%d2_bg_k2)
                    nord_w=0; damp_w = d2_divg
                    if ( flagstruct%do_vort_damp ) then
@@ -623,7 +625,7 @@ contains
 #endif
                    endif
                    d_con_k = 0.
-              elseif ( k==3 .and. flagstruct%d2_bg_k2>0.05 ) then
+              elseif ( k==MAX(3,flagstruct%n_sponge) .and. flagstruct%d2_bg_k2>0.05 ) then
                    nord_k=0;  d2_divg = max(flagstruct%d2_bg, 0.2*flagstruct%d2_bg_k2)
                    nord_w=0;  damp_w = d2_divg
                    d_con_k = 0.
@@ -662,7 +664,7 @@ contains
 #else
                   q_con(isd:,jsd:,1),  z_rat(isd,jsd),  &
 #endif
-                  kgb, heat_s, zvir, sphum, nq,  q,  k,  npz, flagstruct%inline_q,  dt,  &
+                  kgb, heat_s, dpx, zvir, sphum, nq,  q,  k,  npz, flagstruct%inline_q,  dt,  &
                   flagstruct%hord_tr, hord_m, hord_v, hord_t, hord_p,    &
                   nord_k, nord_v(k), nord_w, nord_t, flagstruct%dddmp, d2_divg, flagstruct%d4_bg,  &
                   damp_vt(k), damp_w, damp_t, d_con_k, hydrostatic, gridstruct, flagstruct, bd)
@@ -1969,7 +1971,8 @@ do 1000 j=jfirst,jlast
    ! Local:
    real peg(bd%isd:bd%ied,km+1)
    real pkg(bd%isd:bd%ied,km+1)
-   real p1d(bd%isd:bd%ied)
+   real(kind=8) p1d(bd%isd:bd%ied)
+   real(kind=8) g1d(bd%isd:bd%ied)
    real logp(bd%isd:bd%ied)
    integer i, j, k
    integer ifirst, ilast
@@ -2004,12 +2007,13 @@ do 1000 j=jfirst,jlast
 
 !$OMP parallel do default(none) shared(jfirst,jlast,ifirst,ilast,pk,km,gz,hs,ptop,ptk, &
 !$OMP                                  js,je,is,ie,peln,peln1,pe,delp,akap,pt,CG,pkz,q_con) &
-!$OMP                          private(peg, pkg, p1d, logp)
+!$OMP                          private(peg, pkg, p1d, g1d, logp)
    do 2000 j=jfirst,jlast
 
       do i=ifirst, ilast
          p1d(i) = ptop
          pk(i,j,1) = ptk
+         g1d(i) = hs(i,j)
          gz(i,j,km+1) = hs(i,j)
 #ifdef USE_COND
          peg(i,1) = ptop
@@ -2060,14 +2064,15 @@ do 1000 j=jfirst,jlast
       do k=km,1,-1
          do i=ifirst, ilast
 #ifdef SW_DYNAMICS
-            gz(i,j,k) = gz(i,j,k+1) + pt(i,j,k)*(pk(i,j,k+1)-pk(i,j,k))
+            g1d(i) = g1d(i) + pt(i,j,k)*(pk(i,j,k+1)-pk(i,j,k))
 #else
 #ifdef USE_COND
-            gz(i,j,k) = gz(i,j,k+1) + cp_air*pt(i,j,k)*(pkg(i,k+1)-pkg(i,k))
+            g1d(i) = g1d(i) + cp_air*pt(i,j,k)*(pkg(i,k+1)-pkg(i,k))
 #else
-            gz(i,j,k) = gz(i,j,k+1) + cp_air*pt(i,j,k)*(pk(i,j,k+1)-pk(i,j,k))
+            g1d(i) = g1d(i) + cp_air*pt(i,j,k)*(pk(i,j,k+1)-pk(i,j,k))
 #endif
 #endif
+            gz(i,j,k) = g1d(i)
          enddo
       enddo
 

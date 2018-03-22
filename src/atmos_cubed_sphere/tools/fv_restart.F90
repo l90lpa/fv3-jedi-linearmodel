@@ -56,7 +56,6 @@ module fv_restart_mod
   use mpp_domains_mod,     only: CENTER, CORNER, NORTH, EAST,  mpp_get_C2F_index, WEST, SOUTH
   use mpp_domains_mod,     only: mpp_global_field
   use fms_mod,             only: file_exist
-  use fv_treat_da_inc_mod, only: read_da_inc
 
   implicit none
   private
@@ -69,8 +68,8 @@ module fv_restart_mod
   logical                       :: module_is_initialized = .FALSE.
 
 !---- version number -----
-  character(len=128) :: version = '$Id$'
-  character(len=128) :: tagname = '$Name$'
+  character(len=128) :: version = '$Id: fv_restart.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains 
 
@@ -229,17 +228,6 @@ contains
         else
              if( is_master() ) write(*,*) 'Warm starting, calling fv_io_restart'
              call fv_io_read_restart(Atm(n)%domain,Atm(n:n))
-!            ====== PJP added DA functionality ======
-             if (Atm(n)%flagstruct%read_increment) then
-                ! print point in middle of domain for a sanity check
-                i = (Atm(n)%bd%isc + Atm(n)%bd%iec)/2
-                j = (Atm(n)%bd%jsc + Atm(n)%bd%jec)/2
-                k = Atm(n)%npz/2
-                if( is_master() ) write(*,*) 'Calling read_da_inc',Atm(n)%pt(i,j,k)
-                call read_da_inc(Atm(n:n), Atm(n)%domain)
-                if( is_master() ) write(*,*) 'Back from read_da_inc',Atm(n)%pt(i,j,k)
-             endif
-!            ====== end PJP added DA functionailty======
         endif
     endif
 
@@ -657,6 +645,13 @@ contains
     npz     = Atm%npz    
     nwat = Atm%flagstruct%nwat
 
+#ifdef MAPL_MODE
+      liq_wat = -1
+      ice_wat = -1
+      rainwat = -1
+      snowwat = -1
+      graupel = -1
+#else
    if (nwat>=3 ) then
       liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
       ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
@@ -666,6 +661,7 @@ contains
       snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
       graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
    endif
+#endif
 
     call mpp_get_data_domain( Atm%parent_grid%domain, &
          isd_p,  ied_p,  jsd_p,  jed_p  )
@@ -985,12 +981,15 @@ contains
          Atm(1)%neststruct%ind_h, Atm(1)%neststruct%wt_h, &
          0, 0,  isg, ieg, jsg, jeg, npz, Atm(1)%bd)
 
-
+#ifdef MAPL_MODE
+       sphum = 1
+#else
     if ( Atm(1)%flagstruct%nwat > 0 ) then
        sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
     else
        sphum = 1
     endif
+#endif
     if ( Atm(1)%parent_grid%flagstruct%adiabatic .or. Atm(1)%parent_grid%flagstruct%do_Held_Suarez ) then
        zvir = 0.         ! no virtual effect
     else

@@ -46,17 +46,17 @@ module fv_dynamics_tlm_mod
    use boundary_tlm_mod,        only: nested_grid_BC_apply_intT
    use boundary_tlm_mod,        only: nested_grid_BC_apply_intT_tlm
    use fv_arrays_mod,           only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_grid_bounds_type
-   use fv_arrays_nlm_mod,       only: fv_flags_pert_type
    use fv_nwp_nudge_mod,        only: do_adiabatic_init
 !#ifdef MAPL_MODE
 !   use fv_control_mod,          only: dyn_timer, comm_timer
 !#endif
+   use fv_arrays_nlm_mod,       only: fv_flags_pert_type, fpp
 
 implicit none
 
 !#ifdef MAPL_MODE
-  ! Include the MPI library definitons:
-  include 'mpif.h'
+!  ! Include the MPI library definitons:
+!  include 'mpif.h'
 !#endif
 
    logical :: RF_initialized = .false.
@@ -73,8 +73,8 @@ private
 public :: fv_dynamics, fv_dynamics_tlm
 
 !---- version number -----
-   character(len=128) :: version = '$Id: fv_dynamics_tlm.F90,v 1.3 2017/11/13 21:58:44 drholdaw Exp $'
-   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_18_0_vlabfv3pert $'
+   character(len=128) :: version = '$Id: fv_dynamics_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
+   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of fv_dynamics in forward (tangent) mode:
@@ -97,8 +97,6 @@ CONTAINS
 &   cx_tl, cy, cy_tl, ze0, hybrid_z, gridstruct, flagstruct, flagstructp&
 &   , neststruct, idiag, bd, parent_grid, domain, time_total)
     IMPLICIT NONE
-!t2 = MPI_Wtime(status)
-!dyn_timer = dyn_timer + (t2-t1)
 ! Large time-step
     REAL, INTENT(IN) :: bdt
     REAL, INTENT(IN) :: consv_te
@@ -150,7 +148,7 @@ CONTAINS
     REAL, INTENT(INOUT) :: delz(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
     REAL, INTENT(INOUT) :: delz_tl(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 ! height at edges (m); non-hydrostatic
-    REAL, INTENT(INOUT) :: ze0(bd%is:, bd%js:, :)
+    REAL, INTENT(INOUT) :: ze0(bd%is:bd%is, bd%js:bd%js, 1)
 ! ze0 no longer used
 !-----------------------------------------------------------------------
 ! Auxilliary pressure arrays:
@@ -173,7 +171,7 @@ CONTAINS
 ! finite-volume mean pk
     REAL, INTENT(INOUT) :: pkz(bd%is:bd%ie, bd%js:bd%je, npz)
     REAL, INTENT(INOUT) :: pkz_tl(bd%is:bd%ie, bd%js:bd%je, npz)
-    REAL, INTENT(INOUT) :: q_con(bd%isd:bd%isd, bd%jsd:bd%jsd, 1)
+    REAL, INTENT(INOUT) :: q_con(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 !-----------------------------------------------------------------------
 ! Others:
 !-----------------------------------------------------------------------
@@ -223,8 +221,12 @@ CONTAINS
     REAL :: pfull(npz)
     REAL, DIMENSION(bd%is:bd%ie) :: cvm
     REAL :: dp1(bd%isd:bd%ied, bd%jsd:bd%jed, npz), dtdt_m(bd%is:bd%ie, &
-&   bd%js:bd%je, npz), cappa(bd%isd:bd%isd, bd%jsd:bd%jsd, 1)
+&   bd%js:bd%je, npz), cappa(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
     REAL :: dp1_tl(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
+    REAL(kind=8) :: psx(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL(kind=8) :: psx_tl(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL(kind=8) :: dpx(bd%is:bd%ie, bd%js:bd%je)
+    REAL(kind=8) :: dpx_tl(bd%is:bd%ie, bd%js:bd%je)
     REAL :: akap, rdg, ph1, ph2, mdt, gam, amdt, u0
     REAL :: amdt_tl, u0_tl
     INTEGER :: kord_tracer(ncnst), kord_mt, kord_wz, kord_tm
@@ -316,17 +318,6 @@ CONTAINS
     ied = bd%ied
     jsd = bd%jsd
     jed = bd%jed
-!Compute the FV variables internally, for checkpointing purposes
-    IF (hydrostatic .AND. (.NOT.idealtest)) THEN
-      CALL GEOS_TO_FV3_TLM(bd, npz, kappa, ptop, delp, delp_tl, pe, &
-&                    pe_tl, pk, pk_tl, pkz, pkz_tl, peln, peln_tl, pt, &
-&                    pt_tl)
-    ELSE
-      peln_tl = 0.0
-      pkz_tl = 0.0
-      pe_tl = 0.0
-      pk_tl = 0.0
-    END IF
 !    dyn_timer = 0
 !    comm_timer = 0
 !     cv_air =  cp_air - rdgas
@@ -339,6 +330,8 @@ CONTAINS
 !allocate ( dp1(isd:ied, jsd:jed, 1:npz) )
 ! Begin Dynamics timer for GEOS history processing
 !t1 = MPI_Wtime(status)
+    t1 = 0.0
+    t2 = 0.0
 !allocate ( cappa(isd:isd,jsd:jsd,1) )
     cappa = 0.
 !We call this BEFORE converting pt to virtual potential temperature,
@@ -371,21 +364,59 @@ CONTAINS
 &         (model_atmos, 'sphum')
     END IF
 !goto 911
-    sphum = 1
+    IF (fpp%fpp_mapl_mode) THEN
+      SELECT CASE  (nwat) 
+      CASE (0) 
+        sphum = 1
 ! to cause trouble if (mis)used
-    liq_wat = -1
+        cld_amt = -1
+      CASE (1) 
+        sphum = 1
 ! to cause trouble if (mis)used
-    ice_wat = -1
+        liq_wat = -1
 ! to cause trouble if (mis)used
-    rainwat = -1
+        ice_wat = -1
 ! to cause trouble if (mis)used
-    snowwat = -1
+        rainwat = -1
 ! to cause trouble if (mis)used
-    graupel = -1
+        snowwat = -1
 ! to cause trouble if (mis)used
-    cld_amt = -1
+        graupel = -1
 ! to cause trouble if (mis)used
-    theta_d = -1
+        cld_amt = -1
+! to cause trouble if (mis)used
+        theta_d = -1
+      CASE (3) 
+        sphum = 1
+        liq_wat = 2
+        ice_wat = 3
+! to cause trouble if (mis)used
+        rainwat = -1
+! to cause trouble if (mis)used
+        snowwat = -1
+! to cause trouble if (mis)used
+        graupel = -1
+! to cause trouble if (mis)used
+        cld_amt = -1
+! to cause trouble if (mis)used
+        theta_d = -1
+      END SELECT
+    ELSE
+      IF (nwat .EQ. 0) THEN
+        sphum = 1
+! to cause trouble if (mis)used
+        cld_amt = -1
+      ELSE
+        sphum = GET_TRACER_INDEX(model_atmos, 'sphum')
+        liq_wat = GET_TRACER_INDEX(model_atmos, 'liq_wat')
+        ice_wat = GET_TRACER_INDEX(model_atmos, 'ice_wat')
+        rainwat = GET_TRACER_INDEX(model_atmos, 'rainwat')
+        snowwat = GET_TRACER_INDEX(model_atmos, 'snowwat')
+        graupel = GET_TRACER_INDEX(model_atmos, 'graupel')
+        cld_amt = GET_TRACER_INDEX(model_atmos, 'cld_amt')
+      END IF
+      theta_d = GET_TRACER_INDEX(model_atmos, 'theta_d')
+    END IF
     akap = kappa
 !$OMP parallel do default(none) shared(npz,ak,bk,flagstruct,pfull) &
 !$OMP                          private(ph1, ph2)
@@ -493,6 +524,7 @@ CONTAINS
 &       do_adiabatic_init)) THEN
       m_fac_tl = 0.0
       ps2_tl = 0.0
+      va_tl = 0.0
       ua_tl = 0.0
       CALL COMPUTE_AAM_TLM(npz, is, ie, js, je, isd, ied, jsd, jed, &
 &                    gridstruct, bd, ptop, ua, ua_tl, va, va_tl, u, u_tl&
@@ -533,28 +565,25 @@ CONTAINS
       END IF
     END IF
 ! Convert pt to virtual potential temperature on the first timestep
-    IF (flagstruct%adiabatic .AND. flagstruct%kord_tm .GT. 0) THEN
-      IF (.NOT.pt_initialized) THEN
+    IF (flagstruct%adiabatic) THEN
 !$OMP parallel do default(none) shared(theta_d,is,ie,js,je,npz,pt,pkz,q)
-        DO k=1,npz
+      DO k=1,npz
+        DO j=js,je
+          DO i=is,ie
+            pt_tl(i, j, k) = (pt_tl(i, j, k)*pkz(i, j, k)-pt(i, j, k)*&
+&             pkz_tl(i, j, k))/pkz(i, j, k)**2
+            pt(i, j, k) = pt(i, j, k)/pkz(i, j, k)
+          END DO
+        END DO
+        IF (theta_d .GT. 0) THEN
           DO j=js,je
             DO i=is,ie
-              pt_tl(i, j, k) = (pt_tl(i, j, k)*pkz(i, j, k)-pt(i, j, k)*&
-&               pkz_tl(i, j, k))/pkz(i, j, k)**2
-              pt(i, j, k) = pt(i, j, k)/pkz(i, j, k)
+              q_tl(i, j, k, theta_d) = pt_tl(i, j, k)
+              q(i, j, k, theta_d) = pt(i, j, k)
             END DO
           END DO
-          IF (theta_d .GT. 0) THEN
-            DO j=js,je
-              DO i=is,ie
-                q_tl(i, j, k, theta_d) = pt_tl(i, j, k)
-                q(i, j, k, theta_d) = pt(i, j, k)
-              END DO
-            END DO
-          END IF
-        END DO
-        pt_initialized = .true.
-      END IF
+        END IF
+      END DO
     ELSE
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,dp1,pkz,q_con)
       DO k=1,npz
@@ -581,6 +610,20 @@ CONTAINS
         END DO
       END DO
     END IF
+!DryMassRoundoffControl
+!allocate(psx(isd:ied,jsd:jed),dpx(is:ie,js:je))
+    IF (fpp%fpp_overload_r4) THEN
+      psx_tl = 0.0_8
+      DO j=js,je
+        DO i=is,ie
+          psx_tl(i, j) = pe_tl(i, npz+1, j)
+          psx(i, j) = pe(i, npz+1, j)
+          dpx(i, j) = 0.0
+        END DO
+      END DO
+    ELSE
+      psx_tl = 0.0_8
+    END IF
     CALL TIMING_ON('FV_DYN_LOOP')
     omga_tl = 0.0
     ps_tl = 0.0
@@ -598,6 +641,7 @@ CONTAINS
     yfx_tl = 0.0
     vt_tl = 0.0
     zh_tl = 0.0
+    dpx_tl = 0.0_8
     crx_tl = 0.0
     cry_tl = 0.0
 ! first level of time-split
@@ -628,13 +672,35 @@ CONTAINS
 &                 , omga_tl, ptop, pfull, ua, ua_tl, va, va_tl, uc, &
 &                 uc_tl, vc, vc_tl, mfx, mfx_tl, mfy, mfy_tl, cx, cx_tl&
 &                 , cy, cy_tl, pkz, pkz_tl, peln, peln_tl, q_con, ak, bk&
-&                 , ks, gridstruct, flagstruct, flagstructp, neststruct&
-&                 , idiag, bd, domain, n_map .EQ. 1, i_pack, last_step, &
-&                 gz, gz_tl, pkc, pkc_tl, ptc, ptc_tl, crx, crx_tl, xfx&
-&                 , xfx_tl, cry, cry_tl, yfx, yfx_tl, divgd, divgd_tl, &
-&                 delpc, delpc_tl, ut, ut_tl, vt, vt_tl, zh, zh_tl, pk3&
-&                 , pk3_tl, du, du_tl, dv, dv_tl, time_total)
+&                 , dpx, dpx_tl, ks, gridstruct, flagstruct, flagstructp&
+&                 , neststruct, idiag, bd, domain, n_map .EQ. 1, i_pack&
+&                 , last_step, gz, gz_tl, pkc, pkc_tl, ptc, ptc_tl, crx&
+&                 , crx_tl, xfx, xfx_tl, cry, cry_tl, yfx, yfx_tl, divgd&
+&                 , divgd_tl, delpc, delpc_tl, ut, ut_tl, vt, vt_tl, zh&
+&                 , zh_tl, pk3, pk3_tl, du, du_tl, dv, dv_tl, time_total&
+&                )
       CALL TIMING_OFF('DYN_CORE')
+!DryMassRoundoffControl
+      IF (last_step) THEN
+        IF (fpp%fpp_overload_r4) THEN
+          DO j=js,je
+            DO i=is,ie
+              psx_tl(i, j) = psx_tl(i, j) + dpx_tl(i, j)
+              psx(i, j) = psx(i, j) + dpx(i, j)
+            END DO
+          END DO
+          CALL TIMING_ON('COMM_TOTAL')
+          CALL MPP_UPDATE_DOMAINS_TLM(psx, psx_tl, domain)
+          CALL TIMING_OFF('COMM_TOTAL')
+          DO j=js-1,je+1
+            DO i=is-1,ie+1
+              pe_tl(i, npz+1, j) = psx_tl(i, j)
+              pe(i, npz+1, j) = psx(i, j)
+            END DO
+          END DO
+        END IF
+      END IF
+!deallocate(psx,dpx)
       IF (.NOT.flagstruct%inline_q .AND. nq .NE. 0) THEN
 !--------------------------------------------------------
 ! Perform large-time-step scalar transport using the accumulated CFL and
@@ -715,7 +781,7 @@ CONTAINS
           IF (iq .EQ. cld_amt) kord_tracer(iq) = 9
           kord_tracer_pert(iq) = flagstructp%kord_tr_pert
 ! linear
-          IF (iq .EQ. cld_amt) kord_tracer_pert(iq) = 111
+          IF (iq .EQ. cld_amt) kord_tracer_pert(iq) = 17
         END DO
         do_omega = hydrostatic .AND. last_step
         CALL TIMING_ON('Remapping')
@@ -928,10 +994,8 @@ CONTAINS
 &                                      , ng, npz, gridstruct%agrid, -50.&
 &                                      , 100., bad_range)
     END IF
-!Convert back to potential temperature
-    IF (hydrostatic .AND. (.NOT.idealtest)) CALL FV3_TO_GEOS_TLM(bd, npz&
-&                                                          , pkz, pkz_tl&
-&                                                          , pt, pt_tl)
+!    IF (fpp%fpp_mapl_mode) dyn_timer = dyn_timer + (t2-t1)
+!t2 = MPI_Wtime(status)
   END SUBROUTINE FV_DYNAMICS_TLM
 !-----------------------------------------------------------------------
 !     fv_dynamics :: FV dynamical core driver
@@ -943,8 +1007,6 @@ CONTAINS
 &   ze0, hybrid_z, gridstruct, flagstruct, flagstructp, neststruct, &
 &   idiag, bd, parent_grid, domain, time_total)
     IMPLICIT NONE
-!t2 = MPI_Wtime(status)
-!dyn_timer = dyn_timer + (t2-t1)
 ! Large time-step
     REAL, INTENT(IN) :: bdt
     REAL, INTENT(IN) :: consv_te
@@ -986,7 +1048,7 @@ CONTAINS
 ! delta-height (m); non-hydrostatic only
     REAL, INTENT(INOUT) :: delz(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 ! height at edges (m); non-hydrostatic
-    REAL, INTENT(INOUT) :: ze0(bd%is:, bd%js:, :)
+    REAL, INTENT(INOUT) :: ze0(bd%is:bd%is, bd%js:bd%js, 1)
 ! ze0 no longer used
 !-----------------------------------------------------------------------
 ! Auxilliary pressure arrays:
@@ -1003,7 +1065,7 @@ CONTAINS
     REAL, INTENT(INOUT) :: peln(bd%is:bd%ie, npz+1, bd%js:bd%je)
 ! finite-volume mean pk
     REAL, INTENT(INOUT) :: pkz(bd%is:bd%ie, bd%js:bd%je, npz)
-    REAL, INTENT(INOUT) :: q_con(bd%isd:bd%isd, bd%jsd:bd%jsd, 1)
+    REAL, INTENT(INOUT) :: q_con(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 !-----------------------------------------------------------------------
 ! Others:
 !-----------------------------------------------------------------------
@@ -1039,7 +1101,9 @@ CONTAINS
     REAL :: pfull(npz)
     REAL, DIMENSION(bd%is:bd%ie) :: cvm
     REAL :: dp1(bd%isd:bd%ied, bd%jsd:bd%jed, npz), dtdt_m(bd%is:bd%ie, &
-&   bd%js:bd%je, npz), cappa(bd%isd:bd%isd, bd%jsd:bd%jsd, 1)
+&   bd%js:bd%je, npz), cappa(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
+    REAL(kind=8) :: psx(bd%isd:bd%ied, bd%jsd:bd%jed)
+    REAL(kind=8) :: dpx(bd%is:bd%ie, bd%js:bd%je)
     REAL :: akap, rdg, ph1, ph2, mdt, gam, amdt, u0
     INTEGER :: kord_tracer(ncnst), kord_mt, kord_wz, kord_tm
     INTEGER :: kord_tracer_pert(ncnst), kord_mt_pert, kord_wz_pert, &
@@ -1112,11 +1176,6 @@ CONTAINS
     ied = bd%ied
     jsd = bd%jsd
     jed = bd%jed
-!Compute the FV variables internally, for checkpointing purposes
-    IF (hydrostatic .AND. (.NOT.idealtest)) CALL GEOS_TO_FV3(bd, npz, &
-&                                                      kappa, ptop, delp&
-&                                                      , pe, pk, pkz, &
-&                                                      peln, pt)
 !    dyn_timer = 0
 !    comm_timer = 0
 !     cv_air =  cp_air - rdgas
@@ -1129,6 +1188,8 @@ CONTAINS
 !allocate ( dp1(isd:ied, jsd:jed, 1:npz) )
 ! Begin Dynamics timer for GEOS history processing
 !t1 = MPI_Wtime(status)
+    t1 = 0.0
+    t2 = 0.0
 !allocate ( cappa(isd:isd,jsd:jsd,1) )
     cappa = 0.
 !We call this BEFORE converting pt to virtual potential temperature,
@@ -1156,21 +1217,59 @@ CONTAINS
 &         (model_atmos, 'sphum')
     END IF
 !goto 911
-    sphum = 1
+    IF (fpp%fpp_mapl_mode) THEN
+      SELECT CASE  (nwat) 
+      CASE (0) 
+        sphum = 1
 ! to cause trouble if (mis)used
-    liq_wat = -1
+        cld_amt = -1
+      CASE (1) 
+        sphum = 1
 ! to cause trouble if (mis)used
-    ice_wat = -1
+        liq_wat = -1
 ! to cause trouble if (mis)used
-    rainwat = -1
+        ice_wat = -1
 ! to cause trouble if (mis)used
-    snowwat = -1
+        rainwat = -1
 ! to cause trouble if (mis)used
-    graupel = -1
+        snowwat = -1
 ! to cause trouble if (mis)used
-    cld_amt = -1
+        graupel = -1
 ! to cause trouble if (mis)used
-    theta_d = -1
+        cld_amt = -1
+! to cause trouble if (mis)used
+        theta_d = -1
+      CASE (3) 
+        sphum = 1
+        liq_wat = 2
+        ice_wat = 3
+! to cause trouble if (mis)used
+        rainwat = -1
+! to cause trouble if (mis)used
+        snowwat = -1
+! to cause trouble if (mis)used
+        graupel = -1
+! to cause trouble if (mis)used
+        cld_amt = -1
+! to cause trouble if (mis)used
+        theta_d = -1
+      END SELECT
+    ELSE
+      IF (nwat .EQ. 0) THEN
+        sphum = 1
+! to cause trouble if (mis)used
+        cld_amt = -1
+      ELSE
+        sphum = GET_TRACER_INDEX(model_atmos, 'sphum')
+        liq_wat = GET_TRACER_INDEX(model_atmos, 'liq_wat')
+        ice_wat = GET_TRACER_INDEX(model_atmos, 'ice_wat')
+        rainwat = GET_TRACER_INDEX(model_atmos, 'rainwat')
+        snowwat = GET_TRACER_INDEX(model_atmos, 'snowwat')
+        graupel = GET_TRACER_INDEX(model_atmos, 'graupel')
+        cld_amt = GET_TRACER_INDEX(model_atmos, 'cld_amt')
+      END IF
+      theta_d = GET_TRACER_INDEX(model_atmos, 'theta_d')
+    END IF
     akap = kappa
 !$OMP parallel do default(none) shared(npz,ak,bk,flagstruct,pfull) &
 !$OMP                          private(ph1, ph2)
@@ -1282,25 +1381,22 @@ CONTAINS
       END IF
     END IF
 ! Convert pt to virtual potential temperature on the first timestep
-    IF (flagstruct%adiabatic .AND. flagstruct%kord_tm .GT. 0) THEN
-      IF (.NOT.pt_initialized) THEN
+    IF (flagstruct%adiabatic) THEN
 !$OMP parallel do default(none) shared(theta_d,is,ie,js,je,npz,pt,pkz,q)
-        DO k=1,npz
+      DO k=1,npz
+        DO j=js,je
+          DO i=is,ie
+            pt(i, j, k) = pt(i, j, k)/pkz(i, j, k)
+          END DO
+        END DO
+        IF (theta_d .GT. 0) THEN
           DO j=js,je
             DO i=is,ie
-              pt(i, j, k) = pt(i, j, k)/pkz(i, j, k)
+              q(i, j, k, theta_d) = pt(i, j, k)
             END DO
           END DO
-          IF (theta_d .GT. 0) THEN
-            DO j=js,je
-              DO i=is,ie
-                q(i, j, k, theta_d) = pt(i, j, k)
-              END DO
-            END DO
-          END IF
-        END DO
-        pt_initialized = .true.
-      END IF
+        END IF
+      END DO
     ELSE
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,dp1,pkz,q_con)
       DO k=1,npz
@@ -1321,6 +1417,16 @@ CONTAINS
           DO i=is,ie
             dtdt_m(i, j, k) = 0.
           END DO
+        END DO
+      END DO
+    END IF
+!DryMassRoundoffControl
+!allocate(psx(isd:ied,jsd:jed),dpx(is:ie,js:je))
+    IF (fpp%fpp_overload_r4) THEN
+      DO j=js,je
+        DO i=is,ie
+          psx(i, j) = pe(i, npz+1, j)
+          dpx(i, j) = 0.0
         END DO
       END DO
     END IF
@@ -1348,12 +1454,31 @@ CONTAINS
       CALL DYN_CORE(npx, npy, npz, ng, sphum, nq, mdt, n_split, zvir, &
 &             cp_air, akap, cappa, grav, hydrostatic, u, v, w, delz, pt&
 &             , q, delp, pe, pk, phis, ws, omga, ptop, pfull, ua, va, uc&
-&             , vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, ks, &
-&             gridstruct, flagstruct, flagstructp, neststruct, idiag, bd&
-&             , domain, n_map .EQ. 1, i_pack, last_step, gz, pkc, ptc, &
-&             crx, xfx, cry, yfx, divgd, delpc, ut, vt, zh, pk3, du, dv&
-&             , time_total)
+&             , vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, dpx, ks&
+&             , gridstruct, flagstruct, flagstructp, neststruct, idiag, &
+&             bd, domain, n_map .EQ. 1, i_pack, last_step, gz, pkc, ptc&
+&             , crx, xfx, cry, yfx, divgd, delpc, ut, vt, zh, pk3, du, &
+&             dv, time_total)
       CALL TIMING_OFF('DYN_CORE')
+!DryMassRoundoffControl
+      IF (last_step) THEN
+        IF (fpp%fpp_overload_r4) THEN
+          DO j=js,je
+            DO i=is,ie
+              psx(i, j) = psx(i, j) + dpx(i, j)
+            END DO
+          END DO
+          CALL TIMING_ON('COMM_TOTAL')
+          CALL MPP_UPDATE_DOMAINS(psx, domain)
+          CALL TIMING_OFF('COMM_TOTAL')
+          DO j=js-1,je+1
+            DO i=is-1,ie+1
+              pe(i, npz+1, j) = psx(i, j)
+            END DO
+          END DO
+        END IF
+      END IF
+!deallocate(psx,dpx)
       IF (.NOT.flagstruct%inline_q .AND. nq .NE. 0) THEN
 !--------------------------------------------------------
 ! Perform large-time-step scalar transport using the accumulated CFL and
@@ -1429,7 +1554,7 @@ CONTAINS
           IF (iq .EQ. cld_amt) kord_tracer(iq) = 9
           kord_tracer_pert(iq) = flagstructp%kord_tr_pert
 ! linear
-          IF (iq .EQ. cld_amt) kord_tracer_pert(iq) = 111
+          IF (iq .EQ. cld_amt) kord_tracer_pert(iq) = 17
         END DO
         do_omega = hydrostatic .AND. last_step
         CALL TIMING_ON('Remapping')
@@ -1619,9 +1744,8 @@ CONTAINS
 &                                      , ng, npz, gridstruct%agrid, -50.&
 &                                      , 100., bad_range)
     END IF
-!Convert back to potential temperature
-    IF (hydrostatic .AND. (.NOT.idealtest)) CALL FV3_TO_GEOS(bd, npz, &
-&                                                      pkz, pt)
+!    IF (fpp%fpp_mapl_mode) dyn_timer = dyn_timer + (t2-t1)
+!t2 = MPI_Wtime(status)
   END SUBROUTINE FV_DYNAMICS
 !  Differentiation of rayleigh_super in forward (tangent) mode:
 !   variations   of useful results: u v w ua va pt
@@ -2263,7 +2387,7 @@ CONTAINS
   END SUBROUTINE RAYLEIGH_FRICTION
 !  Differentiation of compute_aam in forward (tangent) mode:
 !   variations   of useful results: ua aam va m_fac ps
-!   with respect to varying inputs: u v delp ua aam m_fac ps
+!   with respect to varying inputs: u v delp ua aam va m_fac ps
   SUBROUTINE COMPUTE_AAM_TLM(npz, is, ie, js, je, isd, ied, jsd, jed, &
 &   gridstruct, bd, ptop, ua, ua_tl, va, va_tl, u, u_tl, v, v_tl, delp, &
 &   delp_tl, aam, aam_tl, ps, ps_tl, m_fac, m_fac_tl)
@@ -2297,7 +2421,6 @@ CONTAINS
     REAL, DIMENSION(is:ie) :: dm_tl
     INTEGER :: i, j, k
     INTRINSIC COS
-    va_tl = 0.0
     CALL C2L_ORD2_TLM(u, u_tl, v, v_tl, ua, ua_tl, va, va_tl, gridstruct&
 &               , npz, gridstruct%grid_type, bd, gridstruct%nested)
     dm_tl = 0.0
@@ -2377,186 +2500,4 @@ CONTAINS
       END DO
     END DO
   END SUBROUTINE COMPUTE_AAM
-!  Differentiation of geos_to_fv3 in forward (tangent) mode:
-!   variations   of useful results: peln pkz pe pk pt
-!   with respect to varying inputs: delp pt
-  SUBROUTINE GEOS_TO_FV3_TLM(bd, npz, kappa, ptop, delp, delp_tl, pe, &
-&   pe_tl, pk, pk_tl, pkz, pkz_tl, peln, peln_tl, pt, pt_tl)
-    IMPLICIT NONE
-!Arguments
-    TYPE(FV_GRID_BOUNDS_TYPE), INTENT(IN) :: bd
-    INTEGER, INTENT(IN) :: npz
-    REAL, INTENT(IN) :: kappa, ptop
-    REAL, INTENT(INOUT) :: pt(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
-    REAL, INTENT(INOUT) :: pt_tl(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
-    REAL, INTENT(INOUT) :: delp(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
-    REAL, INTENT(INOUT) :: delp_tl(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
-    REAL, INTENT(INOUT) :: pe(bd%is-1:bd%ie+1, npz+1, bd%js-1:bd%je+1)
-    REAL, INTENT(INOUT) :: pe_tl(bd%is-1:bd%ie+1, npz+1, bd%js-1:bd%je+1&
-&   )
-    REAL, INTENT(INOUT) :: pk(bd%is:bd%ie, bd%js:bd%je, npz+1)
-    REAL, INTENT(INOUT) :: pk_tl(bd%is:bd%ie, bd%js:bd%je, npz+1)
-    REAL, INTENT(INOUT) :: peln(bd%is:bd%ie, npz+1, bd%js:bd%je)
-    REAL, INTENT(INOUT) :: peln_tl(bd%is:bd%ie, npz+1, bd%js:bd%je)
-    REAL, INTENT(INOUT) :: pkz(bd%is:bd%ie, bd%js:bd%je, npz)
-    REAL, INTENT(INOUT) :: pkz_tl(bd%is:bd%ie, bd%js:bd%je, npz)
-!Locals
-    INTEGER :: i, j, k, is, ie, js, je
-    INTRINSIC LOG
-    INTRINSIC EXP
-    is = bd%is
-    ie = bd%ie
-    js = bd%js
-    je = bd%je
-    pe(:, :, :) = 0.0
-    pe(:, 1, :) = ptop
-    pe_tl = 0.0
-    DO k=2,npz+1
-      DO j=js,je
-        DO i=is,ie
-          pe_tl(i, k, j) = pe_tl(i, k-1, j) + delp_tl(i, j, k-1)
-          pe(i, k, j) = pe(i, k-1, j) + delp(i, j, k-1)
-        END DO
-      END DO
-    END DO
-    peln_tl = 0.0
-    DO k=1,npz+1
-      DO j=js,je
-        DO i=is,ie
-          peln_tl(i, k, j) = pe_tl(i, k, j)/pe(i, k, j)
-          peln(i, k, j) = LOG(pe(i, k, j))
-        END DO
-      END DO
-    END DO
-    pk_tl = 0.0
-    DO k=1,npz+1
-      DO j=js,je
-        DO i=is,ie
-          pk_tl(i, j, k) = kappa*peln_tl(i, k, j)*EXP(kappa*peln(i, k, j&
-&           ))
-          pk(i, j, k) = EXP(kappa*peln(i, k, j))
-        END DO
-      END DO
-    END DO
-    pkz_tl = 0.0
-    DO k=1,npz
-      DO j=js,je
-        DO i=is,ie
-          pkz_tl(i, j, k) = ((pk_tl(i, j, k+1)-pk_tl(i, j, k))*kappa*(&
-&           peln(i, k+1, j)-peln(i, k, j))-(pk(i, j, k+1)-pk(i, j, k))*&
-&           kappa*(peln_tl(i, k+1, j)-peln_tl(i, k, j)))/(kappa*(peln(i&
-&           , k+1, j)-peln(i, k, j)))**2
-          pkz(i, j, k) = (pk(i, j, k+1)-pk(i, j, k))/(kappa*(peln(i, k+1&
-&           , j)-peln(i, k, j)))
-        END DO
-      END DO
-    END DO
-    pt_tl(is:ie, js:je, :) = pt_tl(is:ie, js:je, :)*pkz(is:ie, js:je, :)&
-&     + pt(is:ie, js:je, :)*pkz_tl(is:ie, js:je, :)
-    pt(is:ie, js:je, :) = pt(is:ie, js:je, :)*pkz(is:ie, js:je, :)
-  END SUBROUTINE GEOS_TO_FV3_TLM
-  SUBROUTINE GEOS_TO_FV3(bd, npz, kappa, ptop, delp, pe, pk, pkz, peln, &
-&   pt)
-    IMPLICIT NONE
-!Arguments
-    TYPE(FV_GRID_BOUNDS_TYPE), INTENT(IN) :: bd
-    INTEGER, INTENT(IN) :: npz
-    REAL, INTENT(IN) :: kappa, ptop
-    REAL, INTENT(INOUT) :: pt(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
-    REAL, INTENT(INOUT) :: delp(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
-    REAL, INTENT(INOUT) :: pe(bd%is-1:bd%ie+1, npz+1, bd%js-1:bd%je+1)
-    REAL, INTENT(INOUT) :: pk(bd%is:bd%ie, bd%js:bd%je, npz+1)
-    REAL, INTENT(INOUT) :: peln(bd%is:bd%ie, npz+1, bd%js:bd%je)
-    REAL, INTENT(INOUT) :: pkz(bd%is:bd%ie, bd%js:bd%je, npz)
-!Locals
-    INTEGER :: i, j, k, is, ie, js, je
-    INTRINSIC LOG
-    INTRINSIC EXP
-    is = bd%is
-    ie = bd%ie
-    js = bd%js
-    je = bd%je
-    pe(:, :, :) = 0.0
-    pe(:, 1, :) = ptop
-    DO k=2,npz+1
-      DO j=js,je
-        DO i=is,ie
-          pe(i, k, j) = pe(i, k-1, j) + delp(i, j, k-1)
-        END DO
-      END DO
-    END DO
-    DO k=1,npz+1
-      DO j=js,je
-        DO i=is,ie
-          peln(i, k, j) = LOG(pe(i, k, j))
-        END DO
-      END DO
-    END DO
-    DO k=1,npz+1
-      DO j=js,je
-        DO i=is,ie
-          pk(i, j, k) = EXP(kappa*peln(i, k, j))
-        END DO
-      END DO
-    END DO
-    DO k=1,npz
-      DO j=js,je
-        DO i=is,ie
-          pkz(i, j, k) = (pk(i, j, k+1)-pk(i, j, k))/(kappa*(peln(i, k+1&
-&           , j)-peln(i, k, j)))
-        END DO
-      END DO
-    END DO
-    pt(is:ie, js:je, :) = pt(is:ie, js:je, :)*pkz(is:ie, js:je, :)
-  END SUBROUTINE GEOS_TO_FV3
-!  Differentiation of fv3_to_geos in forward (tangent) mode:
-!   variations   of useful results: pt
-!   with respect to varying inputs: pkz pt
-  SUBROUTINE FV3_TO_GEOS_TLM(bd, npz, pkz, pkz_tl, pt, pt_tl)
-    IMPLICIT NONE
-!Arguments
-    TYPE(FV_GRID_BOUNDS_TYPE), INTENT(IN) :: bd
-    INTEGER, INTENT(IN) :: npz
-    REAL, INTENT(INOUT) :: pt(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
-    REAL, INTENT(INOUT) :: pt_tl(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
-    REAL, INTENT(INOUT) :: pkz(bd%is:bd%ie, bd%js:bd%je, npz)
-    REAL, INTENT(INOUT) :: pkz_tl(bd%is:bd%ie, bd%js:bd%je, npz)
-!Locals
-    INTEGER :: i, j, k, is, ie, js, je
-    is = bd%is
-    ie = bd%ie
-    js = bd%js
-    je = bd%je
-    DO k=1,npz
-      DO j=js,je
-        DO i=is,ie
-          pt_tl(i, j, k) = (pt_tl(i, j, k)*pkz(i, j, k)-pt(i, j, k)*&
-&           pkz_tl(i, j, k))/pkz(i, j, k)**2
-          pt(i, j, k) = pt(i, j, k)/pkz(i, j, k)
-        END DO
-      END DO
-    END DO
-  END SUBROUTINE FV3_TO_GEOS_TLM
-  SUBROUTINE FV3_TO_GEOS(bd, npz, pkz, pt)
-    IMPLICIT NONE
-!Arguments
-    TYPE(FV_GRID_BOUNDS_TYPE), INTENT(IN) :: bd
-    INTEGER, INTENT(IN) :: npz
-    REAL, INTENT(INOUT) :: pt(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
-    REAL, INTENT(INOUT) :: pkz(bd%is:bd%ie, bd%js:bd%je, npz)
-!Locals
-    INTEGER :: i, j, k, is, ie, js, je
-    is = bd%is
-    ie = bd%ie
-    js = bd%js
-    je = bd%je
-    DO k=1,npz
-      DO j=js,je
-        DO i=is,ie
-          pt(i, j, k) = pt(i, j, k)/pkz(i, j, k)
-        END DO
-      END DO
-    END DO
-  END SUBROUTINE FV3_TO_GEOS
-
 end module fv_dynamics_tlm_mod

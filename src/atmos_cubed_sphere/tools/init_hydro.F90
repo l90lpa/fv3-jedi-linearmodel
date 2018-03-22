@@ -17,7 +17,7 @@
 !*           675 Mass Ave, Cambridge, MA 02139, USA.                   *
 !* or see:   http://www.gnu.org/licenses/gpl.html                      *
 !***********************************************************************
-! $Id$
+! $Id: init_hydro.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $
 
 module init_hydro_mod
 
@@ -39,8 +39,8 @@ module init_hydro_mod
       public :: p_var, hydro_eq
 
 !---- version number -----
-      character(len=128) :: version = '$Id$'
-      character(len=128) :: tagname = '$Name$'
+      character(len=128) :: version = '$Id: init_hydro.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $'
+      character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains
 
@@ -166,7 +166,11 @@ contains
 ! The following form is the same as in "fv_update_phys.F90"
 !------------------------------------------------------------------
        zvir = rvgas/rdgas - 1.
+#ifdef MAPL_MODE
+       sphum   = 1
+#else
        sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
+#endif
 !$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,pkz,cappa,rdg, &
 !$OMP                                  delp,pt,zvir,q,sphum,delz)
        do k=1,km

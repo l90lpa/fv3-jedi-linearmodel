@@ -85,8 +85,8 @@
       public  del2_cubed_sphere, del4_cubed_sphere, FV3_zs_filter
 
 !---- version number -----
-      character(len=128) :: version = '$Id$'
-      character(len=128) :: tagname = '$Name$'
+      character(len=128) :: version = '$Id: fv_surf_map.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $'
+      character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
       contains
 

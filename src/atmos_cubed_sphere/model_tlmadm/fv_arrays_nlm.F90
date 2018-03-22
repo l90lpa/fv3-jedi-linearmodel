@@ -26,15 +26,44 @@ public
 
 logical :: fv_timing_onoff
 
+!Compiler definitions that are regular if statements for the tlm/adm, should still match how the code is compiled
+type fpp_type
+  logical :: FPP_MAPL_MODE   = .true.    !GMAO Mode
+  logical :: FPP_OVERLOAD_R4 = .false.
+end type fpp_type
+
+type(fpp_type) :: fpp
+
 type fv_flags_pert_type
 
-! TLM/ADM options for horizontal transport
+! Traj = pert, true is faster
    logical :: split_hord   = .true. !Force traj to use pert options if false
-   integer :: hord_mt_pert = 6      ! Linear options:
-   integer :: hord_vt_pert = 6      !   1 (all) first order scheme
-   integer :: hord_tm_pert = 6      !   6 (all) quasi fifth order linear scheme
-   integer :: hord_dp_pert = 6      !  -5 (vt,tm,dp,tr) linear scheme based on PPM 4th order interpolation
-   integer :: hord_tr_pert = 6      ! 333 (vt,tm,dp,tr) linear third order cheme
+
+! TLM/ADM options for horizontal transport
+   integer :: hord_mt_pert = 2      ! Linear options:
+   integer :: hord_vt_pert = 2      !   1 (all) first order scheme
+   integer :: hord_tm_pert = 2      !   6 (all) quasi fifth order linear scheme
+   integer :: hord_dp_pert = 2      !  -5 (vt,tm,dp,tr) linear scheme based on PPM 4th order interpolation
+   integer :: hord_tr_pert = 2      ! 333 (vt,tm,dp,tr) linear third order cheme
+
+! Number of sponge layers for the perturbations
+   integer :: n_sponge_pert = 9
+
+!Perturbation damping in the sponge
+   logical :: hord_ks_pert    = .true. !Use the below for the trajectory in the sponge layer
+   integer :: hord_mt_ks_pert = 1
+   integer :: hord_vt_ks_pert = 1
+   integer :: hord_tm_ks_pert = 1
+   integer :: hord_dp_ks_pert = 1
+   integer :: hord_tr_ks_pert = 1
+
+!Trajectory damping in the sponge
+   logical :: hord_ks_traj    = .true. !Use the below for the trajectory in the sponge layer
+   integer :: hord_mt_ks_traj = 1
+   integer :: hord_vt_ks_traj = 1
+   integer :: hord_tm_ks_traj = 1
+   integer :: hord_dp_ks_traj = 1
+   integer :: hord_tr_ks_traj = 1
 
 ! TLM/ADM options for vertical remapping
    logical :: split_kord   = .true. !Force traj to use pert options if false
@@ -51,6 +80,9 @@ type fv_flags_pert_type
    real    :: d4_bg_pert = 0.150
    logical :: do_vort_damp_pert = .true.
    real    :: vtdm4_pert = 0.0005
+   real    :: d2_bg_k1_pert = 4.         ! factor for d2_bg (k=1)
+   real    :: d2_bg_k2_pert = 2.         ! factor for d2_bg (k=2)
+   real    :: d2_bg_ks_pert = 2.         ! factor for d2_bg (k=1)
 
 ! TLM/ADM options for tracer damping
    logical :: split_damp_tr = .true. !Force traj to use pert options if false
@@ -63,40 +95,41 @@ type fv_atmos_pert_type
 
    type(fv_flags_pert_type) :: flagstruct
 
-   real, _ALLOCATABLE :: up(:,:,:)    _NULL  ! D grid zonal wind (m/s)
-   real, _ALLOCATABLE :: vp(:,:,:)    _NULL  ! D grid meridional wind (m/s)
-   real, _ALLOCATABLE :: ptp(:,:,:)   _NULL  ! temperature (K)
-   real, _ALLOCATABLE :: delpp(:,:,:) _NULL  ! pressure thickness (pascal)
-   real, _ALLOCATABLE :: qp(:,:,:,:)  _NULL  ! specific humidity and constituents
+   real, allocatable ::     up(:,:,:)   ! D grid zonal wind (m/s)
+   real, allocatable ::     vp(:,:,:)   ! D grid meridional wind (m/s)
+   real, allocatable ::    ptp(:,:,:)   ! temperature (K)
+   real, allocatable ::  delpp(:,:,:)   ! pressure thickness (pascal)
+   real, allocatable ::     qp(:,:,:,:) ! specific humidity and constituents
 
-   real, _ALLOCATABLE ::     wp(:,:,:)  _NULL  ! cell center vertical wind (m/s)
-   real, _ALLOCATABLE ::  delzp(:,:,:)  _NULL  ! layer thickness (meters)
-   real, _ALLOCATABLE ::   ze0p(:,:,:)  _NULL  ! height at layer edges for remapping
+   real, allocatable ::     wp(:,:,:)   ! cell center vertical wind (m/s)
+   real, allocatable ::  delzp(:,:,:)   ! layer thickness (meters)
+   real, allocatable ::   ze0p(:,:,:)   ! height at layer edges for remapping
+   real, allocatable :: q_conp(:,:,:)   ! total condensates
 
-   real, _ALLOCATABLE :: psp (:,:)      _NULL  ! Surface pressure (pascal)
-   real, _ALLOCATABLE :: pep (:,:,: )   _NULL  ! edge pressure (pascal)
-   real, _ALLOCATABLE :: pkp  (:,:,:)   _NULL  ! pe**cappa
-   real, _ALLOCATABLE :: pelnp(:,:,:)   _NULL  ! ln(pe)
-   real, _ALLOCATABLE :: pkzp (:,:,:)   _NULL  ! finite-volume mean pk
+   real, allocatable ::    psp(:,:)     ! Surface pressure (pascal)
+   real, allocatable ::    pep(:,:,:)   ! edge pressure (pascal)
+   real, allocatable ::    pkp(:,:,:)   ! pe**cappa
+   real, allocatable ::  pelnp(:,:,:)   ! ln(pe)
+   real, allocatable ::   pkzp(:,:,:)   ! finite-volume mean pk
 
-   real, _ALLOCATABLE :: omgap(:,:,:)   _NULL  ! Vertical pressure velocity (pa/s)
+   real, allocatable ::  omgap(:,:,:)   ! Vertical pressure velocity (pa/s)
 
-   real, _ALLOCATABLE :: uap(:,:,:)     _NULL  ! (ua, va) are mostly used as the A grid winds
-   real, _ALLOCATABLE :: vap(:,:,:)     _NULL
-   real, _ALLOCATABLE :: ucp(:,:,:)     _NULL  ! (uc, vc) are mostly used as the C grid winds
-   real, _ALLOCATABLE :: vcp(:,:,:)     _NULL
+   real, allocatable ::    uap(:,:,:)   ! (ua, va) are mostly used as the A grid winds
+   real, allocatable ::    vap(:,:,:)     
+   real, allocatable ::    ucp(:,:,:)   ! (uc, vc) are mostly used as the C grid winds
+   real, allocatable ::    vcp(:,:,:)     
 
-   real, _ALLOCATABLE ::  mfxp(:,:,:)  _NULL
-   real, _ALLOCATABLE ::  mfyp(:,:,:)  _NULL
+   real, allocatable ::   mfxp(:,:,:)   ! Mass fluxes
+   real, allocatable ::   mfyp(:,:,:)  
 
-   real, _ALLOCATABLE ::  cxp(:,:,:)  _NULL
-   real, _ALLOCATABLE ::  cyp(:,:,:)  _NULL
+   real, allocatable ::    cxp(:,:,:)  
+   real, allocatable ::    cyp(:,:,:)  
 
 end type fv_atmos_pert_type
 
 !---- version number -----
-character(len=128) :: version = '$Id: fv_arrays_nlm.F90,v 1.3 2017/11/13 21:58:43 drholdaw Exp $'
-character(len=128) :: tagname = '$Name: drh-GEOSadas-5_18_0_vlabfv3pert $'
+character(len=128) :: version = '$Id: fv_arrays_nlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
+character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains
 
@@ -115,6 +148,7 @@ subroutine allocate_fv_atmos_pert_type(AtmP, isd, ied, jsd, jed, is, ie, js, je,
   allocate (    AtmP%wp(isd:ied, jsd:jed  ,npz  ) )
   allocate ( AtmP%delzp(isd:ied, jsd:jed  ,npz) )
   allocate (  AtmP%ze0p(is:ie  , js:je    ,npz+1) )
+  allocate (AtmP%q_conp(isd:ied,jsd:jed,1:npz) ) 
   allocate (   AtmP%psp(isd:ied  ,jsd:jed) )
   allocate (   AtmP%pep(is-1:ie+1, npz+1,js-1:je+1) )
   allocate (   AtmP%pkp(is:ie    ,js:je  , npz+1) )
@@ -138,6 +172,7 @@ subroutine allocate_fv_atmos_pert_type(AtmP, isd, ied, jsd, jed, is, ie, js, je,
      AtmP%wp = 0.0
   AtmP%delzp = 0.0
    AtmP%ze0p = 0.0
+ AtmP%q_conp = 0.0
     AtmP%psp = 0.0
     AtmP%pep = 0.0
     AtmP%pkp = 0.0

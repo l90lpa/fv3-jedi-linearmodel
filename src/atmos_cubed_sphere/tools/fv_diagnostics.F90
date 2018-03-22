@@ -29,7 +29,9 @@ module fv_diagnostics_mod
  use fv_arrays_mod,      only: fv_atmos_type, fv_grid_type, fv_diag_type, fv_grid_bounds_type, & 
                                R_GRID
  !!! CLEANUP needs rem oval?
+#ifndef MAPL_MODE
  use fv_mapz_mod,        only: E_Flux, moist_cv
+#endif
  use fv_mp_mod,          only: mp_reduce_sum, mp_reduce_min, mp_reduce_max, is_master
  use fv_eta_mod,         only: get_eta_level, gw_1d
  use fv_grid_utils_mod,  only: g_sum
@@ -80,8 +82,8 @@ module fv_diagnostics_mod
 
 
 !---- version number -----
- character(len=128) :: version = '$Id$'
- character(len=128) :: tagname = '$Name$'
+ character(len=128) :: version = '$Id: fv_diagnostics.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $'
+ character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
  integer, parameter :: nplev = 31
  integer :: levs(nplev)
@@ -1049,6 +1051,7 @@ contains
                       Atm(n)%ps, Atm(n)%delp, Atm(n)%q, Atm(n)%gridstruct%area_64, Atm(n)%domain)
 #endif
 
+#ifndef MAPL_MODE
 #ifndef SW_DYNAMICS
         if (Atm(n)%flagstruct%consv_te > 1.e-5) then
            idiag%steps = idiag%steps + 1
@@ -1066,6 +1069,7 @@ contains
                                Atm(n)%q, Atm(n)%phis, Atm(n)%gridstruct%area, Atm(n)%domain, &
                                sphum, liq_wat, rainwat, ice_wat, snowwat, graupel, Atm(n)%flagstruct%nwat,     &
                                Atm(n)%ua, Atm(n)%va, Atm(n)%flagstruct%moist_phys, a2)
+#endif
 #endif
         call prt_maxmin('UA_top', Atm(n)%ua(isc:iec,jsc:jec,1),    &
                         isc, iec, jsc, jec, 0, 1, 1.)
@@ -2189,7 +2193,7 @@ contains
             used=send_data(idiag%id_pmaskv2, a2, Time)
        endif
 
-       if ( idiag%id_u100m>0 .or. idiag%id_v100m>0 .or. idiag%id_w100m>0 .or. idiag%id_w5km>0 .or. idiag%id_w2500m>0 .or. idiag%id_basedbz>0 .or. idiag%id_dbz4km>0) then
+       if ( idiag%id_u100m>0 .or. idiag%id_v100m>0 .or. idiag%id_w100m>0 .or. idiag%id_w5km>0 .or. idiag%id_w2500m>0 .or.  idiag%id_basedbz>0 .or. idiag%id_dbz4km>0) then
           if (.not.allocated(wz)) allocate ( wz(isc:iec,jsc:jec,npz+1) )
           if ( Atm(n)%flagstruct%hydrostatic) then
              rgrav = 1. / grav
@@ -2469,20 +2473,8 @@ contains
           enddo
           enddo
         else
-! DH*
-! The argument Atm(n)%q(isd,jsd,1,sphum) causes a compile-time error with gfortran:
-!     Error: Element of assumed-shaped or pointer array passed to array dummy argument 'q' at (1)
-! In our configuration, this section of the code is not executed; hence the correct behavior
-! of passing in the entire Atm(n)%q array for gfortran has not been tested
-#ifdef __GFORTRAN__
-         write (0,*) 'Attention - calling eqv_pot with Atm(n)%q instead of Atm(n)%q(isd,jsd,1,sphum) for gfortran has not been tested!'
-         call eqv_pot(a3, Atm(n)%pt, Atm(n)%delp, Atm(n)%delz, Atm(n)%peln, Atm(n)%pkz, Atm(n)%q,                     &
-                      isc, iec, jsc, jec, ngc, npz, Atm(n)%flagstruct%hydrostatic, Atm(n)%flagstruct%moist_phys)
-#else
-          call eqv_pot(a3, Atm(n)%pt, Atm(n)%delp, Atm(n)%delz, Atm(n)%peln, Atm(n)%pkz, Atm(n)%q(isd,jsd,1,sphum),    &
+          call eqv_pot(a3, Atm(n)%pt, Atm(n)%delp, Atm(n)%delz, Atm(n)%peln, Atm(n)%pkz, Atm(n)%q(:,:,:,sphum),    &
                        isc, iec, jsc, jec, ngc, npz, Atm(n)%flagstruct%hydrostatic, Atm(n)%flagstruct%moist_phys)
-#endif
-! *DH
         endif
 
           if( prt_minmax ) call prt_maxmin('Theta_E', a3, isc, iec, jsc, jec, 0, npz, 1.)
@@ -3819,6 +3811,7 @@ subroutine eqv_pot(theta_e, pt, delp, delz, peln, pkz, q, is, ie, js, je, ng, np
 end subroutine eqv_pot
 
 
+#ifndef MAPL_MODE
  subroutine nh_total_energy(is, ie, js, je, isd, ied, jsd, jed, km,  &
                             w, delz, pt, delp, q, hs, area, domain,  &
                             sphum, liq_wat, rainwat, ice_wat,        &
@@ -3891,7 +3884,7 @@ end subroutine eqv_pot
   if( master ) write(*,*) 'TE ( Joule/m^2 * E9) =',  psm * 1.E-9
 
   end subroutine nh_total_energy
-
+#endif
 
  subroutine dbzcalc(q, pt, delp, peln, delz, &
       dbz, maxdbz, allmax, bd, npz, ncnst, &

@@ -26,6 +26,8 @@ module fv_grid_tools_mod
                                cell_center2, get_area, inner_prod, fill_ghost, &
                            direct_transform, dist2side_latlon, &
                            spherical_linear_interpolation, big_number
+  use fv_grid_utils_mod, only: project_sphere_v
+
   use fv_timing_mod,  only: timing_on, timing_off
   use fv_mp_mod,      only: ng, is_master, fill_corners, XDir, YDir
   use fv_mp_mod,      only: mp_gather, mp_bcst, mp_reduce_max, mp_stop
@@ -70,12 +72,17 @@ module fv_grid_tools_mod
   logical, parameter :: debug_message_size = .false.
   logical :: write_grid_char_file = .false.
 
+  INTERFACE get_unit_vector
+     MODULE PROCEDURE get_unit_vector_3pts
+     MODULE PROCEDURE get_unit_vector_2pts
+  END INTERFACE
 
   public :: todeg, missing, init_grid, spherical_to_cartesian
+  public :: mirror_grid, get_unit_vector
 
   !---- version number -----
-  character(len=128) :: version = '$Id$'
-  character(len=128) :: tagname = '$Name$'
+  character(len=128) :: version = '$Id: fv_grid_tools.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains
 
@@ -822,18 +829,6 @@ contains
           enddo
        endif
 
-         sw_corner = .false.
-         se_corner = .false.
-         ne_corner = .false.
-         nw_corner = .false.
-
-         if (Atm%flagstruct%grid_type < 3 .and. .not. Atm%neststruct%nested) then
-            if (       is==1 .and.  js==1 )      sw_corner = .true.
-            if ( (ie+1)==npx .and.  js==1 )      se_corner = .true.
-            if ( (ie+1)==npx .and. (je+1)==npy ) ne_corner = .true.
-            if (       is==1 .and. (je+1)==npy ) nw_corner = .true.
-         endif
-
        if ( sw_corner ) then
              i=1; j=1
              p1(1:2) = grid(i,j,1:2)
@@ -1114,7 +1109,8 @@ contains
        
        area_c(:,:)  = dx_const*dy_const
        rarea_c(:,:) = 1./(dx_const*dy_const)
-       
+      
+#ifndef MAPL_MODE 
 ! The following is a hack to get pass the am2 phys init:
        do j=max(1,jsd),min(jed,npy)
           do i=max(1,isd),min(ied,npx)
@@ -1122,6 +1118,16 @@ contains
              grid(i,j,2) = lat_rad - 0.5*domain_rad + real(j-1)/real(npy-1)*domain_rad
           enddo
        enddo
+#else
+  ! Setup an f-plane at LON=deglon LAT=deglat with slight dx/dy so MAPL/Physics is happy
+    domain_rad = 1.e-2/npx
+    do j=max(1,jsd),min(jed,npy)
+       do i=max(1,isd),min(ied,npx)
+          grid(i,j,1) = (0.0    + FLOAT(i-1)*domain_rad)*pi/180.0 ! Radians 
+          grid(i,j,2) = (deglat + FLOAT(j-1)*domain_rad)*pi/180.0 ! Radians
+       enddo
+    enddo
+#endif
 
        agrid(:,:,1)  = lon_rad
        agrid(:,:,2)  = lat_rad
@@ -2310,7 +2316,64 @@ contains
   end subroutine mirror_grid
 
 
+ subroutine get_unit_vector_3pts( p1, p2, p3, uvect )
+ real(kind=R_GRID), intent(in):: p1(2), p2(2), p3(2) ! input position unit vectors (spherical coordinates)
+ real(kind=R_GRID), intent(out):: uvect(3)           ! output unit vspherical cartesian
+! local
+ integer :: n
+ real(kind=R_GRID) :: xyz1(3), xyz2(3), xyz3(3)
+ real :: dp(3)
+ real :: dp_dot_p2
 
+  call spherical_to_cartesian(p1(1), p1(2), 1.d0, xyz1(1), xyz1(2), xyz1(3))
+  call spherical_to_cartesian(p2(1), p2(2), 1.d0, xyz2(1), xyz2(2), xyz2(3))
+  call spherical_to_cartesian(p3(1), p3(2), 1.d0, xyz3(1), xyz3(2), xyz3(3))
+  do n=1,3
+     uvect(n) = xyz3(n)-xyz1(n)
+  enddo
+  call project_sphere_v(1, uvect,xyz2)
+  call normalize_vect(1, uvect)
+
+ end subroutine get_unit_vector_3pts
+
+
+ subroutine get_unit_vector_2pts( p1, p2, uvect )
+ real(kind=R_GRID), intent(in):: p1(2), p2(2)        ! input position unit vectors (spherical coordinates)
+ real(kind=R_GRID), intent(out):: uvect(3)           ! output unit vspherical cartesian
+! local        
+ integer :: n
+ real(kind=R_GRID) :: xyz1(3), xyz2(3)
+ real :: dp_dot_xyz1
+
+  call spherical_to_cartesian(p1(1), p1(2), 1.d0, xyz1(1), xyz1(2), xyz1(3))
+  call spherical_to_cartesian(p2(1), p2(2), 1.d0, xyz2(1), xyz2(2), xyz2(3))
+  do n=1,3
+     uvect(n) = xyz2(n)-xyz1(n)
+  enddo
+  call project_sphere_v(1, uvect,xyz1)
+  call normalize_vect(1, uvect)
+
+ end subroutine get_unit_vector_2pts
+
+ subroutine normalize_vect(np, e)
+!
+! Make e an unit vector
+!
+ implicit none
+ integer, intent(in):: np
+ real(kind=R_GRID), intent(inout):: e(3,np)
+ ! local:
+ integer k, n
+ real(kind=R_GRID) pdot
+
+ do n=1,np
+    pdot = sqrt(e(1,n)**2+e(2,n)**2+e(3,n)**2)
+    do k=1,3
+       e(k,n) = e(k,n) / pdot
+    enddo
+ enddo
+
+ end subroutine normalize_vect
 
       end module fv_grid_tools_mod
 

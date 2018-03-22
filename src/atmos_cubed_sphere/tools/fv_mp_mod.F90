@@ -100,7 +100,7 @@
       !The following variables are declared public by this module for convenience;
       !they will need to be switched when domains are switched
 !!! CLEANUP: ng is a PARAMETER and is OK to be shared by a use statement
-      public is, ie, js, je, isd, ied, jsd, jed, isc, iec, jsc, jec, ng
+      public is, ie, js, je, isd, ied, jsd, jed, isc, iec, jsc, jec, ng, tile
       public start_group_halo_update, complete_group_halo_update
       public group_halo_update_type
 
@@ -176,8 +176,8 @@
 
       integer :: halo_update_type = 1
 !---- version number -----
-      character(len=128) :: version = '$Id$'
-      character(len=128) :: tagname = '$Name$'
+      character(len=128) :: version = '$Id: fv_mp_mod.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $'
+      character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains
 
@@ -347,6 +347,9 @@ contains
                nregions = 1
                num_contact = 0
                npes_per_tile = npes_x*npes_y !/nregions !Set up for concurrency
+               if (npes_per_tile==0) then
+                  npes_per_tile = npes/nregions
+               endif
                is_symmetry = .true.
                call mpp_define_layout( (/1,npx-1,1,npy-1/), npes_per_tile, layout )
 
@@ -417,6 +420,9 @@ contains
             num_contact = 12
             !--- cubic grid always have six tiles, so npes should be multiple of 6
             npes_per_tile = npes_x*npes_y
+            if (npes_per_tile==0) then
+               npes_per_tile = npes/nregions
+            endif
             call  mpp_define_layout( (/1,npx-1,1,npy-1/), npes_per_tile, layout )
 
             if ( npes_x == 0 ) then 

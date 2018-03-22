@@ -20,7 +20,7 @@
 module dyn_core_tlm_mod
 
   use constants_mod,      only: rdgas, radius, cp_air, pi
-  use mpp_mod,            only: mpp_pe 
+  use mpp_mod,            only: mpp_pe, mpp_root_pe
   use mpp_domains_mod,    only: CGRID_NE, DGRID_NE, mpp_get_boundary, mpp_update_domains, &
                                 domain2d
   use fv_mp_tlm_mod,      only: mpp_get_boundary_tlm, mpp_update_domains_tlm
@@ -50,7 +50,6 @@ module dyn_core_tlm_mod
   use diag_manager_mod,   only: send_data
   use fv_arrays_mod,      only: fv_grid_type, fv_flags_type, fv_nest_type, fv_diag_type, &
                                 fv_grid_bounds_type, R_GRID
-  use fv_arrays_nlm_mod,  only: fv_flags_pert_type
 
   use boundary_tlm_mod,   only: extrapolation_BC,  nested_grid_BC_apply_intT
   use boundary_tlm_mod,   only: nested_grid_BC_apply_intT_tlm
@@ -58,6 +57,8 @@ module dyn_core_tlm_mod
 #ifdef SW_DYNAMICS
   use test_cases_mod,     only: test_case, case9_forcing1, case9_forcing2
 #endif
+
+  use fv_arrays_nlm_mod,  only: fv_flags_pert_type, fpp
 
 implicit none
 private
@@ -78,8 +79,8 @@ public :: dyn_core_tlm, del2_cubed_tlm
   integer :: kmax=1
 
 !---- version number -----
-  character(len=128) :: version = '$Id: dyn_core_tlm.F90,v 1.3 2017/11/13 21:58:44 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_18_0_vlabfv3pert $'
+  character(len=128) :: version = '$Id: dyn_core_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of dyn_core in forward (tangent) mode:
@@ -98,12 +99,12 @@ CONTAINS
 &   , delz, delz_tl, pt, pt_tl, q, q_tl, delp, delp_tl, pe, pe_tl, pk, &
 &   pk_tl, phis, ws, ws_tl, omga, omga_tl, ptop, pfull, ua, ua_tl, va, &
 &   va_tl, uc, uc_tl, vc, vc_tl, mfx, mfx_tl, mfy, mfy_tl, cx, cx_tl, cy&
-&   , cy_tl, pkz, pkz_tl, peln, peln_tl, q_con, ak, bk, ks, gridstruct, &
-&   flagstruct, flagstructp, neststruct, idiag, bd, domain, init_step, &
-&   i_pack, end_step, gz, gz_tl, pkc, pkc_tl, ptc, ptc_tl, crx, crx_tl, &
-&   xfx, xfx_tl, cry, cry_tl, yfx, yfx_tl, divgd, divgd_tl, delpc, &
-&   delpc_tl, ut, ut_tl, vt, vt_tl, zh, zh_tl, pk3, pk3_tl, du, du_tl, &
-&   dv, dv_tl, time_total)
+&   , cy_tl, pkz, pkz_tl, peln, peln_tl, q_con, ak, bk, dpx, dpx_tl, ks&
+&   , gridstruct, flagstruct, flagstructp, neststruct, idiag, bd, domain&
+&   , init_step, i_pack, end_step, gz, gz_tl, pkc, pkc_tl, ptc, ptc_tl, &
+&   crx, crx_tl, xfx, xfx_tl, cry, cry_tl, yfx, yfx_tl, divgd, divgd_tl&
+&   , delpc, delpc_tl, ut, ut_tl, vt, vt_tl, zh, zh_tl, pk3, pk3_tl, du&
+&   , du_tl, dv, dv_tl, time_total)
     IMPLICIT NONE
 ! end init_step
 ! Start of the big dynamic time stepping
@@ -178,7 +179,7 @@ CONTAINS
     REAL, INTENT(INOUT) :: delz(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
     REAL, INTENT(INOUT) :: delz_tl(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 ! moist kappa
-    REAL, INTENT(INOUT) :: cappa(bd%isd:bd%isd, bd%jsd:bd%jsd, 1)
+    REAL, INTENT(INOUT) :: cappa(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 ! temperature (K)
     REAL, INTENT(INOUT) :: pt(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
     REAL, INTENT(INOUT) :: pt_tl(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
@@ -207,6 +208,8 @@ CONTAINS
 ! pe**kappa
     REAL, INTENT(INOUT) :: pk(bd%is:bd%ie, bd%js:bd%je, npz+1)
     REAL, INTENT(INOUT) :: pk_tl(bd%is:bd%ie, bd%js:bd%je, npz+1)
+    REAL(kind=8), INTENT(INOUT) :: dpx(bd%is:bd%ie, bd%js:bd%je)
+    REAL(kind=8), INTENT(INOUT) :: dpx_tl(bd%is:bd%ie, bd%js:bd%je)
 !-----------------------------------------------------------------------
 ! Others:
     REAL, PARAMETER :: near0=1.e-8
@@ -227,7 +230,7 @@ CONTAINS
 &   ua, va
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed, npz), INTENT(INOUT) ::&
 &   ua_tl, va_tl
-    REAL, INTENT(INOUT) :: q_con(bd%isd:bd%isd, bd%jsd:bd%jsd, 1)
+    REAL, INTENT(INOUT) :: q_con(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 ! The Flux capacitors: accumulated Mass flux arrays
     REAL, INTENT(INOUT) :: mfx(bd%is:bd%ie+1, bd%js:bd%je, npz)
     REAL, INTENT(INOUT) :: mfx_tl(bd%is:bd%ie+1, bd%js:bd%je, npz)
@@ -336,6 +339,8 @@ CONTAINS
     INTRINSIC EXP
     INTRINSIC ABS
     INTRINSIC SIGN
+    INTEGER :: max1
+    INTEGER :: max2
     REAL :: min1
     REAL :: min1_tl
     REAL :: min2
@@ -476,6 +481,8 @@ CONTAINS
 &                                               ie, js, je, ng, npz, 1.&
 &                                               , gridstruct%area_64, &
 &                                               domain)
+        CALL PRT_MXM('PT', pt, is, ie, js, je, ng, npz, 1., gridstruct%&
+&              area_64, domain)
       END IF
       IF (gridstruct%nested) split_timestep_bc = REAL(n_split*flagstruct&
 &         %k_split + neststruct%nest_timestep)
@@ -739,12 +746,7 @@ CONTAINS
         hord_t = flagstruct%hord_tm
         hord_v = flagstruct%hord_vt
         hord_p = flagstruct%hord_dp
-        hord_m_pert = flagstructp%hord_mt_pert
-        hord_t_pert = flagstructp%hord_tm_pert
-        hord_v_pert = flagstructp%hord_vt_pert
-        hord_p_pert = flagstructp%hord_dp_pert
         nord_k = flagstruct%nord
-        nord_k_pert = flagstructp%nord_pert
 !      if ( k==npz ) then
         kgb = flagstruct%ke_bg
         IF (2 .GT. flagstruct%nord) THEN
@@ -752,20 +754,10 @@ CONTAINS
         ELSE
           nord_v(k) = 2
         END IF
-        IF (2 .GT. flagstructp%nord_pert) THEN
-          nord_v_pert(k) = flagstructp%nord_pert
-        ELSE
-          nord_v_pert(k) = 2
-        END IF
         IF (0.20 .GT. flagstruct%d2_bg) THEN
           d2_divg = flagstruct%d2_bg
         ELSE
           d2_divg = 0.20
-        END IF
-        IF (0.20 .GT. flagstructp%d2_bg_pert) THEN
-          d2_divg_pert = flagstructp%d2_bg_pert
-        ELSE
-          d2_divg_pert = 0.20
         END IF
         IF (flagstruct%do_vort_damp) THEN
 ! for delp, delz, and vorticity
@@ -773,132 +765,16 @@ CONTAINS
         ELSE
           damp_vt(k) = 0.
         END IF
-        IF (flagstructp%do_vort_damp_pert) THEN
-! for delp, delz, and vorticity
-          damp_vt_pert(k) = flagstructp%vtdm4_pert
-        ELSE
-          damp_vt_pert(k) = 0.
-        END IF
         nord_w = nord_v(k)
         nord_t = nord_v(k)
-        nord_w_pert = nord_v_pert(k)
-        nord_t_pert = nord_v_pert(k)
         damp_w = damp_vt(k)
         damp_t = damp_vt(k)
-        damp_w_pert = damp_vt_pert(k)
-        damp_t_pert = damp_vt_pert(k)
         d_con_k = flagstruct%d_con
         IF (npz .EQ. 1 .OR. flagstruct%n_sponge .LT. 0) THEN
           d2_divg = flagstruct%d2_bg
-          d2_divg_pert = flagstructp%d2_bg_pert
-        ELSE IF (flagstruct%n_sponge .EQ. 0) THEN
-! Sponge layers with del-2 damping on divergence, vorticity, w, z, and air mass (delp).
-! no special damping of potential temperature in sponge layers
-          IF (k .EQ. 1) THEN
-! Divergence damping:
-            nord_k = 0
-            IF (0.01 .LT. flagstruct%d2_bg) THEN
-              IF (flagstruct%d2_bg .LT. flagstruct%d2_bg_k1) THEN
-                d2_divg = flagstruct%d2_bg_k1
-              ELSE
-                d2_divg = flagstruct%d2_bg
-              END IF
-            ELSE IF (0.01 .LT. flagstruct%d2_bg_k1) THEN
-              d2_divg = flagstruct%d2_bg_k1
-            ELSE
-              d2_divg = 0.01
-            END IF
-            nord_k_pert = 0
-            IF (0.01 .LT. flagstructp%d2_bg_pert) THEN
-              IF (flagstructp%d2_bg_pert .LT. flagstruct%d2_bg_k1) THEN
-                d2_divg_pert = flagstruct%d2_bg_k1
-              ELSE
-                d2_divg_pert = flagstructp%d2_bg_pert
-              END IF
-            ELSE IF (0.01 .LT. flagstruct%d2_bg_k1) THEN
-              d2_divg_pert = flagstruct%d2_bg_k1
-            ELSE
-              d2_divg_pert = 0.01
-            END IF
-! Vertical velocity:
-            nord_w = 0
-            damp_w = d2_divg
-            nord_w_pert = 0
-            damp_w_pert = d2_divg_pert
-            IF (flagstruct%do_vort_damp) THEN
-! damping on delp and vorticity:
-              nord_v(k) = 0
-              damp_vt(k) = 0.5*d2_divg
-            END IF
-            IF (flagstructp%do_vort_damp_pert) THEN
-! damping on delp and vorticity:
-              nord_v_pert(k) = 0
-              damp_vt_pert(k) = 0.5*d2_divg_pert
-            END IF
-            d_con_k = 0.
-          ELSE IF (k .EQ. 2 .AND. flagstruct%d2_bg_k2 .GT. 0.01) THEN
-            nord_k = 0
-            IF (flagstruct%d2_bg .LT. flagstruct%d2_bg_k2) THEN
-              d2_divg = flagstruct%d2_bg_k2
-            ELSE
-              d2_divg = flagstruct%d2_bg
-            END IF
-            nord_k_pert = 0
-            IF (flagstructp%d2_bg_pert .LT. flagstruct%d2_bg_k2) THEN
-              d2_divg_pert = flagstruct%d2_bg_k2
-            ELSE
-              d2_divg_pert = flagstructp%d2_bg_pert
-            END IF
-            nord_w = 0
-            damp_w = d2_divg
-            nord_w_pert = 0
-            damp_w_pert = d2_divg_pert
-            IF (flagstruct%do_vort_damp) THEN
-              nord_v(k) = 0
-              damp_vt(k) = 0.5*d2_divg
-            END IF
-            IF (flagstructp%do_vort_damp_pert) THEN
-              nord_v_pert(k) = 0
-              damp_vt_pert(k) = 0.5*d2_divg_pert
-            END IF
-            d_con_k = 0.
-          ELSE IF (k .EQ. 3 .AND. flagstruct%d2_bg_k2 .GT. 0.05) THEN
-            nord_k = 0
-            IF (flagstruct%d2_bg .LT. 0.2*flagstruct%d2_bg_k2) THEN
-              d2_divg = 0.2*flagstruct%d2_bg_k2
-            ELSE
-              d2_divg = flagstruct%d2_bg
-            END IF
-            nord_k_pert = 0
-            IF (flagstructp%d2_bg_pert .LT. 0.2*flagstruct%d2_bg_k2) &
-&           THEN
-              d2_divg_pert = 0.2*flagstruct%d2_bg_k2
-            ELSE
-              d2_divg_pert = flagstructp%d2_bg_pert
-            END IF
-            nord_w = 0
-            damp_w = d2_divg
-            nord_w_pert = 0
-            damp_w_pert = d2_divg_pert
-            d_con_k = 0.
-          END IF
         ELSE IF (k .EQ. 1) THEN
 ! Sponge layers with del-2 damping on divergence, vorticity, w, z, and air mass (delp).
 ! no special damping of potential temperature in sponge layers
-! Apply first order scheme for damping the sponge layer
-          hord_m = 1
-          hord_v = 6
-          hord_t = 6
-          hord_p = 6
-          hord_m_pert = 1
-          hord_v_pert = 2
-          hord_t_pert = 2
-          hord_p_pert = 2
-          IF (.NOT.flagstructp%split_hord) THEN
-            hord_v = hord_v_pert
-            hord_t = hord_t_pert
-            hord_p = hord_p_pert
-          END IF
 ! Divergence damping:
           nord_k = 0
           IF (0.01 .LT. flagstruct%d2_bg) THEN
@@ -912,108 +788,142 @@ CONTAINS
           ELSE
             d2_divg = 0.01
           END IF
+! Vertical velocity:
+          nord_w = 0
+          damp_w = d2_divg
+          IF (flagstruct%do_vort_damp) THEN
+! damping on delp and vorticity:
+            nord_v(k) = 0
+            damp_vt(k) = 0.5*d2_divg
+          END IF
+          d_con_k = 0.
+        ELSE
+          IF (2 .LT. flagstruct%n_sponge - 1) THEN
+            max1 = flagstruct%n_sponge - 1
+          ELSE
+            max1 = 2
+          END IF
+          IF (k .EQ. max1 .AND. flagstruct%d2_bg_k2 .GT. 0.01) THEN
+            nord_k = 0
+            IF (flagstruct%d2_bg .LT. flagstruct%d2_bg_k2) THEN
+              d2_divg = flagstruct%d2_bg_k2
+            ELSE
+              d2_divg = flagstruct%d2_bg
+            END IF
+            nord_w = 0
+            damp_w = d2_divg
+            IF (flagstruct%do_vort_damp) THEN
+              nord_v(k) = 0
+              damp_vt(k) = 0.5*d2_divg
+            END IF
+            d_con_k = 0.
+          ELSE
+            IF (3 .LT. flagstruct%n_sponge) THEN
+              max2 = flagstruct%n_sponge
+            ELSE
+              max2 = 3
+            END IF
+            IF (k .EQ. max2 .AND. flagstruct%d2_bg_k2 .GT. 0.05) THEN
+              nord_k = 0
+              IF (flagstruct%d2_bg .LT. 0.2*flagstruct%d2_bg_k2) THEN
+                d2_divg = 0.2*flagstruct%d2_bg_k2
+              ELSE
+                d2_divg = flagstruct%d2_bg
+              END IF
+              nord_w = 0
+              damp_w = d2_divg
+              d_con_k = 0.
+            END IF
+          END IF
+        END IF
+        hord_m_pert = flagstructp%hord_mt_pert
+        hord_t_pert = flagstructp%hord_tm_pert
+        hord_v_pert = flagstructp%hord_vt_pert
+        hord_p_pert = flagstructp%hord_dp_pert
+        nord_k_pert = flagstructp%nord_pert
+        IF (2 .GT. flagstructp%nord_pert) THEN
+          nord_v_pert(k) = flagstructp%nord_pert
+        ELSE
+          nord_v_pert(k) = 2
+        END IF
+        IF (0.20 .GT. flagstructp%d2_bg_pert) THEN
+          d2_divg_pert = flagstructp%d2_bg_pert
+        ELSE
+          d2_divg_pert = 0.20
+        END IF
+        IF (flagstructp%do_vort_damp_pert) THEN
+! for delp, delz, and vorticity
+          damp_vt_pert(k) = flagstructp%vtdm4_pert
+        ELSE
+          damp_vt_pert(k) = 0.
+        END IF
+        nord_w_pert = nord_v_pert(k)
+        nord_t_pert = nord_v_pert(k)
+        damp_w_pert = damp_vt_pert(k)
+        damp_t_pert = damp_vt_pert(k)
+!Sponge layers for the pertuabtiosn
+        IF (k .LE. flagstructp%n_sponge_pert) THEN
+          IF (k .LE. flagstructp%n_sponge_pert - 1) THEN
+            IF (flagstructp%hord_ks_traj) THEN
+              hord_m = flagstructp%hord_mt_ks_traj
+              hord_t = flagstructp%hord_tm_ks_traj
+              hord_v = flagstructp%hord_vt_ks_traj
+              hord_p = flagstructp%hord_dp_ks_traj
+            END IF
+            IF (flagstructp%hord_ks_pert) THEN
+              hord_m_pert = flagstructp%hord_mt_ks_pert
+              hord_t_pert = flagstructp%hord_tm_ks_pert
+              hord_v_pert = flagstructp%hord_vt_ks_pert
+              hord_p_pert = flagstructp%hord_dp_ks_pert
+            END IF
+          END IF
           nord_k_pert = 0
-          IF (0.01 .LT. flagstructp%d2_bg_pert) THEN
-            IF (flagstructp%d2_bg_pert .LT. flagstruct%d2_bg_k1) THEN
-              d2_divg_pert = flagstruct%d2_bg_k1
+          IF (k .EQ. 1) THEN
+            IF (0.01 .LT. flagstructp%d2_bg_pert) THEN
+              IF (flagstructp%d2_bg_pert .LT. flagstructp%d2_bg_k1_pert&
+&             ) THEN
+                d2_divg_pert = flagstructp%d2_bg_k1_pert
+              ELSE
+                d2_divg_pert = flagstructp%d2_bg_pert
+              END IF
+            ELSE IF (0.01 .LT. flagstructp%d2_bg_k1_pert) THEN
+              d2_divg_pert = flagstructp%d2_bg_k1_pert
+            ELSE
+              d2_divg_pert = 0.01
+            END IF
+          ELSE IF (k .EQ. 2) THEN
+            IF (0.01 .LT. flagstructp%d2_bg_pert) THEN
+              IF (flagstructp%d2_bg_pert .LT. flagstructp%d2_bg_k2_pert&
+&             ) THEN
+                d2_divg_pert = flagstructp%d2_bg_k2_pert
+              ELSE
+                d2_divg_pert = flagstructp%d2_bg_pert
+              END IF
+            ELSE IF (0.01 .LT. flagstructp%d2_bg_k2_pert) THEN
+              d2_divg_pert = flagstructp%d2_bg_k2_pert
+            ELSE
+              d2_divg_pert = 0.01
+            END IF
+          ELSE IF (0.01 .LT. flagstructp%d2_bg_pert) THEN
+            IF (flagstructp%d2_bg_pert .LT. flagstructp%d2_bg_ks_pert) &
+&           THEN
+              d2_divg_pert = flagstructp%d2_bg_ks_pert
             ELSE
               d2_divg_pert = flagstructp%d2_bg_pert
             END IF
-          ELSE IF (0.01 .LT. flagstruct%d2_bg_k1) THEN
-            d2_divg_pert = flagstruct%d2_bg_k1
+          ELSE IF (0.01 .LT. flagstructp%d2_bg_ks_pert) THEN
+            d2_divg_pert = flagstructp%d2_bg_ks_pert
           ELSE
             d2_divg_pert = 0.01
           END IF
-! Vertical velocity:
-          nord_w = 0
-          damp_w = d2_divg
           nord_w_pert = 0
           damp_w_pert = d2_divg_pert
-          IF (flagstruct%do_vort_damp) THEN
-! damping on delp and vorticity:
-            nord_v(k) = 0
-            damp_vt(k) = 0.5*d2_divg
-          END IF
           IF (flagstructp%do_vort_damp_pert) THEN
-! damping on delp and vorticity:
             nord_v_pert(k) = 0
             damp_vt_pert(k) = 0.5*d2_divg_pert
           END IF
-          d_con_k = 0.
-        ELSE IF (k .LE. flagstruct%n_sponge .AND. flagstruct%d2_bg_k2 &
-&           .GT. 0.01) THEN
-! Apply first order scheme for damping the sponge layer
-          hord_m = 1
-          hord_v = 6
-          hord_t = 6
-          hord_p = 6
-          hord_m_pert = 1
-          hord_v_pert = 2
-          hord_t_pert = 2
-          hord_p_pert = 2
-          IF (.NOT.flagstructp%split_hord) THEN
-            hord_v = hord_v_pert
-            hord_t = hord_t_pert
-            hord_p = hord_p_pert
-          END IF
-! Divergence damping:
-          nord_k = 0
-          IF (flagstruct%d2_bg .LT. flagstruct%d2_bg_k2) THEN
-            d2_divg = flagstruct%d2_bg_k2
-          ELSE
-            d2_divg = flagstruct%d2_bg
-          END IF
-          nord_k_pert = 0
-          IF (flagstructp%d2_bg_pert .LT. flagstruct%d2_bg_k2) THEN
-            d2_divg_pert = flagstruct%d2_bg_k2
-          ELSE
-            d2_divg_pert = flagstructp%d2_bg_pert
-          END IF
-! Vertical velocity:
-          nord_w = 0
-          damp_w = d2_divg
-          nord_w_pert = 0
-          damp_w_pert = d2_divg_pert
-          IF (flagstruct%do_vort_damp) THEN
-! damping on delp and vorticity:
-            nord_v(k) = 0
-            damp_vt(k) = 0.5*d2_divg
-          END IF
-          IF (flagstructp%do_vort_damp_pert) THEN
-! damping on delp and vorticity:
-            nord_v_pert(k) = 0
-            damp_vt_pert(k) = 0.5*d2_divg_pert
-          END IF
-          d_con_k = 0.
-        ELSE IF (k .EQ. flagstruct%n_sponge + 1 .AND. flagstruct%&
-&           d2_bg_k2 .GT. 0.05) THEN
-! Apply second order scheme for damping at edge of the sponge layer
-          hord_v = 2
-          hord_t = 2
-          hord_p = 2
-          hord_v_pert = 2
-          hord_t_pert = 2
-          hord_p_pert = 2
-! Divergence damping:
-          nord_k = 0
-          IF (flagstruct%d2_bg .LT. 0.2*flagstruct%d2_bg_k2) THEN
-            d2_divg = 0.2*flagstruct%d2_bg_k2
-          ELSE
-            d2_divg = flagstruct%d2_bg
-          END IF
-          nord_k_pert = 0
-          IF (flagstructp%d2_bg_pert .LT. 0.2*flagstruct%d2_bg_k2) THEN
-            d2_divg_pert = 0.2*flagstruct%d2_bg_k2
-          ELSE
-            d2_divg_pert = flagstructp%d2_bg_pert
-          END IF
-! Vertical velocity:
-          nord_w = 0
-          damp_w = d2_divg
-          nord_w_pert = 0
-          damp_w_pert = d2_divg_pert
-          d_con_k = 0.
         END IF
+!Tapenade issue if not defined at level npz+1
         damp_vt(npz+1) = damp_vt(npz)
         damp_vt_pert(npz+1) = damp_vt_pert(npz)
         nord_v(npz+1) = nord_v(npz)
@@ -1063,19 +973,19 @@ CONTAINS
 &               jsd:jed, k), crx_tl(is:ie+1, jsd:jed, k), cry(isd:ied, &
 &               js:je+1, k), cry_tl(isd:ied, js:je+1, k), xfx(is:ie+1, &
 &               jsd:jed, k), xfx_tl(is:ie+1, jsd:jed, k), yfx(isd:ied, &
-&               js:je+1, k), yfx_tl(isd:ied, js:je+1, k), q_con(isd:isd&
-&               , jsd:jsd, 1), z_rat(isd:ied, jsd:jed), z_rat_tl(isd:ied&
-&               , jsd:jed), kgb, heat_s, heat_s_tl, zvir, sphum, nq, q, &
-&               q_tl, k, npz, flagstruct%inline_q, dt, flagstruct%&
-&               hord_tr, hord_m, hord_v, hord_t, hord_p, nord_k, nord_v(&
-&               k), nord_w, nord_t, flagstruct%dddmp, d2_divg, &
-&               flagstruct%d4_bg, damp_vt(k), damp_w, damp_t, d_con_k, &
-&               hydrostatic, gridstruct, flagstruct, bd, flagstructp%&
-&               hord_tr_pert, hord_m_pert, hord_v_pert, hord_t_pert, &
-&               hord_p_pert, flagstructp%split_damp, nord_k_pert, &
-&               nord_v_pert(k), nord_w_pert, nord_t_pert, flagstructp%&
-&               dddmp_pert, d2_divg_pert, flagstructp%d4_bg_pert, &
-&               damp_vt_pert(k), damp_w_pert, damp_t_pert)
+&               js:je+1, k), yfx_tl(isd:ied, js:je+1, k), q_con(isd:ied&
+&               , jsd:jed, 1), z_rat(isd:ied, jsd:jed), z_rat_tl(isd:ied&
+&               , jsd:jed), kgb, heat_s, heat_s_tl, dpx, dpx_tl, zvir, &
+&               sphum, nq, q, q_tl, k, npz, flagstruct%inline_q, dt, &
+&               flagstruct%hord_tr, hord_m, hord_v, hord_t, hord_p, &
+&               nord_k, nord_v(k), nord_w, nord_t, flagstruct%dddmp, &
+&               d2_divg, flagstruct%d4_bg, damp_vt(k), damp_w, damp_t, &
+&               d_con_k, hydrostatic, gridstruct, flagstruct, bd, &
+&               flagstructp%hord_tr_pert, hord_m_pert, hord_v_pert, &
+&               hord_t_pert, hord_p_pert, flagstructp%split_damp, &
+&               nord_k_pert, nord_v_pert(k), nord_w_pert, nord_t_pert, &
+&               flagstructp%dddmp_pert, d2_divg_pert, flagstructp%&
+&               d4_bg_pert, damp_vt_pert(k), damp_w_pert, damp_t_pert)
         IF (hydrostatic .AND. (.NOT.flagstruct%use_old_omega) .AND. &
 &           last_step) THEN
 ! Average horizontal "convergence" to cell center
@@ -1572,10 +1482,10 @@ CONTAINS
   SUBROUTINE DYN_CORE(npx, npy, npz, ng, sphum, nq, bdt, n_split, zvir, &
 &   cp, akap, cappa, grav, hydrostatic, u, v, w, delz, pt, q, delp, pe, &
 &   pk, phis, ws, omga, ptop, pfull, ua, va, uc, vc, mfx, mfy, cx, cy, &
-&   pkz, peln, q_con, ak, bk, ks, gridstruct, flagstruct, flagstructp, &
-&   neststruct, idiag, bd, domain, init_step, i_pack, end_step, gz, pkc&
-&   , ptc, crx, xfx, cry, yfx, divgd, delpc, ut, vt, zh, pk3, du, dv, &
-&   time_total)
+&   pkz, peln, q_con, ak, bk, dpx, ks, gridstruct, flagstruct, &
+&   flagstructp, neststruct, idiag, bd, domain, init_step, i_pack, &
+&   end_step, gz, pkc, ptc, crx, xfx, cry, yfx, divgd, delpc, ut, vt, zh&
+&   , pk3, du, dv, time_total)
     IMPLICIT NONE
 ! end init_step
 ! Start of the big dynamic time stepping
@@ -1644,7 +1554,7 @@ CONTAINS
 ! delta-height (m, negative)
     REAL, INTENT(INOUT) :: delz(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 ! moist kappa
-    REAL, INTENT(INOUT) :: cappa(bd%isd:bd%isd, bd%jsd:bd%jsd, 1)
+    REAL, INTENT(INOUT) :: cappa(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 ! temperature (K)
     REAL, INTENT(INOUT) :: pt(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 ! pressure thickness (pascal)
@@ -1666,6 +1576,7 @@ CONTAINS
     REAL, INTENT(INOUT) :: peln(bd%is:bd%ie, npz+1, bd%js:bd%je)
 ! pe**kappa
     REAL, INTENT(INOUT) :: pk(bd%is:bd%ie, bd%js:bd%je, npz+1)
+    REAL(kind=8), INTENT(INOUT) :: dpx(bd%is:bd%ie, bd%js:bd%je)
 !-----------------------------------------------------------------------
 ! Others:
     REAL, PARAMETER :: near0=1.e-8
@@ -1680,7 +1591,7 @@ CONTAINS
     REAL, INTENT(INOUT) :: vc(bd%isd:bd%ied, bd%jsd:bd%jed+1, npz)
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed, npz), INTENT(INOUT) ::&
 &   ua, va
-    REAL, INTENT(INOUT) :: q_con(bd%isd:bd%isd, bd%jsd:bd%jsd, 1)
+    REAL, INTENT(INOUT) :: q_con(bd%isd:bd%ied, bd%jsd:bd%jed, npz)
 ! The Flux capacitors: accumulated Mass flux arrays
     REAL, INTENT(INOUT) :: mfx(bd%is:bd%ie+1, bd%js:bd%je, npz)
     REAL, INTENT(INOUT) :: mfy(bd%is:bd%ie, bd%js:bd%je+1, npz)
@@ -1757,6 +1668,8 @@ CONTAINS
     INTRINSIC EXP
     INTRINSIC ABS
     INTRINSIC SIGN
+    INTEGER :: max1
+    INTEGER :: max2
     REAL :: min1
     REAL :: min2
     REAL :: abs0
@@ -1843,6 +1756,8 @@ CONTAINS
 &                                               ie, js, je, ng, npz, 1.&
 &                                               , gridstruct%area_64, &
 &                                               domain)
+        CALL PRT_MXM('PT', pt, is, ie, js, je, ng, npz, 1., gridstruct%&
+&              area_64, domain)
       END IF
       IF (gridstruct%nested) split_timestep_bc = REAL(n_split*flagstruct&
 &         %k_split + neststruct%nest_timestep)
@@ -2073,12 +1988,7 @@ CONTAINS
         hord_t = flagstruct%hord_tm
         hord_v = flagstruct%hord_vt
         hord_p = flagstruct%hord_dp
-        hord_m_pert = flagstructp%hord_mt_pert
-        hord_t_pert = flagstructp%hord_tm_pert
-        hord_v_pert = flagstructp%hord_vt_pert
-        hord_p_pert = flagstructp%hord_dp_pert
         nord_k = flagstruct%nord
-        nord_k_pert = flagstructp%nord_pert
 !      if ( k==npz ) then
         kgb = flagstruct%ke_bg
         IF (2 .GT. flagstruct%nord) THEN
@@ -2086,20 +1996,10 @@ CONTAINS
         ELSE
           nord_v(k) = 2
         END IF
-        IF (2 .GT. flagstructp%nord_pert) THEN
-          nord_v_pert(k) = flagstructp%nord_pert
-        ELSE
-          nord_v_pert(k) = 2
-        END IF
         IF (0.20 .GT. flagstruct%d2_bg) THEN
           d2_divg = flagstruct%d2_bg
         ELSE
           d2_divg = 0.20
-        END IF
-        IF (0.20 .GT. flagstructp%d2_bg_pert) THEN
-          d2_divg_pert = flagstructp%d2_bg_pert
-        ELSE
-          d2_divg_pert = 0.20
         END IF
         IF (flagstruct%do_vort_damp) THEN
 ! for delp, delz, and vorticity
@@ -2107,132 +2007,16 @@ CONTAINS
         ELSE
           damp_vt(k) = 0.
         END IF
-        IF (flagstructp%do_vort_damp_pert) THEN
-! for delp, delz, and vorticity
-          damp_vt_pert(k) = flagstructp%vtdm4_pert
-        ELSE
-          damp_vt_pert(k) = 0.
-        END IF
         nord_w = nord_v(k)
         nord_t = nord_v(k)
-        nord_w_pert = nord_v_pert(k)
-        nord_t_pert = nord_v_pert(k)
         damp_w = damp_vt(k)
         damp_t = damp_vt(k)
-        damp_w_pert = damp_vt_pert(k)
-        damp_t_pert = damp_vt_pert(k)
         d_con_k = flagstruct%d_con
         IF (npz .EQ. 1 .OR. flagstruct%n_sponge .LT. 0) THEN
           d2_divg = flagstruct%d2_bg
-          d2_divg_pert = flagstructp%d2_bg_pert
-        ELSE IF (flagstruct%n_sponge .EQ. 0) THEN
-! Sponge layers with del-2 damping on divergence, vorticity, w, z, and air mass (delp).
-! no special damping of potential temperature in sponge layers
-          IF (k .EQ. 1) THEN
-! Divergence damping:
-            nord_k = 0
-            IF (0.01 .LT. flagstruct%d2_bg) THEN
-              IF (flagstruct%d2_bg .LT. flagstruct%d2_bg_k1) THEN
-                d2_divg = flagstruct%d2_bg_k1
-              ELSE
-                d2_divg = flagstruct%d2_bg
-              END IF
-            ELSE IF (0.01 .LT. flagstruct%d2_bg_k1) THEN
-              d2_divg = flagstruct%d2_bg_k1
-            ELSE
-              d2_divg = 0.01
-            END IF
-            nord_k_pert = 0
-            IF (0.01 .LT. flagstructp%d2_bg_pert) THEN
-              IF (flagstructp%d2_bg_pert .LT. flagstruct%d2_bg_k1) THEN
-                d2_divg_pert = flagstruct%d2_bg_k1
-              ELSE
-                d2_divg_pert = flagstructp%d2_bg_pert
-              END IF
-            ELSE IF (0.01 .LT. flagstruct%d2_bg_k1) THEN
-              d2_divg_pert = flagstruct%d2_bg_k1
-            ELSE
-              d2_divg_pert = 0.01
-            END IF
-! Vertical velocity:
-            nord_w = 0
-            damp_w = d2_divg
-            nord_w_pert = 0
-            damp_w_pert = d2_divg_pert
-            IF (flagstruct%do_vort_damp) THEN
-! damping on delp and vorticity:
-              nord_v(k) = 0
-              damp_vt(k) = 0.5*d2_divg
-            END IF
-            IF (flagstructp%do_vort_damp_pert) THEN
-! damping on delp and vorticity:
-              nord_v_pert(k) = 0
-              damp_vt_pert(k) = 0.5*d2_divg_pert
-            END IF
-            d_con_k = 0.
-          ELSE IF (k .EQ. 2 .AND. flagstruct%d2_bg_k2 .GT. 0.01) THEN
-            nord_k = 0
-            IF (flagstruct%d2_bg .LT. flagstruct%d2_bg_k2) THEN
-              d2_divg = flagstruct%d2_bg_k2
-            ELSE
-              d2_divg = flagstruct%d2_bg
-            END IF
-            nord_k_pert = 0
-            IF (flagstructp%d2_bg_pert .LT. flagstruct%d2_bg_k2) THEN
-              d2_divg_pert = flagstruct%d2_bg_k2
-            ELSE
-              d2_divg_pert = flagstructp%d2_bg_pert
-            END IF
-            nord_w = 0
-            damp_w = d2_divg
-            nord_w_pert = 0
-            damp_w_pert = d2_divg_pert
-            IF (flagstruct%do_vort_damp) THEN
-              nord_v(k) = 0
-              damp_vt(k) = 0.5*d2_divg
-            END IF
-            IF (flagstructp%do_vort_damp_pert) THEN
-              nord_v_pert(k) = 0
-              damp_vt_pert(k) = 0.5*d2_divg_pert
-            END IF
-            d_con_k = 0.
-          ELSE IF (k .EQ. 3 .AND. flagstruct%d2_bg_k2 .GT. 0.05) THEN
-            nord_k = 0
-            IF (flagstruct%d2_bg .LT. 0.2*flagstruct%d2_bg_k2) THEN
-              d2_divg = 0.2*flagstruct%d2_bg_k2
-            ELSE
-              d2_divg = flagstruct%d2_bg
-            END IF
-            nord_k_pert = 0
-            IF (flagstructp%d2_bg_pert .LT. 0.2*flagstruct%d2_bg_k2) &
-&           THEN
-              d2_divg_pert = 0.2*flagstruct%d2_bg_k2
-            ELSE
-              d2_divg_pert = flagstructp%d2_bg_pert
-            END IF
-            nord_w = 0
-            damp_w = d2_divg
-            nord_w_pert = 0
-            damp_w_pert = d2_divg_pert
-            d_con_k = 0.
-          END IF
         ELSE IF (k .EQ. 1) THEN
 ! Sponge layers with del-2 damping on divergence, vorticity, w, z, and air mass (delp).
 ! no special damping of potential temperature in sponge layers
-! Apply first order scheme for damping the sponge layer
-          hord_m = 1
-          hord_v = 6
-          hord_t = 6
-          hord_p = 6
-          hord_m_pert = 1
-          hord_v_pert = 2
-          hord_t_pert = 2
-          hord_p_pert = 2
-          IF (.NOT.flagstructp%split_hord) THEN
-            hord_v = hord_v_pert
-            hord_t = hord_t_pert
-            hord_p = hord_p_pert
-          END IF
 ! Divergence damping:
           nord_k = 0
           IF (0.01 .LT. flagstruct%d2_bg) THEN
@@ -2246,108 +2030,142 @@ CONTAINS
           ELSE
             d2_divg = 0.01
           END IF
+! Vertical velocity:
+          nord_w = 0
+          damp_w = d2_divg
+          IF (flagstruct%do_vort_damp) THEN
+! damping on delp and vorticity:
+            nord_v(k) = 0
+            damp_vt(k) = 0.5*d2_divg
+          END IF
+          d_con_k = 0.
+        ELSE
+          IF (2 .LT. flagstruct%n_sponge - 1) THEN
+            max1 = flagstruct%n_sponge - 1
+          ELSE
+            max1 = 2
+          END IF
+          IF (k .EQ. max1 .AND. flagstruct%d2_bg_k2 .GT. 0.01) THEN
+            nord_k = 0
+            IF (flagstruct%d2_bg .LT. flagstruct%d2_bg_k2) THEN
+              d2_divg = flagstruct%d2_bg_k2
+            ELSE
+              d2_divg = flagstruct%d2_bg
+            END IF
+            nord_w = 0
+            damp_w = d2_divg
+            IF (flagstruct%do_vort_damp) THEN
+              nord_v(k) = 0
+              damp_vt(k) = 0.5*d2_divg
+            END IF
+            d_con_k = 0.
+          ELSE
+            IF (3 .LT. flagstruct%n_sponge) THEN
+              max2 = flagstruct%n_sponge
+            ELSE
+              max2 = 3
+            END IF
+            IF (k .EQ. max2 .AND. flagstruct%d2_bg_k2 .GT. 0.05) THEN
+              nord_k = 0
+              IF (flagstruct%d2_bg .LT. 0.2*flagstruct%d2_bg_k2) THEN
+                d2_divg = 0.2*flagstruct%d2_bg_k2
+              ELSE
+                d2_divg = flagstruct%d2_bg
+              END IF
+              nord_w = 0
+              damp_w = d2_divg
+              d_con_k = 0.
+            END IF
+          END IF
+        END IF
+        hord_m_pert = flagstructp%hord_mt_pert
+        hord_t_pert = flagstructp%hord_tm_pert
+        hord_v_pert = flagstructp%hord_vt_pert
+        hord_p_pert = flagstructp%hord_dp_pert
+        nord_k_pert = flagstructp%nord_pert
+        IF (2 .GT. flagstructp%nord_pert) THEN
+          nord_v_pert(k) = flagstructp%nord_pert
+        ELSE
+          nord_v_pert(k) = 2
+        END IF
+        IF (0.20 .GT. flagstructp%d2_bg_pert) THEN
+          d2_divg_pert = flagstructp%d2_bg_pert
+        ELSE
+          d2_divg_pert = 0.20
+        END IF
+        IF (flagstructp%do_vort_damp_pert) THEN
+! for delp, delz, and vorticity
+          damp_vt_pert(k) = flagstructp%vtdm4_pert
+        ELSE
+          damp_vt_pert(k) = 0.
+        END IF
+        nord_w_pert = nord_v_pert(k)
+        nord_t_pert = nord_v_pert(k)
+        damp_w_pert = damp_vt_pert(k)
+        damp_t_pert = damp_vt_pert(k)
+!Sponge layers for the pertuabtiosn
+        IF (k .LE. flagstructp%n_sponge_pert) THEN
+          IF (k .LE. flagstructp%n_sponge_pert - 1) THEN
+            IF (flagstructp%hord_ks_traj) THEN
+              hord_m = flagstructp%hord_mt_ks_traj
+              hord_t = flagstructp%hord_tm_ks_traj
+              hord_v = flagstructp%hord_vt_ks_traj
+              hord_p = flagstructp%hord_dp_ks_traj
+            END IF
+            IF (flagstructp%hord_ks_pert) THEN
+              hord_m_pert = flagstructp%hord_mt_ks_pert
+              hord_t_pert = flagstructp%hord_tm_ks_pert
+              hord_v_pert = flagstructp%hord_vt_ks_pert
+              hord_p_pert = flagstructp%hord_dp_ks_pert
+            END IF
+          END IF
           nord_k_pert = 0
-          IF (0.01 .LT. flagstructp%d2_bg_pert) THEN
-            IF (flagstructp%d2_bg_pert .LT. flagstruct%d2_bg_k1) THEN
-              d2_divg_pert = flagstruct%d2_bg_k1
+          IF (k .EQ. 1) THEN
+            IF (0.01 .LT. flagstructp%d2_bg_pert) THEN
+              IF (flagstructp%d2_bg_pert .LT. flagstructp%d2_bg_k1_pert&
+&             ) THEN
+                d2_divg_pert = flagstructp%d2_bg_k1_pert
+              ELSE
+                d2_divg_pert = flagstructp%d2_bg_pert
+              END IF
+            ELSE IF (0.01 .LT. flagstructp%d2_bg_k1_pert) THEN
+              d2_divg_pert = flagstructp%d2_bg_k1_pert
+            ELSE
+              d2_divg_pert = 0.01
+            END IF
+          ELSE IF (k .EQ. 2) THEN
+            IF (0.01 .LT. flagstructp%d2_bg_pert) THEN
+              IF (flagstructp%d2_bg_pert .LT. flagstructp%d2_bg_k2_pert&
+&             ) THEN
+                d2_divg_pert = flagstructp%d2_bg_k2_pert
+              ELSE
+                d2_divg_pert = flagstructp%d2_bg_pert
+              END IF
+            ELSE IF (0.01 .LT. flagstructp%d2_bg_k2_pert) THEN
+              d2_divg_pert = flagstructp%d2_bg_k2_pert
+            ELSE
+              d2_divg_pert = 0.01
+            END IF
+          ELSE IF (0.01 .LT. flagstructp%d2_bg_pert) THEN
+            IF (flagstructp%d2_bg_pert .LT. flagstructp%d2_bg_ks_pert) &
+&           THEN
+              d2_divg_pert = flagstructp%d2_bg_ks_pert
             ELSE
               d2_divg_pert = flagstructp%d2_bg_pert
             END IF
-          ELSE IF (0.01 .LT. flagstruct%d2_bg_k1) THEN
-            d2_divg_pert = flagstruct%d2_bg_k1
+          ELSE IF (0.01 .LT. flagstructp%d2_bg_ks_pert) THEN
+            d2_divg_pert = flagstructp%d2_bg_ks_pert
           ELSE
             d2_divg_pert = 0.01
           END IF
-! Vertical velocity:
-          nord_w = 0
-          damp_w = d2_divg
           nord_w_pert = 0
           damp_w_pert = d2_divg_pert
-          IF (flagstruct%do_vort_damp) THEN
-! damping on delp and vorticity:
-            nord_v(k) = 0
-            damp_vt(k) = 0.5*d2_divg
-          END IF
           IF (flagstructp%do_vort_damp_pert) THEN
-! damping on delp and vorticity:
             nord_v_pert(k) = 0
             damp_vt_pert(k) = 0.5*d2_divg_pert
           END IF
-          d_con_k = 0.
-        ELSE IF (k .LE. flagstruct%n_sponge .AND. flagstruct%d2_bg_k2 &
-&           .GT. 0.01) THEN
-! Apply first order scheme for damping the sponge layer
-          hord_m = 1
-          hord_v = 6
-          hord_t = 6
-          hord_p = 6
-          hord_m_pert = 1
-          hord_v_pert = 2
-          hord_t_pert = 2
-          hord_p_pert = 2
-          IF (.NOT.flagstructp%split_hord) THEN
-            hord_v = hord_v_pert
-            hord_t = hord_t_pert
-            hord_p = hord_p_pert
-          END IF
-! Divergence damping:
-          nord_k = 0
-          IF (flagstruct%d2_bg .LT. flagstruct%d2_bg_k2) THEN
-            d2_divg = flagstruct%d2_bg_k2
-          ELSE
-            d2_divg = flagstruct%d2_bg
-          END IF
-          nord_k_pert = 0
-          IF (flagstructp%d2_bg_pert .LT. flagstruct%d2_bg_k2) THEN
-            d2_divg_pert = flagstruct%d2_bg_k2
-          ELSE
-            d2_divg_pert = flagstructp%d2_bg_pert
-          END IF
-! Vertical velocity:
-          nord_w = 0
-          damp_w = d2_divg
-          nord_w_pert = 0
-          damp_w_pert = d2_divg_pert
-          IF (flagstruct%do_vort_damp) THEN
-! damping on delp and vorticity:
-            nord_v(k) = 0
-            damp_vt(k) = 0.5*d2_divg
-          END IF
-          IF (flagstructp%do_vort_damp_pert) THEN
-! damping on delp and vorticity:
-            nord_v_pert(k) = 0
-            damp_vt_pert(k) = 0.5*d2_divg_pert
-          END IF
-          d_con_k = 0.
-        ELSE IF (k .EQ. flagstruct%n_sponge + 1 .AND. flagstruct%&
-&           d2_bg_k2 .GT. 0.05) THEN
-! Apply second order scheme for damping at edge of the sponge layer
-          hord_v = 2
-          hord_t = 2
-          hord_p = 2
-          hord_v_pert = 2
-          hord_t_pert = 2
-          hord_p_pert = 2
-! Divergence damping:
-          nord_k = 0
-          IF (flagstruct%d2_bg .LT. 0.2*flagstruct%d2_bg_k2) THEN
-            d2_divg = 0.2*flagstruct%d2_bg_k2
-          ELSE
-            d2_divg = flagstruct%d2_bg
-          END IF
-          nord_k_pert = 0
-          IF (flagstructp%d2_bg_pert .LT. 0.2*flagstruct%d2_bg_k2) THEN
-            d2_divg_pert = 0.2*flagstruct%d2_bg_k2
-          ELSE
-            d2_divg_pert = flagstructp%d2_bg_pert
-          END IF
-! Vertical velocity:
-          nord_w = 0
-          damp_w = d2_divg
-          nord_w_pert = 0
-          damp_w_pert = d2_divg_pert
-          d_con_k = 0.
         END IF
+!Tapenade issue if not defined at level npz+1
         damp_vt(npz+1) = damp_vt(npz)
         damp_vt_pert(npz+1) = damp_vt_pert(npz)
         nord_v(npz+1) = nord_v(npz)
@@ -2383,8 +2201,8 @@ CONTAINS
 &           , js:je+1, k), cx(is:ie+1, jsd:jed, k), cy(isd:ied, js:je+1&
 &           , k), crx(is:ie+1, jsd:jed, k), cry(isd:ied, js:je+1, k), &
 &           xfx(is:ie+1, jsd:jed, k), yfx(isd:ied, js:je+1, k), q_con(&
-&           isd:isd, jsd:jsd, 1), z_rat(isd:ied, jsd:jed), kgb, heat_s, &
-&           zvir, sphum, nq, q, k, npz, flagstruct%inline_q, dt, &
+&           isd:ied, jsd:jed, 1), z_rat(isd:ied, jsd:jed), kgb, heat_s, &
+&           dpx, zvir, sphum, nq, q, k, npz, flagstruct%inline_q, dt, &
 &           flagstruct%hord_tr, hord_m, hord_v, hord_t, hord_p, nord_k, &
 &           nord_v(k), nord_w, nord_t, flagstruct%dddmp, d2_divg, &
 &           flagstruct%d4_bg, damp_vt(k), damp_w, damp_t, d_con_k, &
@@ -4773,7 +4591,7 @@ CONTAINS
 &   , delp
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed, km), INTENT(IN) :: &
 &   pt_tl, delp_tl
-    REAL, DIMENSION(bd%isd:bd%isd, bd%jsd:bd%jsd, 1), INTENT(IN) :: &
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed, km), INTENT(IN) :: &
 &   q_con
     LOGICAL, INTENT(IN) :: cg, nested, computehalo
 ! !OUTPUT PARAMETERS
@@ -4793,8 +4611,10 @@ CONTAINS
 ! Local:
     REAL :: peg(bd%isd:bd%ied, km+1)
     REAL :: pkg(bd%isd:bd%ied, km+1)
-    REAL :: p1d(bd%isd:bd%ied)
-    REAL :: p1d_tl(bd%isd:bd%ied)
+    REAL(kind=8) :: p1d(bd%isd:bd%ied)
+    REAL(kind=8) :: p1d_tl(bd%isd:bd%ied)
+    REAL(kind=8) :: g1d(bd%isd:bd%ied)
+    REAL(kind=8) :: g1d_tl(bd%isd:bd%ied)
     REAL :: logp(bd%isd:bd%ied)
     REAL :: logp_tl(bd%isd:bd%ied)
     INTEGER :: i, j, k
@@ -4837,25 +4657,30 @@ CONTAINS
       IF (js .EQ. 1) jfirst = jsd
       IF (je .EQ. npy - 1) THEN
         jlast = jed
+        g1d_tl = 0.0_8
         logp_tl = 0.0
-        p1d_tl = 0.0
+        p1d_tl = 0.0_8
       ELSE
+        g1d_tl = 0.0_8
         logp_tl = 0.0
-        p1d_tl = 0.0
+        p1d_tl = 0.0_8
       END IF
     ELSE
+      g1d_tl = 0.0_8
       logp_tl = 0.0
-      p1d_tl = 0.0
+      p1d_tl = 0.0_8
     END IF
 !$OMP parallel do default(none) shared(jfirst,jlast,ifirst,ilast,pk,km,gz,hs,ptop,ptk, &
 !$OMP                                  js,je,is,ie,peln,peln1,pe,delp,akap,pt,CG,pkz,q_con) &
-!$OMP                          private(peg, pkg, p1d, logp)
+!$OMP                          private(peg, pkg, p1d, g1d, logp)
     DO j=jfirst,jlast
       DO i=ifirst,ilast
-        p1d_tl(i) = 0.0
+        p1d_tl(i) = 0.0_8
         p1d(i) = ptop
         pk_tl(i, j, 1) = 0.0
         pk(i, j, 1) = ptk
+        g1d_tl(i) = 0.0_8
+        g1d(i) = hs(i, j)
         gz_tl(i, j, km+1) = 0.0
         gz(i, j, km+1) = hs(i, j)
       END DO
@@ -4917,11 +4742,12 @@ CONTAINS
 ! Bottom up
       DO k=km,1,-1
         DO i=ifirst,ilast
-          gz_tl(i, j, k) = gz_tl(i, j, k+1) + cp_air*(pt_tl(i, j, k)*(pk&
-&           (i, j, k+1)-pk(i, j, k))+pt(i, j, k)*(pk_tl(i, j, k+1)-pk_tl&
-&           (i, j, k)))
-          gz(i, j, k) = gz(i, j, k+1) + cp_air*pt(i, j, k)*(pk(i, j, k+1&
-&           )-pk(i, j, k))
+          g1d_tl(i) = g1d_tl(i) + cp_air*(pt_tl(i, j, k)*(pk(i, j, k+1)-&
+&           pk(i, j, k))+pt(i, j, k)*(pk_tl(i, j, k+1)-pk_tl(i, j, k)))
+          g1d(i) = g1d(i) + cp_air*pt(i, j, k)*(pk(i, j, k+1)-pk(i, j, k&
+&           ))
+          gz_tl(i, j, k) = g1d_tl(i)
+          gz(i, j, k) = g1d(i)
         END DO
       END DO
       IF (.NOT.cg .AND. j .GE. js .AND. j .LE. je) THEN
@@ -4947,7 +4773,7 @@ CONTAINS
     REAL, INTENT(IN) :: hs(bd%isd:bd%ied, bd%jsd:bd%jed)
     REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed, km), INTENT(IN) :: pt&
 &   , delp
-    REAL, DIMENSION(bd%isd:bd%isd, bd%jsd:bd%jsd, 1), INTENT(IN) :: &
+    REAL, DIMENSION(bd%isd:bd%ied, bd%jsd:bd%jed, km), INTENT(IN) :: &
 &   q_con
     LOGICAL, INTENT(IN) :: cg, nested, computehalo
 ! !OUTPUT PARAMETERS
@@ -4962,7 +4788,8 @@ CONTAINS
 ! Local:
     REAL :: peg(bd%isd:bd%ied, km+1)
     REAL :: pkg(bd%isd:bd%ied, km+1)
-    REAL :: p1d(bd%isd:bd%ied)
+    REAL(kind=8) :: p1d(bd%isd:bd%ied)
+    REAL(kind=8) :: g1d(bd%isd:bd%ied)
     REAL :: logp(bd%isd:bd%ied)
     INTEGER :: i, j, k
     INTEGER :: ifirst, ilast
@@ -5006,11 +4833,12 @@ CONTAINS
     END IF
 !$OMP parallel do default(none) shared(jfirst,jlast,ifirst,ilast,pk,km,gz,hs,ptop,ptk, &
 !$OMP                                  js,je,is,ie,peln,peln1,pe,delp,akap,pt,CG,pkz,q_con) &
-!$OMP                          private(peg, pkg, p1d, logp)
+!$OMP                          private(peg, pkg, p1d, g1d, logp)
     DO j=jfirst,jlast
       DO i=ifirst,ilast
         p1d(i) = ptop
         pk(i, j, 1) = ptk
+        g1d(i) = hs(i, j)
         gz(i, j, km+1) = hs(i, j)
       END DO
       IF (j .GE. js .AND. j .LE. je) THEN
@@ -5064,8 +4892,9 @@ CONTAINS
 ! Bottom up
       DO k=km,1,-1
         DO i=ifirst,ilast
-          gz(i, j, k) = gz(i, j, k+1) + cp_air*pt(i, j, k)*(pk(i, j, k+1&
-&           )-pk(i, j, k))
+          g1d(i) = g1d(i) + cp_air*pt(i, j, k)*(pk(i, j, k+1)-pk(i, j, k&
+&           ))
+          gz(i, j, k) = g1d(i)
         END DO
       END DO
       IF (.NOT.cg .AND. j .GE. js .AND. j .LE. je) THEN

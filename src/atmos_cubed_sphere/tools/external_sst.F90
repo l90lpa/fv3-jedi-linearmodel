@@ -34,7 +34,7 @@ use amip_interp_mod, only: i_sst, j_sst, sst_ncep, sst_anom, &
 public i_sst, j_sst, sst_ncep, sst_anom, forecast_mode, use_ncep_sst
 
 !---- version number -----
-character(len=128) :: version = '$Id$'
-character(len=128) :: tagname = '$Name$'
+character(len=128) :: version = '$Id: external_sst.F90,v 1.3 2018/03/15 14:19:48 drholdaw Exp $'
+character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 end module external_sst_mod

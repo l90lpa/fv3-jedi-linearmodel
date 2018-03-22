@@ -65,13 +65,12 @@ public  fv_subgrid_z, qsmith, neg_adj3
   real:: lv00, d0_vap
 
 !---- version number -----
-  character(len=128) :: version = '$Id: fv_sg.F90,v 17.0.2.4.2.3.2.6.2.10.4.1 2014/11/12 03:46:32 Lucas.Harris Exp $'
-  character(len=128) :: tagname = '$Name:  $'
+  character(len=128) :: version = '$Id: fv_sg.F90,v 1.4 2018/03/15 14:02:27 drholdaw Exp $'
+  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 contains
 
-
-#ifdef GFS_PHYS
+#if defined(GFS_PHYS) || defined(MAPL_MODE)
  subroutine fv_subgrid_z( isd, ied, jsd, jed, is, ie, js, je, km, nq, dt,    &
                          tau, nwat, delp, pe, peln, pkz, ta, qa, ua, va,  &
                          hydrostatic, w, delz, u_dt, v_dt, t_dt, k_bot )
@@ -136,6 +135,20 @@ contains
          t_max = t3_max
       endif
 
+#ifdef MAPL_MODE
+      sphum = 1
+      if ( nwat == 0 ) then
+         xvir = 0.
+         rz = 0.
+      else
+         xvir = zvir
+         rz = rvgas - rdgas          ! rz = zvir * rdgas
+         if ( nwat == 3) then
+            liq_wat = 2
+            ice_wat = 3
+         endif
+      endif
+#else
       sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
       if ( nwat == 0 ) then
          xvir = 0.
@@ -150,6 +163,7 @@ contains
          graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
          cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
       endif
+#endif
 
 !------------------------------------------------------------------------
 ! The nonhydrostatic pressure changes if there is heating (under constant
@@ -474,7 +488,7 @@ contains
          u_dt(i,j,k) = rdt*(u0(i,k) - ua(i,j,k))
          v_dt(i,j,k) = rdt*(v0(i,k) - va(i,j,k))
            ta(i,j,k) = t0(i,k)   ! *** temperature updated ***
-#ifdef GFS_PHYS
+#if defined(GFS_PHYS) || defined(MAPL_MODE)
            ua(i,j,k) = u0(i,k)
            va(i,j,k) = v0(i,k)
 #endif
@@ -941,7 +955,7 @@ contains
          u_dt(i,j,k) = rdt*(u0(i,k) - ua(i,j,k))
          v_dt(i,j,k) = rdt*(v0(i,k) - va(i,j,k))
            ta(i,j,k) = t0(i,k)   ! *** temperature updated ***
-#ifdef GFS_PHYS
+#if defined(GFS_PHYS) || defined(MAPL_MODE)
            ua(i,j,k) = u0(i,k)
            va(i,j,k) = v0(i,k)
 #endif
