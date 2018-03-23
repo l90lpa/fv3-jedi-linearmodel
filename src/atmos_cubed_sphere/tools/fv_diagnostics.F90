@@ -2473,8 +2473,20 @@ contains
           enddo
           enddo
         else
-          call eqv_pot(a3, Atm(n)%pt, Atm(n)%delp, Atm(n)%delz, Atm(n)%peln, Atm(n)%pkz, Atm(n)%q(:,:,:,sphum),    &
+! DH*
+! The argument Atm(n)%q(isd,jsd,1,sphum) causes a compile-time error with gfortran:
+!     Error: Element of assumed-shaped or pointer array passed to array dummy argument 'q' at (1)
+! In our configuration, this section of the code is not executed; hence the correct behavior
+! of passing in the entire Atm(n)%q array for gfortran has not been tested
+#ifdef __GFORTRAN__
+         write (0,*) 'Attention - calling eqv_pot with Atm(n)%q instead of Atm(n)%q(isd,jsd,1,sphum) for gfortran has not been tested!'
+         call eqv_pot(a3, Atm(n)%pt, Atm(n)%delp, Atm(n)%delz, Atm(n)%peln, Atm(n)%pkz, Atm(n)%q,                     &
+                      isc, iec, jsc, jec, ngc, npz, Atm(n)%flagstruct%hydrostatic, Atm(n)%flagstruct%moist_phys)
+#else
+          call eqv_pot(a3, Atm(n)%pt, Atm(n)%delp, Atm(n)%delz, Atm(n)%peln, Atm(n)%pkz, Atm(n)%q(isd,jsd,1,sphum),    &
                        isc, iec, jsc, jec, ngc, npz, Atm(n)%flagstruct%hydrostatic, Atm(n)%flagstruct%moist_phys)
+#endif
+! *DH
         endif
 
           if( prt_minmax ) call prt_maxmin('Theta_E', a3, isc, iec, jsc, jec, 0, npz, 1.)
