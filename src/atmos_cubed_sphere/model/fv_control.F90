@@ -341,6 +341,19 @@ module fv_control_mod
             Atm(n)%gridstruct%grid_type => Atm(n)%flagstruct%grid_type
             Atm(n)%flagstruct%grid_number => Atm(n)%grid_number
 
+
+      Atm(n)%gridstruct%sw_corner = .false.
+      Atm(n)%gridstruct%se_corner = .false.
+      Atm(n)%gridstruct%ne_corner = .false.
+      Atm(n)%gridstruct%nw_corner = .false.
+
+      if (Atm(n)%gridstruct%grid_type < 3 .and. .not. Atm(n)%neststruct%nested) then
+         if (  Atm(n)%bd%is   ==1   .and.  Atm(n)%bd%js   ==1   ) Atm(n)%gridstruct%sw_corner = .true.
+         if ( (Atm(n)%bd%ie+1)==npx .and.  Atm(n)%bd%js   ==1   ) Atm(n)%gridstruct%se_corner = .true.
+         if ( (Atm(n)%bd%ie+1)==npx .and. (Atm(n)%bd%je+1)==npy ) Atm(n)%gridstruct%ne_corner = .true.
+         if (  Atm(n)%bd%is   ==1   .and. (Atm(n)%bd%je+1)==npy ) Atm(n)%gridstruct%nw_corner = .true.
+      endif
+
             call init_grid(Atm(n), grid_name, grid_file, npx, npy, npz, ndims, ntiles, ng)
 
             ! Initialize the SW (2D) part of the model

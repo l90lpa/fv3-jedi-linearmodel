@@ -706,28 +706,28 @@ CONTAINS
            gsum_ad = g_sum_ad
       endif
 
-!-------------------------
-! FMS global sum algorithm:
-!-------------------------
-      if ( present(reproduce) ) then
-         if (reproduce) then
-            call mpp_global_sum_ad(domain, arg1_ad(:,:), gsum_ad, flags=BITWISE_EFP_SUM)
-            p_ad = p_ad + area(ifirst:ilast, jfirst:jlast)*arg1_ad
-         else
-            call mpp_global_sum_ad(domain, arg1_ad(:,:), gsum_ad)
-            p_ad = p_ad + area(ifirst:ilast, jfirst:jlast)*arg1_ad
-         endif
-      else
-!-------------------------
-! Quick local sum algorithm
-!-------------------------
-         call mpp_global_sum_ad(domain, gsuma_ad, gsum_ad)
-         do j=jfirst,jlast
-            do i=ifirst,ilast
-               p_ad(i, j) = p_ad(i, j) + area(i, j)*gsuma_ad(i,j)
-            enddo
-         enddo
-      endif
+!!-------------------------
+!! FMS global sum algorithm:
+!!-------------------------
+!      if ( present(reproduce) ) then
+!         if (reproduce) then
+!            call mpp_global_sum_ad(domain, arg1_ad(:,:), gsum_ad, flags=BITWISE_EFP_SUM)
+!            p_ad = p_ad + area(ifirst:ilast, jfirst:jlast)*arg1_ad
+!         else
+!            call mpp_global_sum_ad(domain, arg1_ad(:,:), gsum_ad)
+!            p_ad = p_ad + area(ifirst:ilast, jfirst:jlast)*arg1_ad
+!         endif
+!      else
+!!-------------------------
+!! Quick local sum algorithm
+!!-------------------------
+!         call mpp_global_sum_ad(domain, gsuma_ad, gsum_ad)
+!         do j=jfirst,jlast
+!            do i=ifirst,ilast
+!               p_ad(i, j) = p_ad(i, j) + area(i, j)*gsuma_ad(i,j)
+!            enddo
+!         enddo
+!      endif
 
       p_ad = 0.0
 
