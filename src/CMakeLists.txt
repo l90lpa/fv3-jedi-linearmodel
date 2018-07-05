@@ -1,5 +1,5 @@
 list( APPEND fv3_src_files
-atmos_cubed_sphere/mapl/MAPL_Mod.F90
+utils/MAPL_Constants.F90
 atmos_cubed_sphere/model/a2b_edge.F90
 atmos_cubed_sphere/model/boundary.F90
 atmos_cubed_sphere/model/dyn_core.F90
@@ -73,6 +73,29 @@ atmos_cubed_sphere/tools/read_climate_nudge_data.F90
 atmos_cubed_sphere/tools/sim_nc_mod.F90
 atmos_cubed_sphere/tools/sorted_index.F90
 atmos_cubed_sphere/tools/test_cases.F90
+physics/convection/convection_ad.F90
+physics/convection/convection.F90
+physics/convection/convection_tl.F90
+physics/convection/qsat_util.F90
+#physics/gwd/gw_drag_b.F90
+#physics/gwd/gw_drag_d.F90
+#physics/gwd/gw_drag_init.F90
+physics/microphys/cloud_ad.F90
+physics/microphys/cloud.F90
+physics/microphys/cloud_tl.F90
+#physics/radiation/cloudradcouple.F90
+#physics/radiation/irrad_ad.F90
+#physics/radiation/irradconstants.F90
+#physics/radiation/irrad.F90
+#physics/radiation/irrad_tl.F90
+#physics/radiation/MieInterface.F90
+#physics/radiation/radconstants.F90
+#physics/radiation/sorad_ad.F90
+#physics/radiation/soradconstants.F90
+#physics/radiation/sorad.F90
+#physics/radiation/sorad_tl.F90
+physics/turbulence/bldriver.F90
+physics/turbulence/blsimp.F90
 )
 
 ecbuild_add_library( TARGET   fv3
