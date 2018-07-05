@@ -1,9 +1,30 @@
-module mapl_mod
+module MAPL_ConstantsMod
+
+!  $Id: MAPL_Constants.F90,v 1.7 2018/04/02 15:19:55 mathomp4 Exp $
 
 implicit none
+private
 
-real(kind=8), parameter, public :: MAPL_PI_R8     = 3.14159265358979323846
-real, parameter, public :: MAPL_PI     = MAPL_PI_R8
+
+!=============================================================================
+!BOP
+
+! !MODULE: -- A container module for global constants
+
+! !PUBLIC VARIABLES:
+
+integer,parameter, public :: MAPL_R8 = selected_real_kind(12) ! 8 byte real
+integer,parameter, public :: MAPL_R4 = selected_real_kind( 6) ! 4 byte real
+integer,parameter, public :: MAPL_RN = kind(1.0)              ! native real
+integer,parameter, public :: MAPL_I8 = selected_int_kind (13) ! 8 byte integer
+integer,parameter, public :: MAPL_I4 = selected_int_kind ( 6) ! 4 byte integer
+integer,parameter, public :: MAPL_IN = kind(1)                ! native integer
+
+real(kind=MAPL_R8), parameter, public :: MAPL_PI_R8 = 3.14159265358979323846_MAPL_R8
+real(kind=MAPL_R4), parameter, public :: MAPL_PI    = MAPL_PI_R8
+
+real(kind=MAPL_R8), parameter, public :: MAPL_PSDRY = 98305.0_MAPL_R8
+
 real, parameter, public :: MAPL_GRAV   = 9.80665                ! m^2/s
 real, parameter, public :: MAPL_RADIUS = 6371.0E3               ! m
 real, parameter, public :: MAPL_OMEGA  = 2.0*MAPL_PI/86164.0    ! 1/s
@@ -25,7 +46,6 @@ real, parameter, public :: MAPL_CPVAP  = 4.*MAPL_RVAP           ! J/(kg K)
 real, parameter, public :: MAPL_CVVAP  = MAPL_CPVAP-MAPL_RVAP   ! J/(kg K)
 
 real, parameter, public :: MAPL_KAPPA  = MAPL_RDRY/MAPL_CPDRY   ! (2.0/7.0)
-
 
 real, parameter, public :: MAPL_EPSILON= MAPL_H2OMW/MAPL_AIRMW  ! --
 real, parameter, public :: MAPL_DELTAP = MAPL_CPVAP/MAPL_CPDRY  ! --
@@ -51,12 +71,9 @@ real, parameter, public :: MAPL_RHO_SEAWATER  = 1026.0          ! sea water dens
 real, parameter, public :: MAPL_RHO_SEAICE    = 917.0           ! sea ice   density [kg/m^3]. SA: should it be = 917  kg/m^3?
 real, parameter, public :: MAPL_RHO_SNOW      = 330.0           ! snow density      [kg/m^3]. SA: should it be = 330  kg/m^3?
 
-integer,parameter, public :: MAPL_R8 = selected_real_kind(12) ! 8 byte real
-integer,parameter, public :: MAPL_R4 = selected_real_kind( 6) ! 4 byte real
-integer,parameter, public :: MAPL_RN = kind(1.0)              ! native real
-integer,parameter, public :: MAPL_I8 = selected_int_kind (13) ! 8 byte integer
-integer,parameter, public :: MAPL_I4 = selected_int_kind ( 6) ! 4 byte integer
-integer,parameter, public :: MAPL_IN = kind(1)                ! native integer
 
 
-end module mapl_mod
+!EOP
+
+end module MAPL_CONSTANTSMOD
+

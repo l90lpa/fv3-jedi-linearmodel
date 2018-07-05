@@ -19,7 +19,7 @@ module external_ic_mod
 #ifndef MAPL_MODE
    use constants_mod,     only: pi=>pi_8, omega, grav, kappa, rdgas, rvgas, cp_air
 #else
-   use MAPL_MOD,          only: MAPL_PI_R8, MAPL_OMEGA, MAPL_GRAV, &
+   use MAPL_ConstantsMOD,          only: MAPL_PI_R8, MAPL_OMEGA, MAPL_GRAV, &
          MAPL_KAPPA, MAPL_RGAS, MAPL_RVAP, &
          MAPL_CP
 !   use MAPL_IOMod
