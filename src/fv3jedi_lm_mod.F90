@@ -61,7 +61,13 @@ subroutine create(self,dt,npx,npy,npz,ptop,ak,bk)
  self%conf%jed = self%fv3jedi_lm_dynamics%FV_Atm(1)%bd%jed
  self%conf%npz = self%fv3jedi_lm_dynamics%FV_Atm(1)%npz
 
+ !Convenience
+ self%conf%hydrostatic = self%fv3jedi_lm_dynamics%FV_Atm(1)%flagstruct%hydrostatic
 
+ !Allocate main traj and pert structures
+ call allocate_traj(self%traj,self%conf%isc,self%conf%iec,self%conf%jsc,self%conf%jec,&
+                    self%conf%npz,self%conf%hydrostatic,self%conf%do_phy_mst)
+ call allocate_pert(self%pert,self%conf%isc,self%conf%iec,self%conf%jsc,self%conf%jec,self%conf%npz,self%conf%hydrostatic)
 
 endsubroutine create
 
@@ -146,6 +152,12 @@ subroutine delete(self)
  class(fv3jedi_lm_type), intent(inout) :: self
 
  call self%fv3jedi_lm_dynamics%delete()
+
+ deallocate(self%conf%ak)
+ deallocate(self%conf%bk)
+
+ call deallocate_traj(self%traj)
+ call deallocate_pert(self%pert)
 
 endsubroutine delete
 
