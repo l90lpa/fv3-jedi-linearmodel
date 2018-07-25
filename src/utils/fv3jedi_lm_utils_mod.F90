@@ -67,6 +67,8 @@ subroutine allocate_pert(pert,isc,iec,jsc,jec,npz,hydrostatic)
  allocate(pert%ql     (isc:iec, jsc:jec, npz))
  allocate(pert%qi     (isc:iec, jsc:jec, npz))
  allocate(pert%o3     (isc:iec, jsc:jec, npz))
+
+ allocate(pert%cfcn     (isc:iec, jsc:jec, npz))
  
  if (.not. hydrostatic) then
    allocate(pert%w      (isc:iec, jsc:jec, npz))

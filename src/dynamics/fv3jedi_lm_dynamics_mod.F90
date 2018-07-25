@@ -37,7 +37,7 @@ type fv3jedi_lm_dynamics_type
  integer         :: isd,ied,jsd,jed     !<Grid, with halo
  integer         :: npz                 !<Number of vertical levels
  integer :: cp_dyn_ind
- integer :: linmodtest = 0
+ integer :: linmodtest = 1
  contains
   procedure :: create
   procedure :: init_nl
@@ -71,9 +71,11 @@ subroutine create(self,conf)
 
  type(fv_atmos_type), pointer :: FV_Atm(:)
 
-  FV_Atm => self%FV_Atm
+  print*, 'dan: dyn create'
 
   call fv_init(self%FV_Atm, conf%dt, grids_on_this_pe, p_split)
+
+  FV_Atm => self%FV_Atm
 
   if (allocated(grids_on_this_pe)) deallocate(grids_on_this_pe)
   if (allocated(pelist_all)) deallocate(pelist_all)
@@ -102,6 +104,13 @@ subroutine create(self,conf)
   FV_Atm(1)%w = 0.0
   FV_Atm(1)%delz = 0.0
   FV_Atm(1)%q_con = 0.0
+
+  deallocate(FV_Atm(1)%q)
+  if (conf%do_phy_mst == 0) then
+     allocate(FV_Atm(1)%q(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,4))
+  else
+     allocate(FV_Atm(1)%q(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,5))
+  endif
 
   !fC and f0
   if (FV_Atm(1)%flagstruct%grid_type == 4) then
@@ -143,6 +152,12 @@ subroutine create(self,conf)
   !Initialze the perturbation fv3 structure
   call fv_init_pert(self%FV_Atm,self%FV_AtmP)
 
+  deallocate(self%FV_AtmP(1)%qp)
+  if (conf%do_phy_mst == 0) then
+     allocate(self%FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,4))
+  else
+     allocate(self%FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,5))
+  endif
 
   !Global
   cp_iter_controls%cp_i  = 0
@@ -245,6 +260,7 @@ subroutine step_nl(self,conf,traj)
  type(fv_atmos_type), pointer :: FV_Atm(:)
  integer :: i,j,k
 
+ print*, 'dan: dyn step_nl'
 
  !Convenience pointer to the main FV_Atm structure
  !------------------------------------------------
@@ -325,6 +341,8 @@ subroutine step_tl(self,conf,traj,pert)
  type(fv_atmos_type), pointer :: FV_Atm(:)
  type(fv_atmos_pert_type), pointer :: FV_AtmP(:)
  integer :: i,j,k
+
+print*, 'dan step_tl'
 
  !Convenience pointer to the main FV_Atm structure
  !------------------------------------------------
@@ -412,6 +430,8 @@ subroutine step_tl(self,conf,traj,pert)
  ! Make sure everything is zero
  ! ----------------------------
  call zero_pert_vars(FV_AtmP(1))
+
+ print*, 'dan step_tl done'
 
 endsubroutine step_tl
 

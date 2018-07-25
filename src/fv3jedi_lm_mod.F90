@@ -43,6 +43,8 @@ subroutine create(self,dt,npx,npy,npz,ptop,ak,bk)
  self%conf%dt = dt
  self%conf%ptop = ptop
 
+ self%conf%do_phy_mst = 1
+
  allocate(self%conf%ak(npz+1))
  allocate(self%conf%bk(npz+1))
  self%conf%ak = ak
