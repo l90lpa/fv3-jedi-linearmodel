@@ -15,7 +15,7 @@ type :: fv3jedi_lm_conf
   real(kind_real) :: ptop                !<Pressure of top level
   integer         :: isc,iec,jsc,jec     !<Grid, compute region
   integer         :: isd,ied,jsd,jed     !<Grid, with halo
-  integer         :: npz                 !<Number of vertical levels
+  integer         :: npx, npy, npz       !<Number of grid points
   integer         :: do_dyn
   integer         :: do_phy_trb
   integer         :: do_phy_mst
@@ -44,10 +44,15 @@ type :: fv3jedi_lm_traj
   real(kind_real), allocatable, dimension(:,:)   :: kcbl, ts, khl, khu
 end type fv3jedi_lm_traj
 
+public IceFraction
+
+interface IceFraction
+ module procedure IceFraction_r4
+ module procedure IceFraction_r8
+end interface
+
 ! ------------------------------------------------------------------------------
 contains
-! ------------------------------------------------------------------------------
-
 ! ------------------------------------------------------------------------------
 
 subroutine allocate_pert(pert,isc,iec,jsc,jec,npz,hydrostatic)
@@ -238,6 +243,62 @@ subroutine copy_traj( traj_in, traj_out, hydrostatic, dpm )
  traj_out%khu     = traj_in%khu
 
 end subroutine copy_traj
+
+! ------------------------------------------------------------------------------
+
+subroutine icefraction_r4(temp, icefrct)
+
+ implicit none
+
+ !arguments
+ real(4), intent(in) :: temp
+ real(4), intent(out) :: icefrct
+
+ !locals
+ real(4), parameter :: t_ice_all = 233.16_4, t_ice_max = 273.16_4
+ integer, parameter :: icefrpwr = 4
+
+  icefrct  = 0.00_4
+  if ( temp <= t_ice_all ) then
+     icefrct = 1.000_4
+  else if ( (temp > t_ice_all) .and. (temp <= t_ice_max) ) then
+     icefrct = 1.00_4 -  ( temp - t_ice_all ) / ( t_ice_max - t_ice_all )
+  end if
+
+  icefrct = min(icefrct,1.00_4)
+  icefrct = max(icefrct,0.00_4)
+
+  icefrct = icefrct**icefrpwr
+
+end subroutine icefraction_r4
+
+! ------------------------------------------------------------------------------
+
+subroutine icefraction_r8(temp, icefrct)
+
+ implicit none
+
+ !arguments
+ real(8), intent(in) :: temp
+ real(8), intent(out) :: icefrct
+
+ !locals
+ real(8), parameter :: t_ice_all = 233.16_8, t_ice_max = 273.16_8
+ integer, parameter :: icefrpwr = 4
+
+  icefrct  = 0.0_8
+  if ( temp <= t_ice_all ) then
+     icefrct = 1.000_8
+  else if ( (temp > t_ice_all) .and. (temp <= t_ice_max) ) then
+     icefrct = 1.00_8 -  ( temp - t_ice_all ) / ( t_ice_max - t_ice_all )
+  end if
+
+  icefrct = min(icefrct,1.00_8)
+  icefrct = max(icefrct,0.00_8)
+
+  icefrct = icefrct**icefrpwr
+
+end subroutine icefraction_r8
 
 ! ------------------------------------------------------------------------------
 

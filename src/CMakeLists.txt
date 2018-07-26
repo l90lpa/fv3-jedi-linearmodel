@@ -38,6 +38,7 @@ dynamics/atmos_cubed_sphere/model_tlmadm/fv_mp_adm.F90
 dynamics/atmos_cubed_sphere/model_tlmadm/fv_mp_tlm.F90
 dynamics/atmos_cubed_sphere/model_tlmadm/fv_nesting_adm.F90
 dynamics/atmos_cubed_sphere/model_tlmadm/fv_nesting_tlm.F90
+dynamics/atmos_cubed_sphere/model_tlmadm/fv_pressure.F90
 dynamics/atmos_cubed_sphere/model_tlmadm/fv_restart_adm.F90
 dynamics/atmos_cubed_sphere/model_tlmadm/fv_restart_tlm.F90
 dynamics/atmos_cubed_sphere/model_tlmadm/fv_sg_adm.F90
@@ -71,13 +72,15 @@ dynamics/atmos_cubed_sphere/tools/read_climate_nudge_data.F90
 dynamics/atmos_cubed_sphere/tools/sim_nc_mod.F90
 dynamics/atmos_cubed_sphere/tools/sorted_index.F90
 dynamics/atmos_cubed_sphere/tools/test_cases.F90
-physics/moist/convection_ad.F90
-physics/moist/convection.F90
-physics/moist/convection_tl.F90
-physics/moist/qsat_util.F90
+physics/fv3jedi_lm_physics_mod.F90
 physics/moist/cloud_ad.F90
 physics/moist/cloud.F90
 physics/moist/cloud_tl.F90
+physics/moist/convection_ad.F90
+physics/moist/convection.F90
+physics/moist/convection_tl.F90
+physics/moist/fv3jedi_lm_moist_mod.F90
+physics/moist/qsat_util.F90
 physics/turbulence/bldriver.F90
 physics/turbulence/blsimp.F90
 utils/fv3jedi_lm_const_mod.F90

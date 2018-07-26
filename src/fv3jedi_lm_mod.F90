@@ -15,6 +15,7 @@ type fv3jedi_lm_type
  type(fv3jedi_lm_pert) :: pert
  type(fv3jedi_lm_traj) :: traj
  type(fv3jedi_lm_dynamics_type) :: fv3jedi_lm_dynamics
+ type(fv3jedi_lm_physics_type)  :: fv3jedi_lm_physics
  contains
   procedure :: create
   procedure :: init_nl
@@ -61,7 +62,10 @@ subroutine create(self,dt,npx,npy,npz,ptop,ak,bk)
  self%conf%ied = self%fv3jedi_lm_dynamics%FV_Atm(1)%bd%ied
  self%conf%jsd = self%fv3jedi_lm_dynamics%FV_Atm(1)%bd%jsd
  self%conf%jed = self%fv3jedi_lm_dynamics%FV_Atm(1)%bd%jed
- self%conf%npz = self%fv3jedi_lm_dynamics%FV_Atm(1)%npz
+ 
+ self%conf%npx = npx
+ self%conf%npy = npy
+ self%conf%npz = npz
 
  !Convenience
  self%conf%hydrostatic = self%fv3jedi_lm_dynamics%FV_Atm(1)%flagstruct%hydrostatic

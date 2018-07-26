@@ -15,7 +15,7 @@ use fv_arrays_nlm_mod,   only: fv_atmos_pert_type, deallocate_fv_atmos_pert_type
 use fv_dynamics_mod,     only: fv_dynamics
 use fv_dynamics_tlm_mod, only: fv_dynamics_tlm, fv_dynamics_nlm => fv_dynamics
 use fv_dynamics_adm_mod, only: fv_dynamics_fwd, fv_dynamics_bwd
-use pressure_vt_mod,     only: compute_fv3_pressures, compute_fv3_pressures_tlm, compute_fv3_pressures_bwd
+use fv_pressure_mod,     only: compute_fv3_pressures, compute_fv3_pressures_tlm, compute_fv3_pressures_bwd
 
 use tapenade_iter, only: cp_iter, cp_iter_controls, initialize_cp_iter, finalize_cp_iter
 use tapenade_iter, only: cp_mod_ini, cp_mod_mid, cp_mod_end, pushrealarray, poprealarray
