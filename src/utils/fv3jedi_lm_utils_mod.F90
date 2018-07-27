@@ -1,6 +1,7 @@
 module fv3jedi_lm_utils_mod
 
 use fv3jedi_lm_kinds_mod
+use fv3jedi_lm_const_mod, only: kappa
 
 implicit none
 private
@@ -310,15 +311,19 @@ end subroutine icefraction_r8
 
 ! ------------------------------------------------------------------------------
 
-subroutine compute_pressues_r4(im,jm,lm,ptop,delp,pe,p,pk)
+subroutine compute_pressures_r4(im,jm,lm,ptop,delp,pe,p,pk)
 
  integer, intent(in)  :: im,jm,lm
+ real(4), intent(in)  :: ptop
  real(4), intent(in)  :: delp(1:im,1:jm,1:lm) !Pressure thickness
  real(4), intent(out) :: pe  (1:im,1:jm,0:lm) !Pressure at edges
  real(4), intent(out) :: p   (1:im,1:jm,1:lm) !Pressure at mid-point
  real(4), intent(out) :: pk  (1:im,1:jm,1:lm) !Pressure to the kappa at mid-point
  
  real(4) :: lpe(1:im,1:jm,0:lm)
+ real(4) :: pek(1:im,1:jm,0:lm)
+
+ integer :: l
 
  !Pressure at the level edge
  pe(:,:,0) = ptop
@@ -332,25 +337,29 @@ subroutine compute_pressues_r4(im,jm,lm,ptop,delp,pe,p,pk)
  !Log of edge pressure
  lpe = log(pe)
 
- !pe to the kappa
+ !pe to the kappa at edge
  pek = pe**kappa
 
  !p to the kappa
  pk(:,:,1:lm) = (pek(:,:,1:lm)-pek(:,:,0:lm-1))/(kappa*(lpe(:,:,1:lm)-lpe(:,:,0:lm-1)))
 
-endsubroutine compute_pressues_r4
+endsubroutine compute_pressures_r4
 
 ! ------------------------------------------------------------------------------
 
-subroutine compute_pressues_r8(im,jm,lm,ptop,delp,pe,p,pk)
+subroutine compute_pressures_r8(im,jm,lm,ptop,delp,pe,p,pk)
 
  integer, intent(in)  :: im,jm,lm
+ real(8), intent(in)  :: ptop
  real(8), intent(in)  :: delp(1:im,1:jm,1:lm) !Pressure thickness
  real(8), intent(out) :: pe  (1:im,1:jm,0:lm) !Pressure at edges
  real(8), intent(out) :: p   (1:im,1:jm,1:lm) !Pressure at mid-point
  real(8), intent(out) :: pk  (1:im,1:jm,1:lm) !Pressure to the kappa at mid-point
  
  real(8) :: lpe(1:im,1:jm,0:lm)
+ real(8) :: pek(1:im,1:jm,0:lm)
+
+ integer :: l
 
  !Pressure at the level edge
  pe(:,:,0) = ptop
@@ -364,12 +373,12 @@ subroutine compute_pressues_r8(im,jm,lm,ptop,delp,pe,p,pk)
  !Log of edge pressure
  lpe = log(pe)
 
- !pe to the kappa
+ !pe to the kappa at edge
  pek = pe**kappa
 
  !p to the kappa
  pk(:,:,1:lm) = (pek(:,:,1:lm)-pek(:,:,0:lm-1))/(kappa*(lpe(:,:,1:lm)-lpe(:,:,0:lm-1)))
 
-endsubroutine compute_pressues_r8
+endsubroutine compute_pressures_r8
 
 end module fv3jedi_lm_utils_mod

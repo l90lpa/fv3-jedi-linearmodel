@@ -19,20 +19,15 @@ implicit none
 private
 public :: fv3jedi_lm_turbulence_type
 
-!> Local trajectory objects
+!> Local trajectory object
 type local_traj_turbulence
-
-endtype local_traj_turbulence
-
-!> Local perturbation objects
-type local_pert_turbulence
   real(kind_real), allocatable, dimension(:,:,:) :: akq, bkq, ckq
   real(kind_real), allocatable, dimension(:,:,:) :: aks, bks, cks
   real(kind_real), allocatable, dimension(:,:,:) :: akv, bkv, ckv
   real(kind_real), allocatable, dimension(:,:,:) :: pk
-endtype local_pert_turbulence
+endtype local_traj_turbulence
 
-!> Local perturbation objects
+!> Local constants object
 type local_cnst_turbulence
   integer :: im,jm,lm
   real(kind_real), dimension(22)   :: TURBPARAMS
@@ -65,15 +60,18 @@ subroutine create(self,conf)
  class(fv3jedi_lm_turbulence_type), target, intent(inout) :: self
  type(fv3jedi_lm_conf), intent(in)    :: conf
 
- self%lconst%im = conf%npx
- self%lconst%jm = conf%npy
- self%lconst%lm = conf%npz
+ real(kind_real), allocatable, dimension(:) :: pref
+ integer :: l
+
+ self%lcnst%im = conf%npx
+ self%lcnst%jm = conf%npy
+ self%lcnst%lm = conf%npz
 
  call allocate_ltraj(self%lcnst%im,self%lcnst%jm,self%lcnst%lm,self%ltraj)
 
- allocate(pref(0:self%lconst%lm)
- DO i = 0,lm
-   pref(i) = conf%AK(i+1) + conf%BK(i+1)*p00
+ allocate(pref(0:self%lcnst%lm))
+ DO l = 0,self%lcnst%lm
+   pref(l) = conf%AK(l+1) + conf%BK(l+1)*p00
  enddo
 
  !Turbulence Parameters
@@ -158,6 +156,7 @@ subroutine step_nl(self,conf,traj)
  type(local_traj_turbulence), pointer :: ltraj
  type(local_cnst_turbulence), pointer :: lcnst
 
+ integer :: im,jm,lm
 
  !Set up the local trajectory
  call set_ltraj(conf,self%lcnst,traj,self%ltraj)
@@ -165,6 +164,10 @@ subroutine step_nl(self,conf,traj)
  !Convenience pointers
  ltraj => self%ltraj
  lcnst => self%lcnst
+
+ im = lcnst%im
+ jm = lcnst%jm
+ lm = lcnst%lm
 
  traj%t = traj%t / ltraj%pk
 
@@ -195,6 +198,7 @@ subroutine step_tl(self,conf,traj,pert)
  type(local_traj_turbulence), pointer :: ltraj
  type(local_cnst_turbulence), pointer :: lcnst
 
+ integer :: im,jm,lm
 
  !Set up the local trajectory
  call set_ltraj(conf,self%lcnst,traj,self%ltraj)
@@ -202,6 +206,10 @@ subroutine step_tl(self,conf,traj,pert)
  !Convenience pointers
  ltraj => self%ltraj
  lcnst => self%lcnst
+
+ im = lcnst%im
+ jm = lcnst%jm
+ lm = lcnst%lm
 
  pert%t = pert%t / ltraj%pk 
 
@@ -286,30 +294,41 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  real(kind_real), allocatable, dimension(:,:,:) :: EKV, FKV
  real(kind_real), allocatable, dimension(:,:,:) :: pet, pmt
  real(kind_real), allocatable, dimension(:,:,:) :: QIT1, QLT1
- real(kind_real), allocatable, dimension(:,:,:) :: Ph, PIh, TEMP, fQi
+ real(kind_real), allocatable, dimension(:,:,:) :: fQi
 
 
- im = lconst%im
- jm = lconst%jm
- lm = lconst%lm
+ im = lcnst%im
+ jm = lcnst%jm
+ lm = lcnst%lm
 
  isc = conf%isc
  iec = conf%iec
  jsc = conf%jsc
  jec = conf%jec
 
+ allocate(PTT1 (im,jm,lm))
+ allocate(ZPBL1(im,jm))
+ allocate(CT1  (im,jm))
+ allocate(EKV  (im,jm,lm))
+ allocate(FKV  (im,jm,lm))
+ allocate(pet  (im,jm,0:lm))
+ allocate(pmt  (im,jm,lm))
+ allocate(QIT1 (im,jm,lm))
+ allocate(QLT1 (im,jm,lm))
+ allocate(fQi  (im,jm,lm))
+
  !Compute pressures from delp
  call compute_pressures(im,jm,lm,conf%ptop,traj%delp(isc:iec,jsc:jec,:),&
                         pet,pmt,ltraj%pk)
 
  !Use local copied to avoid overwrite
- ZPBL1(1:im,1:jm,:) = traj%ZPBL(isc:iec,jsc:jec,:)
- CT1(1:im,1:jm,:) = traj%CT(isc:iec,jsc:jec,:)
+ ZPBL1(1:im,1:jm) = traj%ZPBL(isc:iec,jsc:jec)
+ CT1(1:im,1:jm) = traj%CT(isc:iec,jsc:jec)
 
  ptt1(1:im,1:jm,:) = traj%t(isc:iec,jsc:jec,:) * ltraj%pk(1:im,1:jm,:)
 
  !Calculate total cloud ice and liquid trajectory
- if (DO_MOIST_PHYS == 0) then
+ if (conf%do_phy_mst == 0) then
  
     QIT1 = traj%QI(isc:iec,jsc:jec,:)
     QLT1 = traj%QL(isc:iec,jsc:jec,:)
@@ -324,8 +343,8 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
      enddo
   enddo
  
-  QIT1(1:im,1:jm,:) = (traj%QLST(isc:iec,jsc:jec,:) + traj%QCNT(isc:iec,jsc:jec,:)) * fQi(1:im,1:jm,:)
-  QLT1(1:im,1:jm,:) = (traj%QLST(isc:iec,jsc:jec,:) + traj%QCNT(isc:iec,jsc:jec,:)) * (1-fQi(1:im,1:jm,:))
+  QIT1(1:im,1:jm,:) = (traj%QLS(isc:iec,jsc:jec,:) + traj%QCN(isc:iec,jsc:jec,:)) * fQi(1:im,1:jm,:)
+  QLT1(1:im,1:jm,:) = (traj%QLS(isc:iec,jsc:jec,:) + traj%QCN(isc:iec,jsc:jec,:)) * (1-fQi(1:im,1:jm,:))
  
  endif
 
@@ -350,7 +369,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
                  traj%U          , &
                  traj%V          , &
                  PTT1         , &
-                 QVT          , &
+                 traj%QV          , &
                  PET          , &
                  QIT1         , &
                  QLT1         , &
@@ -361,8 +380,8 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
                  traj%CM           , &
                  CT1          , &
                  traj%CQ           , &
-                 TURBPARAMS   , &
-                 TURBPARAMSI  , &
+                 lcnst%TURBPARAMS   , &
+                 lcnst%TURBPARAMSI  , &
                  traj%USTAR        , &
                  traj%BSTAR        , &
                  ltraj%AKS, ltraj%BKS, ltraj%CKS, &
@@ -376,6 +395,17 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  call VTRILUPERT(IM,JM,LM,ltraj%AKS,ltraj%BKS,ltraj%CKS)
  call VTRILUPERT(IM,JM,LM,ltraj%AKQ,ltraj%BKQ,ltraj%CKQ)
 
+ deallocate(PTT1 )
+ deallocate(ZPBL1)
+ deallocate(CT1  )
+ deallocate(EKV  )
+ deallocate(FKV  )
+ deallocate(pet  )
+ deallocate(pmt  )
+ deallocate(QIT1 )
+ deallocate(QLT1 )
+ deallocate(fQi  )
+
 endsubroutine set_ltraj
 
 ! ------------------------------------------------------------------------------
@@ -385,16 +415,16 @@ subroutine allocate_ltraj(im,jm,lm,ltraj)
  integer, intent(in) :: im,jm,lm
  type(local_traj_turbulence), intent(inout) :: ltraj
 
- allocate(pk(im,jm,lm))
- allocate(akv(im,jm,lm))
- allocate(bkv(im,jm,lm))
- allocate(ckv(im,jm,lm))
- allocate(aks(im,jm,lm))
- allocate(bks(im,jm,lm))
- allocate(cks(im,jm,lm))
- allocate(akq(im,jm,lm))
- allocate(bkq(im,jm,lm))
- allocate(ckq(im,jm,lm))
+ allocate(ltraj%pk(im,jm,lm))
+ allocate(ltraj%akv(im,jm,lm))
+ allocate(ltraj%bkv(im,jm,lm))
+ allocate(ltraj%ckv(im,jm,lm))
+ allocate(ltraj%aks(im,jm,lm))
+ allocate(ltraj%bks(im,jm,lm))
+ allocate(ltraj%cks(im,jm,lm))
+ allocate(ltraj%akq(im,jm,lm))
+ allocate(ltraj%bkq(im,jm,lm))
+ allocate(ltraj%ckq(im,jm,lm))
 
 endsubroutine allocate_ltraj
 
@@ -404,16 +434,16 @@ subroutine deallocate_ltraj(ltraj)
 
  type(local_traj_turbulence), intent(inout) :: ltraj
 
- deallocate(pk )
- deallocate(akv)
- deallocate(bkv)
- deallocate(ckv)
- deallocate(aks)
- deallocate(bks)
- deallocate(cks)
- deallocate(akq)
- deallocate(bkq)
- deallocate(ckq)
+ deallocate(ltraj%pk )
+ deallocate(ltraj%akv)
+ deallocate(ltraj%bkv)
+ deallocate(ltraj%ckv)
+ deallocate(ltraj%aks)
+ deallocate(ltraj%bks)
+ deallocate(ltraj%cks)
+ deallocate(ltraj%akq)
+ deallocate(ltraj%bkq)
+ deallocate(ltraj%ckq)
 
 endsubroutine deallocate_ltraj
 

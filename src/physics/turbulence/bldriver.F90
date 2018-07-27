@@ -5,6 +5,7 @@ MODULE BLDRIVER
 !Diffusion coefficient is computed using Louis-Lock formulation.
 
 USE fv3jedi_lm_const_mod
+use fv3jedi_lm_kinds_mod
 
 IMPLICIT NONE
 

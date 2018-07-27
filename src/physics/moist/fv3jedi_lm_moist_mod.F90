@@ -285,6 +285,7 @@ subroutine step_nl(self,conf,traj)
  type(fv3jedi_lm_conf), intent(in) :: conf
 
  integer :: i,j,k
+ integer :: im,jm,lm,isc,iec,jsc,jec
  type(local_traj_moist), pointer :: ltraj
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lconst
@@ -394,6 +395,7 @@ subroutine step_tl(self,conf,traj,pert)
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
  integer :: i,j,k
+ integer :: im,jm,lm,isc,iec,jsc,jec
  type(local_traj_moist), pointer :: ltraj
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lconst
@@ -505,6 +507,7 @@ subroutine step_ad(self,conf,traj,pert)
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
  integer :: i,j,k
+ integer :: im,jm,lm,isc,iec,jsc,jec
  type(local_traj_moist), pointer :: ltraj
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lconst
@@ -630,7 +633,7 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  type(fv3jedi_lm_traj),  intent(in)    :: traj
  type(local_traj_moist), intent(inout) :: ltraj
 
- real(8), allocatable, dimension(:,:,:) :: PLO
+ real(8), allocatable, dimension(:,:,:) :: PLO, PK
  real(8), allocatable, dimension(:,:,:) :: TEMP
  real(8), allocatable, dimension(:,:,:) :: PTT_F, QVT_F
  real(8), allocatable, dimension(:,:,:) :: PTT_L, QVT_L
@@ -656,6 +659,7 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  jec = conf%jec
 
  allocate(plo(im,jm,lm)   )
+ allocate(pk(im,jm,lm)    )
  allocate(temp(im,jm,lm)  )
  allocate(ptt_f(im,jm,lm) )
  allocate(qvt_f(im,jm,lm) )
@@ -689,25 +693,28 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  enddo
 
  !Pressure hPa, half levels and p^kappa
+ call compute_pressures(im,jm,lm,conf%ptop,traj%delp(isc:iec,jsc:jec,:),&
+                        ltraj%ple,plo,ltraj%pk)
+ ltraj%PTT(1:im,1:jm,:) = dble(traj%t(isc:iec,jsc:jec,:)) * ltraj%pk
+
  ltraj%cnv_ple     = 0.01_8*ltraj%ple
  PLO               = 0.5_8*(ltraj%CNV_PLE(:,:,0:LM-1) +  ltraj%CNV_PLE(:,:,1:LM  ) )
  ltraj%PK          = (PLO/1000.0_8)**(lconst%MAPL8_RGAS/lconst%MAPL8_CP)
  TEMP(1:im,1:jm,:) = dble(traj%t(isc:iec,jsc:jec,:))
 
- !Some thermo vars
- ltraj%ptt    = TEMP / ltraj%PK
+ !Some moist vars
  ltraj%qvt(1:im,1:jm,:)    = dble(traj%qv(isc:iec,jsc:jec,:))
  ltraj%cflst  = 0.0_8
 
  if (conf%do_phy_mst .ne. 3) then
-   ltraj%cfcnt  = dble(traj%cfcn)
+   ltraj%cfcnt(1:im,1:jm,:)  = dble(traj%cfcn(isc:iec,jsc:jec,:))
  endif
 
- ltraj%ts(1:im,1:jm,:)     = dble(traj%ts(isc:iec,jsc:jec,:))
- ltraj%frland(1:im,1:jm,:) = dble(traj%frland(isc:iec,jsc:jec,:))
- ltraj%kcbl(1:im,1:jm,:)   = nint(traj%kcbl(isc:iec,jsc:jec,:))
- ltraj%khl(1:im,1:jm,:)    = nint(traj%khl(isc:iec,jsc:jec,:))
- ltraj%khu(1:im,1:jm,:)    = nint(traj%khu(isc:iec,jsc:jec,:))
+ ltraj%ts(1:im,1:jm)     = dble(traj%ts(isc:iec,jsc:jec))
+ ltraj%frland(1:im,1:jm) = dble(traj%frland(isc:iec,jsc:jec))
+ ltraj%kcbl(1:im,1:jm)   = nint(traj%kcbl(isc:iec,jsc:jec))
+ ltraj%khl(1:im,1:jm)    = nint(traj%khl(isc:iec,jsc:jec))
+ ltraj%khu(1:im,1:jm)    = nint(traj%khu(isc:iec,jsc:jec))
 
  ltraj%PTT_C = ltraj%PTT
  ltraj%QVT_C = ltraj%QVT
@@ -858,6 +865,7 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  enddo 
    
  deallocate(plo)
+ deallocate(pk)
  deallocate(temp)
  deallocate(ptt_f)
  deallocate(qvt_f)

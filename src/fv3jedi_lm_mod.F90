@@ -54,6 +54,7 @@ subroutine create(self,dt,npx,npy,npz,ptop,ak,bk)
  self%conf%bk = bk
 
  call self%fv3jedi_lm_dynamics%create(self%conf)
+ call self%fv3jedi_lm_physics%create(self%conf)
 
  !Make grid available to all components
  self%conf%isc = self%fv3jedi_lm_dynamics%FV_Atm(1)%bd%isc
@@ -87,7 +88,8 @@ subroutine init_nl(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- call self%fv3jedi_lm_dynamics%init_nl(self%pert,self%traj)
+ call self%fv3jedi_lm_dynamics%init_nl(self%conf,self%pert,self%traj)
+ call self%fv3jedi_lm_physics%init_nl(self%conf,self%pert,self%traj)
 
 endsubroutine init_nl
 
@@ -99,7 +101,8 @@ subroutine init_tl(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- call self%fv3jedi_lm_dynamics%init_tl(self%pert,self%traj)
+ call self%fv3jedi_lm_dynamics%init_tl(self%conf,self%pert,self%traj)
+ call self%fv3jedi_lm_physics%init_tl(self%conf,self%pert,self%traj)
 
 endsubroutine init_tl
 
@@ -111,7 +114,8 @@ subroutine init_ad(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- call self%fv3jedi_lm_dynamics%init_ad(self%pert,self%traj)
+ call self%fv3jedi_lm_dynamics%init_ad(self%conf,self%pert,self%traj)
+ call self%fv3jedi_lm_physics%init_ad(self%conf,self%pert,self%traj)
 
 endsubroutine init_ad
 
@@ -124,6 +128,7 @@ subroutine step_nl(self)
  class(fv3jedi_lm_type), intent(inout) :: self
 
  call self%fv3jedi_lm_dynamics%step_nl(self%conf,self%traj)
+ call self%fv3jedi_lm_physics%step_nl(self%conf,self%traj)
 
 endsubroutine step_nl
 
@@ -136,6 +141,7 @@ subroutine step_tl(self)
  class(fv3jedi_lm_type), intent(inout) :: self
 
  call self%fv3jedi_lm_dynamics%step_tl(self%conf,self%traj,self%pert)
+ call self%fv3jedi_lm_physics%step_tl(self%conf,self%traj,self%pert)
 
 endsubroutine step_tl
 
@@ -147,6 +153,7 @@ subroutine step_ad(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
+ call self%fv3jedi_lm_physics%step_ad(self%conf,self%traj,self%pert)
  call self%fv3jedi_lm_dynamics%step_ad(self%conf,self%traj,self%pert)
 
 endsubroutine step_ad
@@ -159,7 +166,8 @@ subroutine delete(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- call self%fv3jedi_lm_dynamics%delete()
+ call self%fv3jedi_lm_dynamics%delete(self%conf)
+ call self%fv3jedi_lm_physics%delete(self%conf)
 
  deallocate(self%conf%ak)
  deallocate(self%conf%bk)

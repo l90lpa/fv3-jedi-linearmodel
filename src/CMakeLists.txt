@@ -83,6 +83,7 @@ physics/moist/fv3jedi_lm_moist_mod.F90
 physics/moist/qsat_util.F90
 physics/turbulence/bldriver.F90
 physics/turbulence/blsimp.F90
+physics/turbulence/fv3jedi_lm_turbulence_mod.F90
 utils/fv3jedi_lm_const_mod.F90
 utils/fv3jedi_lm_kinds_mod.F90
 utils/fv3jedi_lm_utils_mod.F90

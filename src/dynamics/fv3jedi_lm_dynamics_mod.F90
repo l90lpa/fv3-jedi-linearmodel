@@ -213,11 +213,12 @@ endsubroutine create
 
 ! ------------------------------------------------------------------------------
 
-subroutine init_nl(self,pert,traj)
+subroutine init_nl(self,conf,pert,traj)
 
  implicit none
 
  class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
  type(fv3jedi_lm_traj), intent(in) :: traj
 
@@ -225,11 +226,12 @@ endsubroutine init_nl
 
 ! ------------------------------------------------------------------------------
 
-subroutine init_tl(self,pert,traj)
+subroutine init_tl(self,conf,pert,traj)
 
  implicit none
 
  class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
  type(fv3jedi_lm_traj), intent(in) :: traj
 
@@ -237,11 +239,12 @@ endsubroutine init_tl
 
 ! ------------------------------------------------------------------------------
 
-subroutine init_ad(self,pert,traj)
+subroutine init_ad(self,conf,pert,traj)
 
  implicit none
 
  class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
  type(fv3jedi_lm_traj), intent(in) :: traj
 
@@ -657,13 +660,12 @@ endsubroutine step_ad
 
 ! ------------------------------------------------------------------------------
 
-subroutine delete(self)
-
-
+subroutine delete(self,conf)
 
  implicit none
 
  class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ type(fv3jedi_lm_conf), intent(in) :: conf
 
  deallocate(self%ebuffery)
  deallocate(self%wbuffery)
