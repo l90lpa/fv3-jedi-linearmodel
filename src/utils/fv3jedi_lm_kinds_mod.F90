@@ -4,11 +4,13 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
 
 module fv3jedi_lm_kinds_mod
-  use, intrinsic :: iso_c_binding
-  implicit none
 
+  use, intrinsic :: iso_fortran_env, only: REAL64
+
+  implicit none
   private
   public kind_real
   
-  integer, parameter :: kind_real=c_double
+  integer, parameter :: kind_real=REAL64
+
 end module fv3jedi_lm_kinds_mod

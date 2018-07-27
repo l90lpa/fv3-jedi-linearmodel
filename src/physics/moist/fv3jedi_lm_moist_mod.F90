@@ -24,7 +24,7 @@ use tapenade_iter, only: cp_mod_ini, cp_mod_mid, cp_mod_end, pushrealarray, popr
 
 implicit none
 private
-public :: fv3jedi_lm_dynamics_type
+public :: fv3jedi_lm_moist_type
 
 !> Local trajectory objects
 type local_traj_moist
@@ -45,15 +45,15 @@ type local_traj_moist
 endtype local_traj_moist
 
 !> Local perturbation objects
-type local_traj_moist
+type local_pert_moist
   real(8), allocatable, dimension(:,:,:) :: UP, VP, PTP, QVP            
   real(8), allocatable, dimension(:,:,:) :: CNV_DQLDTP, CNV_MFDP, CNV_PRC3P, CNV_UPDFP
   real(8), allocatable, dimension(:,:,:) :: QILSP, QLLSP, QICNP, QLCNP
   real(8), allocatable, dimension(:,:,:) :: CFLSP, CFCNP
-endtype local_traj_moist
+endtype local_pert_moist
 
 !> Local perturbation objects
-type local_const_moist
+type local_cnst_moist
   integer :: im,jm,lm
   integer :: ICMIN 
   real(8), allocatable, dimension(:) :: ESTBLX, SIGE
@@ -62,13 +62,13 @@ type local_const_moist
   real(8) :: MAPL8_RGAS, MAPL8_H2OMW, MAPL8_AIRMW, MAPL8_VIREPS
   real(8) :: MAPL8_RUNIV, MAPL8_ALHF, MAPL8_PI, MAPL8_ALHS
   real(8) :: MAPL8_TICE, MAPL8_RVAP
-endtype local_const_moist
+endtype local_cnst_moist
 
 !> Moist class (self)
-type fv3jedi_lm_dynamics_type
- type(local_traj_moist)  :: ltraj
- type(local_pert_moist)  :: lpert
- type(local_const_moist) :: lconst
+type fv3jedi_lm_moist_type
+ type(local_traj_moist) :: ltraj
+ type(local_pert_moist) :: lpert
+ type(local_cnst_moist) :: lconst
  contains
   procedure :: create
   procedure :: init_nl
@@ -78,7 +78,7 @@ type fv3jedi_lm_dynamics_type
   procedure :: step_tl
   procedure :: step_ad
   procedure :: delete
-end type fv3jedi_lm_dynamics_type
+end type fv3jedi_lm_moist_type
 
 contains
 
@@ -100,9 +100,9 @@ subroutine create(self,conf)
  real(8), parameter :: TMINTBL   = 150.0, TMAXTBL = 333.0
  integer, parameter :: TABLESIZE = nint(TMAXTBL-TMINTBL)*DEGSUBS + 1
 
- self%lconst%im = im
- self%lconst%jm = jm
- self%lconst%lm = lm
+ self%lconst%im = conf%npx
+ self%lconst%jm = conf%npy
+ self%lconst%lm = conf%npz
 
  self%lconst%MAPL8_CP     = dble(MAPL_CP)
  self%lconst%MAPL8_ALHL   = dble(MAPL_ALHL)
@@ -120,7 +120,7 @@ subroutine create(self,conf)
  self%lconst%MAPL8_TICE   = dble(MAPL_TICE)
  self%lconst%MAPL8_RVAP   = dble(MAPL_RVAP)
 
- imsize = im*4
+ imsize = self%lconst%im*4
 
  !RAS Parameters
  self%lconst%RASPARAMS( 1) = 1.000
@@ -226,9 +226,9 @@ subroutine create(self,conf)
  !ESTBLX
  call ESINIT(self%lconst%ESTBLX)
 
- allocate(PREF(0:self%lconst%lm)
+ allocate(PREF(0:self%lconst%lm))
  do L = 0,self%lconst%lm
-   PREF(L) = conf%ak(L+1) + conf%bk(L+1)*MAPL8_P00
+   PREF(L) = conf%ak(L+1) + conf%bk(L+1)*self%lconst%MAPL8_P00
  enddo
 
  self%lconst%ICMIN = max(1,count(PREF < PMIN_DET))
@@ -244,7 +244,7 @@ subroutine init_nl(self,pert,traj)
 
  implicit none
 
- class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ class(fv3jedi_lm_moist_type), intent(inout) :: self
  type(fv3jedi_lm_pert), intent(inout) :: pert
  type(fv3jedi_lm_traj), intent(in) :: traj
 
@@ -256,7 +256,7 @@ subroutine init_tl(self,pert,traj)
 
  implicit none
 
- class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ class(fv3jedi_lm_moist_type), intent(inout) :: self
  type(fv3jedi_lm_pert), intent(inout) :: pert
  type(fv3jedi_lm_traj), intent(in) :: traj
 
@@ -268,7 +268,7 @@ subroutine init_ad(self,pert,traj)
 
  implicit none
 
- class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ class(fv3jedi_lm_moist_type), intent(inout) :: self
  type(fv3jedi_lm_pert), intent(inout) :: pert
  type(fv3jedi_lm_traj), intent(in) :: traj
 
@@ -280,14 +280,14 @@ subroutine step_nl(self,conf,traj)
 
  implicit none
 
- class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
+ class(fv3jedi_lm_moist_type), intent(inout), target :: self
  type(fv3jedi_lm_traj), intent(inout) :: traj
  type(fv3jedi_lm_conf), intent(in) :: conf
 
  integer :: i,j,k
- type(local_traj_moist) , pointer :: ltraj
- type(local_pert_moist) , pointer :: lpert
- type(local_const_moist), pointer :: lconst
+ type(local_traj_moist), pointer :: ltraj
+ type(local_pert_moist), pointer :: lpert
+ type(local_cnst_moist), pointer :: lconst
 
 
  !Set up the local trajectory
@@ -351,27 +351,27 @@ subroutine step_nl(self,conf,traj)
  !Call the tangent linear cloud scheme.
  call cloud_driver_d ( conf%dt, lconst%im, lconst%jm, lconst%lm,                                       &
                        ltraj%ptt_c, lpert%ptp,                                                         &
-                       ltraj%qvt_c, lpert%pqvp,                                                        &
+                       ltraj%qvt_c, lpert%qvp,                                                        &
                        ltraj%ple,                                                                      &
                        ltraj%cnv_dqldtt_c, lpert%cnv_dqldtp, ltraj%cnv_mfdt_c,  lpert%cnv_mfdp,        &
                        ltraj%cnv_prc3t_c,  lpert%cnv_prc3p,  ltraj%cnv_updft_c, lpert%cnv_updfp,       &
-                       ltraj%qilst, qilsp, ltraj%qllst, qllsp,                                         &
-                       ltraj%qicnt, qicnp, ltraj%qlcnt, qlcnp,                                         &
-                       ltraj%cflst, cflsp, ltraj%cfcnt, cfcnp,                                         &
+                       ltraj%qilst, lpert%qilsp, ltraj%qllst, lpert%qllsp,                                         &
+                       ltraj%qicnt, lpert%qicnp, ltraj%qlcnt, lpert%qlcnp,                                         &
+                       ltraj%cflst, lpert%cflsp, ltraj%cfcnt, lpert%cfcnp,                                         &
                        ltraj%frland, lconst%cloudparams, lconst%estblx, ltraj%khu, ltraj%khl,          &
                        lconst%mapl8_runiv, lconst%mapl8_kappa, lconst%mapl8_airmw, lconst%mapl8_h2omw, &
                        lconst%mapl8_grav, lconst%mapl8_alhl, lconst%mapl8_alhf,   lconst%mapl8_pi,     &
                        lconst%mapl8_rgas, lconst%mapl8_cp,   lconst%mapl8_vireps, lconst%mapl8_alhs,   &
-                       lconst%mapl8_tice, lconst%mapl8_rvap, lconst%mapl8_p00, conf%do_phys_mst        )
+                       lconst%mapl8_tice, lconst%mapl8_rvap, lconst%mapl8_p00, conf%do_phy_mst        )
 
  !Back to traj
- traj%u  = real(ltraj%up,kind_real)
- traj%v  = real(ltraj%uv,kind_real)
- traj%t  = real(ltraj%ptp * ltraj*pk,kind_real)
- traj%qv = real(ltraj%qvp,kind_real)
- traj%qi = real(ltraj%qilsp + lpert%qicnp,kind_real)
- traj%ql = real(ltraj%qllsp + lpert%qlcnp,kind_real)
- traj%cfcnp = real(ltraj%cfcnp,kind_real)
+ traj%u    = real(ltraj%ut,kind_real)
+ traj%v    = real(ltraj%ut,kind_real)
+ traj%t    = real(ltraj%ptt * ltraj%pk,kind_real)
+ traj%qv   = real(ltraj%qvt,kind_real)
+ traj%qi   = real(ltraj%qilst + ltraj%qicnt,kind_real)
+ traj%ql   = real(ltraj%qllst + ltraj%qlcnt,kind_real)
+ traj%cfcn = real(ltraj%cfcnt,kind_real)
 
 endsubroutine step_nl
 
@@ -381,15 +381,15 @@ subroutine step_tl(self,conf,traj,pert)
 
  implicit none
 
- class(fv3jedi_lm_dynamics_type), target, intent(inout) :: self
+ class(fv3jedi_lm_moist_type), target, intent(inout) :: self
  type(fv3jedi_lm_conf), intent(in)    :: conf
  type(fv3jedi_lm_traj), intent(in)    :: traj
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
  integer :: i,j,k
- type(local_traj_moist) , pointer :: ltraj
- type(local_pert_moist) , pointer :: lpert
- type(local_const_moist), pointer :: lconst
+ type(local_traj_moist), pointer :: ltraj
+ type(local_pert_moist), pointer :: lpert
+ type(local_cnst_moist), pointer :: lconst
 
 
  !Set up the local trajectory
@@ -406,8 +406,8 @@ subroutine step_tl(self,conf,traj,pert)
  lpert%ptp   = dble(pert%t) / ltraj%pk
  lpert%qvp   = dble(pert%qv)
  lpert%cflsp = 0.0_8
- if (conf%do_phys_mst .ne. 3) then
-   lpert%cfcnp = dble(pert%cfcnp4)
+ if (conf%do_phy_mst .ne. 3) then
+   lpert%cfcnp = dble(pert%cfcn)
  endif
  lpert%qilsp = dble(pert%qi) * ltraj%ilsf
  lpert%qicnp = dble(pert%qi) * ltraj%icnf
@@ -455,27 +455,27 @@ subroutine step_tl(self,conf,traj,pert)
  !Call the tangent linear cloud scheme.
  call cloud_driver_d ( conf%dt, lconst%im, lconst%jm, lconst%lm,                                       &
                        ltraj%ptt_c, lpert%ptp,                                                         &
-                       ltraj%qvt_c, lpert%pqvp,                                                        &
+                       ltraj%qvt_c, lpert%qvp,                                                        &
                        ltraj%ple,                                                                      &
                        ltraj%cnv_dqldtt_c, lpert%cnv_dqldtp, ltraj%cnv_mfdt_c,  lpert%cnv_mfdp,        &
                        ltraj%cnv_prc3t_c,  lpert%cnv_prc3p,  ltraj%cnv_updft_c, lpert%cnv_updfp,       &
-                       ltraj%qilst, qilsp, ltraj%qllst, qllsp,                                         &
-                       ltraj%qicnt, qicnp, ltraj%qlcnt, qlcnp,                                         &
-                       ltraj%cflst, cflsp, ltraj%cfcnt, cfcnp,                                         &
+                       ltraj%qilst, lpert%qilsp, ltraj%qllst, lpert%qllsp,                                         &
+                       ltraj%qicnt, lpert%qicnp, ltraj%qlcnt, lpert%qlcnp,                                         &
+                       ltraj%cflst, lpert%cflsp, ltraj%cfcnt, lpert%cfcnp,                                         &
                        ltraj%frland, lconst%cloudparams, lconst%estblx, ltraj%khu, ltraj%khl,          &
                        lconst%mapl8_runiv, lconst%mapl8_kappa, lconst%mapl8_airmw, lconst%mapl8_h2omw, &
                        lconst%mapl8_grav, lconst%mapl8_alhl, lconst%mapl8_alhf,   lconst%mapl8_pi,     &
                        lconst%mapl8_rgas, lconst%mapl8_cp,   lconst%mapl8_vireps, lconst%mapl8_alhs,   &
-                       lconst%mapl8_tice, lconst%mapl8_rvap, lconst%mapl8_p00, conf%do_phys_mst        )
+                       lconst%mapl8_tice, lconst%mapl8_rvap, lconst%mapl8_p00, conf%do_phy_mst        )
 
  !Back to pert
- pert%u  = real(lpert%up,kind_real)
- pert%v  = real(lpert%uv,kind_real)
- pert%t  = real(lpert%ptp * ltraj*pk,kind_real)
- pert%qv = real(lpert%qvp,kind_real)
- pert%qi = real(lpert%qilsp + lpert%qicnp,kind_real)
- pert%ql = real(lpert%qllsp + lpert%qlcnp,kind_real)
- pert%cfcnp = real(lpert%cfcnp,kind_real)
+ pert%u    = real(lpert%up,kind_real)
+ pert%v    = real(lpert%vp,kind_real)
+ pert%t    = real(lpert%ptp * ltraj%pk,kind_real)
+ pert%qv   = real(lpert%qvp,kind_real)
+ pert%qi   = real(lpert%qilsp + lpert%qicnp,kind_real)
+ pert%ql   = real(lpert%qllsp + lpert%qlcnp,kind_real)
+ pert%cfcn = real(lpert%cfcnp,kind_real)
 
 endsubroutine step_tl
 
@@ -485,15 +485,15 @@ subroutine step_ad(self,conf,traj,pert)
 
  implicit none
 
- class(fv3jedi_lm_dynamics_type), target, intent(inout) :: self
+ class(fv3jedi_lm_moist_type), target, intent(inout) :: self
  type(fv3jedi_lm_conf), intent(in)    :: conf
  type(fv3jedi_lm_traj), intent(in)    :: traj
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
  integer :: i,j,k
- type(local_traj_moist) , pointer :: ltraj
- type(local_pert_moist) , pointer :: lpert
- type(local_const_moist), pointer :: lconst
+ type(local_traj_moist), pointer :: ltraj
+ type(local_pert_moist), pointer :: lpert
+ type(local_cnst_moist), pointer :: lconst
 
 
  !Set up the local trajectory
@@ -510,8 +510,8 @@ subroutine step_ad(self,conf,traj,pert)
  lpert%ptp   = dble(pert%t) * ltraj%pk
  lpert%qvp   = dble(pert%qv)
  lpert%cflsp = 0.0_8
- if (conf%do_phys_mst .ne. 3) then
-   lpert%cfcnp = dble(pert%cfcnp4)
+ if (conf%do_phy_mst .ne. 3) then
+   lpert%cfcnp = dble(pert%cfcn)
  endif
  lpert%qilsp = dble(pert%qi)
  lpert%qicnp = dble(pert%qi)
@@ -530,18 +530,18 @@ subroutine step_ad(self,conf,traj,pert)
  !Call the adjoint of the cloud scheme
  call cloud_driver_b ( conf%dt, lconst%im, lconst%jm, lconst%lm,                                       &
                        ltraj%ptt_c, lpert%ptp,                                                         &
-                       ltraj%qvt_c, lpert%pqvp,                                                        &
+                       ltraj%qvt_c, lpert%qvp,                                                        &
                        ltraj%ple,                                                                      &
                        ltraj%cnv_dqldtt_c, lpert%cnv_dqldtp, ltraj%cnv_mfdt_c,  lpert%cnv_mfdp,        &
                        ltraj%cnv_prc3t_c,  lpert%cnv_prc3p,  ltraj%cnv_updft_c, lpert%cnv_updfp,       &
-                       ltraj%qilst, qilsp, ltraj%qllst, qllsp,                                         &
-                       ltraj%qicnt, qicnp, ltraj%qlcnt, qlcnp,                                         &
-                       ltraj%cflst, cflsp, ltraj%cfcnt, cfcnp,                                         &
+                       ltraj%qilst, lpert%qilsp, ltraj%qllst, lpert%qllsp,                                         &
+                       ltraj%qicnt, lpert%qicnp, ltraj%qlcnt, lpert%qlcnp,                                         &
+                       ltraj%cflst, lpert%cflsp, ltraj%cfcnt, lpert%cfcnp,                                         &
                        ltraj%frland, lconst%cloudparams, lconst%estblx, ltraj%khu, ltraj%khl,          &
                        lconst%mapl8_runiv, lconst%mapl8_kappa, lconst%mapl8_airmw, lconst%mapl8_h2omw, &
                        lconst%mapl8_grav, lconst%mapl8_alhl, lconst%mapl8_alhf,   lconst%mapl8_pi,     &
                        lconst%mapl8_rgas, lconst%mapl8_cp,   lconst%mapl8_vireps, lconst%mapl8_alhs,   &
-                       lconst%mapl8_tice, lconst%mapl8_rvap, lconst%mapl8_p00, conf%do_phys_mst        )
+                       lconst%mapl8_tice, lconst%mapl8_rvap, lconst%mapl8_p00, conf%do_phy_mst        )
 
  !Call the adjoint of the convection scheme
  do i = 1,lconst%im
@@ -573,13 +573,13 @@ subroutine step_ad(self,conf,traj,pert)
  enddo
 
  !Back to pert
- pert%u  = real(lpert%up,kind_real)
- pert%v  = real(lpert%uv,kind_real)
- pert%t  = real(lpert%ptp / ltraj*pk,kind_real)
- pert%qv = real(lpert%qvp,kind_real)
- pert%qi = real(lpert%qilsp*ltraj%ilsf + lpert%qicnp*ltraj%icnf,kind_real)
- pert%ql = real(lpert%qllsp*ltraj%llsf + lpert%qlcnp*ltraj%lcnf,kind_real)
- pert%cfcnp = real(lpert%cfcnp,kind_real)
+ pert%u    = real(lpert%up,kind_real)
+ pert%v    = real(lpert%vp,kind_real)
+ pert%t    = real(lpert%ptp / ltraj%pk,kind_real)
+ pert%qv   = real(lpert%qvp,kind_real)
+ pert%qi   = real(lpert%qilsp*ltraj%ilsf + lpert%qicnp*ltraj%icnf,kind_real)
+ pert%ql   = real(lpert%qllsp*ltraj%llsf + lpert%qlcnp*ltraj%lcnf,kind_real)
+ pert%cfcn = real(lpert%cfcnp,kind_real)
 
 endsubroutine step_ad
 
@@ -588,13 +588,13 @@ endsubroutine step_ad
 subroutine delete(self)
 
  implicit none
- class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ class(fv3jedi_lm_moist_type), intent(inout) :: self
 
- deallocate(self%ESTBLX)
- deallocate(self%SIGE)
+ deallocate(self%lconst%ESTBLX)
+ deallocate(self%lconst%SIGE)
 
  call deallocate_ltraj(self%ltraj)
- call deallocate_ltraj(self%lpert)
+ call deallocate_lpert(self%lpert)
 
 endsubroutine delete
 
@@ -602,10 +602,10 @@ endsubroutine delete
 
 subroutine set_ltraj(conf,lconst,traj,ltraj)
 
- type(fv3jedi_lm_conf),   intent(in)    :: conf
- type(local_const_moist), intent(in)    :: lconst
- type(fv3jedi_lm_traj),   intent(in)    :: traj
- type(local_traj_moist),  intent(inout) :: ltraj
+ type(fv3jedi_lm_conf),  intent(in)    :: conf
+ type(local_cnst_moist), intent(in)    :: lconst
+ type(fv3jedi_lm_traj),  intent(in)    :: traj
+ type(local_traj_moist), intent(inout) :: ltraj
 
  real(8), allocatable, dimension(:,:,:) :: PLO
  real(8), allocatable, dimension(:,:,:) :: TEMP
@@ -620,13 +620,18 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  real(8), allocatable, dimension(:)     :: H_pert, M_pert
  real(8), allocatable, dimension(:,:,:) :: fQi
 
- integer :: i,j,l,im,jm,lm
+ integer :: i,j,l,im,jm,lm,isc,iec,jsc,jec
  real(8), parameter :: PMIN_DET = 3000.0, AUTOC_CN_OCN  = 2.5e-3, AUTOC_CN_LAND = AUTOC_CN_OCN
  integer :: maxcondep
 
  im = lconst%im
  jm = lconst%jm
  lm = lconst%lm
+
+ isc = conf%isc
+ iec = conf%iec
+ jsc = conf%jsc
+ jec = conf%jec
 
  allocate(plo(im,jm,lm)   )
  allocate(temp(im,jm,lm)  )
@@ -654,13 +659,13 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  ltraj%ple = 0.0_8
  ltraj%ple(:,:,0) = conf%ptop
  do l = 1,lm
-    ltraj%ple(:,:, l) = ltraj%ple(:,:,l-1) + dble(traj%delp(i, j, k))
+    ltraj%ple(:,:, l) = ltraj%ple(:,:,l-1) + dble(traj%delp(isc+i-1, jsc+j-1, l))
  end do
 
  !Pressure hPa, half levels and p^kappa
  ltraj%cnv_ple  = 0.01_8*ltraj%ple
  PLO            = 0.5_8*(ltraj%CNV_PLE(:,:,0:LM-1) +  ltraj%CNV_PLE(:,:,1:LM  ) )
- ltraj%PK       = (PLO/1000.0_8)**(MAPL8_RGAS/MAPL8_CP)
+ ltraj%PK       = (PLO/1000.0_8)**(lconst%MAPL8_RGAS/lconst%MAPL8_CP)
  TEMP           = dble(traj%t)
 
  !Some thermo vars
@@ -668,7 +673,7 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  ltraj%qvt    = dble(traj%qv)
  ltraj%cflst  = 0.0_8
 
- if (do_moist_phys .ne. 3) then
+ if (conf%do_phy_mst .ne. 3) then
    ltraj%cfcnt  = dble(traj%cfcn)
  endif
 
@@ -686,14 +691,14 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  ltraj%CNV_PRC3T_C   = 0.0_8
  ltraj%CNV_UPDFT_C   = 0.0_8
 
- ltraj%PTT_F = ltraj%PTT
- ltraj%QVT_F = ltraj%QVT
+ PTT_F = ltraj%PTT
+ QVT_F = ltraj%QVT
 
- ltraj%PTT_L = ltraj%PTT
- ltraj%QVT_L = ltraj%QVT
+ PTT_L = ltraj%PTT
+ QVT_L = ltraj%QVT
 
  !Not linearised as could produce unpredictable behaviour (and very sensitive).
- ltraj%SEEDRAS(:,:) = 1000000 * ( 100*TEMP(:,:,LM) - INT( 100%TEMP(:,:,LM) ) )
+ ltraj%SEEDRAS(:,:) = 1000000 * ( 100*TEMP(:,:,LM) - INT( 100*TEMP(:,:,LM) ) )
 
  !Strapping levels
  DO I = 1,IM
@@ -734,15 +739,15 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  !            - The heating rate profile is not just a spike at one level
  !            - Gradients are not too steep (Jacobian filtering).
  ltraj%DOCONVEC = 0
- ltraj%HEAT = 0.0
- ltraj%CTOP = LM
- ltraj%sumHEAT = 0.0
+ HEAT = 0.0
+ CTOP = LM
+ sumHEAT = 0.0
  
  !Be more lenient on profiles let in for 4DVAR, less likely to encounter problems
  !at shorter lead times and gives more realistic low level cloud perturbations.
- if (conf%do_phys_mst == 1) then
+ if (conf%do_phy_mst == 1) then
     MAXCONDEP = 1
- elseif (conf%do_phys_mst == 2) then
+ elseif (conf%do_phy_mst == 2) then
     MAXCONDEP = 10
  endif
  
@@ -1086,7 +1091,7 @@ subroutine deallocate_lpert(lpert)
  deallocate(lpert%cflsp)
  deallocate(lpert%cfcnp)
 
-endsubroutine allocate_lpert
+endsubroutine deallocate_lpert
 
 ! ------------------------------------------------------------------------------
 

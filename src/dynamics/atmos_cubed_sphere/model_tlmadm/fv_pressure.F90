@@ -200,4 +200,4 @@ end subroutine compute_fv3_pressures_bwd
 
 !----------------------------------------------------------------------------
 
-end module pressure_vt_mod
+end module fv_pressure_mod

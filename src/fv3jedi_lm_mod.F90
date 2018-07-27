@@ -2,7 +2,9 @@ module fv3jedi_lm_mod
 
 use fv3jedi_lm_kinds_mod
 use fv3jedi_lm_utils_mod
+
 use fv3jedi_lm_dynamics_mod, only: fv3jedi_lm_dynamics_type
+use fv3jedi_lm_physics_mod, only: fv3jedi_lm_physics_type
 
 !> Top level for fv3jedi linearized model
 
