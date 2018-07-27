@@ -289,6 +289,13 @@ subroutine step_nl(self,conf,traj)
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lconst
 
+ im = self%lconst%im
+ jm = self%lconst%jm
+ lm = self%lconst%lm
+ isc = conf%isc
+ iec = conf%iec
+ jsc = conf%jsc
+ jec = conf%jec
 
  !Set up the local trajectory
  call set_ltraj(conf,self%lconst,traj,self%ltraj)
@@ -365,13 +372,13 @@ subroutine step_nl(self,conf,traj)
                        lconst%mapl8_tice, lconst%mapl8_rvap, lconst%mapl8_p00, conf%do_phy_mst        )
 
  !Back to traj
- traj%u    = real(ltraj%ut,kind_real)
- traj%v    = real(ltraj%ut,kind_real)
- traj%t    = real(ltraj%ptt * ltraj%pk,kind_real)
- traj%qv   = real(ltraj%qvt,kind_real)
- traj%qi   = real(ltraj%qilst + ltraj%qicnt,kind_real)
- traj%ql   = real(ltraj%qllst + ltraj%qlcnt,kind_real)
- traj%cfcn = real(ltraj%cfcnt,kind_real)
+ traj%u(isc:iec,jsc:jec,:)    = real(ltraj%ut(1:im,1:jm,:),kind_real)
+ traj%v(isc:iec,jsc:jec,:)    = real(ltraj%ut(1:im,1:jm,:),kind_real)
+ traj%t(isc:iec,jsc:jec,:)    = real(ltraj%ptt(1:im,1:jm,:) * ltraj%pk,kind_real)
+ traj%qv(isc:iec,jsc:jec,:)   = real(ltraj%qvt(1:im,1:jm,:),kind_real)
+ traj%qi(isc:iec,jsc:jec,:)   = real(ltraj%qilst(1:im,1:jm,:) + ltraj%qicnt(1:im,1:jm,:),kind_real)
+ traj%ql(isc:iec,jsc:jec,:)   = real(ltraj%qllst(1:im,1:jm,:) + ltraj%qlcnt(1:im,1:jm,:),kind_real)
+ traj%cfcn(isc:iec,jsc:jec,:) = real(ltraj%cfcnt(1:im,1:jm,:),kind_real)
 
 endsubroutine step_nl
 
@@ -391,6 +398,13 @@ subroutine step_tl(self,conf,traj,pert)
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lconst
 
+ im = self%lconst%im
+ jm = self%lconst%jm
+ lm = self%lconst%lm
+ isc = conf%isc
+ iec = conf%iec
+ jsc = conf%jsc
+ jec = conf%jec
 
  !Set up the local trajectory
  call set_ltraj(conf,self%lconst,traj,self%ltraj)
@@ -401,18 +415,18 @@ subroutine step_tl(self,conf,traj,pert)
  lconst => self%lconst
 
  !Pert into local pert
- lpert%up    = dble(pert%u)
- lpert%vp    = dble(pert%v)
- lpert%ptp   = dble(pert%t) / ltraj%pk
- lpert%qvp   = dble(pert%qv)
+ lpert%up(1:im,1:jm,:)    = dble(pert%u(isc:iec,jsc:jec,:))
+ lpert%vp(1:im,1:jm,:)    = dble(pert%v(isc:iec,jsc:jec,:))
+ lpert%ptp(1:im,1:jm,:)   = dble(pert%t(isc:iec,jsc:jec,:)) / ltraj%pk(1:im,1:jm,:)
+ lpert%qvp(1:im,1:jm,:)   = dble(pert%qv(isc:iec,jsc:jec,:))
  lpert%cflsp = 0.0_8
  if (conf%do_phy_mst .ne. 3) then
-   lpert%cfcnp = dble(pert%cfcn)
+   lpert%cfcnp(1:im,1:jm,:) = dble(pert%cfcn(isc:iec,jsc:jec,:))
  endif
- lpert%qilsp = dble(pert%qi) * ltraj%ilsf
- lpert%qicnp = dble(pert%qi) * ltraj%icnf
- lpert%qllsp = dble(pert%ql) * ltraj%llsf
- lpert%qlcnp = dble(pert%ql) * ltraj%lcnf
+ lpert%qilsp(1:im,1:jm,:) = dble(pert%qi(isc:iec,jsc:jec,:)) * ltraj%ilsf(1:im,1:jm,:)
+ lpert%qicnp(1:im,1:jm,:) = dble(pert%qi(isc:iec,jsc:jec,:)) * ltraj%icnf(1:im,1:jm,:)
+ lpert%qllsp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:)) * ltraj%llsf(1:im,1:jm,:)
+ lpert%qlcnp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:)) * ltraj%lcnf(1:im,1:jm,:)
 
  ltraj%cnv_dqldtt  = 0.0_8
  ltraj%cnv_mfdt    = 0.0_8
@@ -469,13 +483,13 @@ subroutine step_tl(self,conf,traj,pert)
                        lconst%mapl8_tice, lconst%mapl8_rvap, lconst%mapl8_p00, conf%do_phy_mst        )
 
  !Back to pert
- pert%u    = real(lpert%up,kind_real)
- pert%v    = real(lpert%vp,kind_real)
- pert%t    = real(lpert%ptp * ltraj%pk,kind_real)
- pert%qv   = real(lpert%qvp,kind_real)
- pert%qi   = real(lpert%qilsp + lpert%qicnp,kind_real)
- pert%ql   = real(lpert%qllsp + lpert%qlcnp,kind_real)
- pert%cfcn = real(lpert%cfcnp,kind_real)
+ pert%u(isc:iec,jsc:jec,:)    = real(lpert%up(1:im,1:jm,:),kind_real)
+ pert%v(isc:iec,jsc:jec,:)    = real(lpert%vp(1:im,1:jm,:),kind_real)
+ pert%t(isc:iec,jsc:jec,:)    = real(lpert%ptp(1:im,1:jm,:) * ltraj%pk(1:im,1:jm,:),kind_real)
+ pert%qv(isc:iec,jsc:jec,:)   = real(lpert%qvp(1:im,1:jm,:),kind_real)
+ pert%qi(isc:iec,jsc:jec,:)   = real(lpert%qilsp(1:im,1:jm,:) + lpert%qicnp(1:im,1:jm,:),kind_real)
+ pert%ql(isc:iec,jsc:jec,:)   = real(lpert%qllsp(1:im,1:jm,:) + lpert%qlcnp(1:im,1:jm,:),kind_real)
+ pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
 
 endsubroutine step_tl
 
@@ -495,6 +509,13 @@ subroutine step_ad(self,conf,traj,pert)
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lconst
 
+ im = self%lconst%im
+ jm = self%lconst%jm
+ lm = self%lconst%lm
+ isc = conf%isc
+ iec = conf%iec
+ jsc = conf%jsc
+ jec = conf%jec
 
  !Set up the local trajectory
  call set_ltraj(conf,self%lconst,traj,self%ltraj)
@@ -505,18 +526,18 @@ subroutine step_ad(self,conf,traj,pert)
  lconst => self%lconst
 
  !Pert into local pert
- lpert%up    = dble(pert%u)
- lpert%vp    = dble(pert%v)
- lpert%ptp   = dble(pert%t) * ltraj%pk
- lpert%qvp   = dble(pert%qv)
- lpert%cflsp = 0.0_8
+ lpert%up(1:im,1:jm,:)    = dble(pert%u(isc:iec,jsc:jec,:))
+ lpert%vp(1:im,1:jm,:)    = dble(pert%v(isc:iec,jsc:jec,:))
+ lpert%ptp(1:im,1:jm,:)   = dble(pert%t(isc:iec,jsc:jec,:)) * ltraj%pk(1:im,1:jm,:)
+ lpert%qvp(1:im,1:jm,:)   = dble(pert%qv(isc:iec,jsc:jec,:))
+ lpert%cflsp(1:im,1:jm,:) = 0.0_8
  if (conf%do_phy_mst .ne. 3) then
-   lpert%cfcnp = dble(pert%cfcn)
+   lpert%cfcnp(1:im,1:jm,:) = dble(pert%cfcn(isc:iec,jsc:jec,:))
  endif
- lpert%qilsp = dble(pert%qi)
- lpert%qicnp = dble(pert%qi)
- lpert%qllsp = dble(pert%ql)
- lpert%qlcnp = dble(pert%ql)
+ lpert%qilsp(1:im,1:jm,:) = dble(pert%qi(isc:iec,jsc:jec,:))
+ lpert%qicnp(1:im,1:jm,:) = dble(pert%qi(isc:iec,jsc:jec,:))
+ lpert%qllsp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:))
+ lpert%qlcnp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:))
 
  ltraj%cnv_dqldtt  = 0.0_8
  ltraj%cnv_mfdt    = 0.0_8
@@ -573,13 +594,15 @@ subroutine step_ad(self,conf,traj,pert)
  enddo
 
  !Back to pert
- pert%u    = real(lpert%up,kind_real)
- pert%v    = real(lpert%vp,kind_real)
- pert%t    = real(lpert%ptp / ltraj%pk,kind_real)
- pert%qv   = real(lpert%qvp,kind_real)
- pert%qi   = real(lpert%qilsp*ltraj%ilsf + lpert%qicnp*ltraj%icnf,kind_real)
- pert%ql   = real(lpert%qllsp*ltraj%llsf + lpert%qlcnp*ltraj%lcnf,kind_real)
- pert%cfcn = real(lpert%cfcnp,kind_real)
+ pert%u(isc:iec,jsc:jec,:)    = real(lpert%up(1:im,1:jm,:),kind_real)
+ pert%v(isc:iec,jsc:jec,:)    = real(lpert%vp(1:im,1:jm,:),kind_real)
+ pert%t(isc:iec,jsc:jec,:)    = real(lpert%ptp(1:im,1:jm,:) / ltraj%pk(1:im,1:jm,:),kind_real)
+ pert%qv(isc:iec,jsc:jec,:)   = real(lpert%qvp(1:im,1:jm,:),kind_real)
+ pert%qi(isc:iec,jsc:jec,:)   = real(lpert%qilsp(1:im,1:jm,:)*ltraj%ilsf(1:im,1:jm,:) + &
+                                      lpert%qicnp(1:im,1:jm,:)*ltraj%icnf(1:im,1:jm,:),kind_real)
+ pert%ql(isc:iec,jsc:jec,:)   = real(lpert%qllsp(1:im,1:jm,:)*ltraj%llsf(1:im,1:jm,:) + &
+                                      lpert%qlcnp(1:im,1:jm,:)*ltraj%lcnf(1:im,1:jm,:),kind_real)
+ pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
 
 endsubroutine step_ad
 
@@ -627,7 +650,6 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  im = lconst%im
  jm = lconst%jm
  lm = lconst%lm
-
  isc = conf%isc
  iec = conf%iec
  jsc = conf%jsc
@@ -659,29 +681,33 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  ltraj%ple = 0.0_8
  ltraj%ple(:,:,0) = conf%ptop
  do l = 1,lm
-    ltraj%ple(:,:, l) = ltraj%ple(:,:,l-1) + dble(traj%delp(isc+i-1, jsc+j-1, l))
- end do
+   do j = 1,jm
+     do i = 1,lm
+       ltraj%ple(i,j,l) = ltraj%ple(i,j,l-1) + dble(traj%delp(isc+i-1,jsc+j-1,l))
+     enddo
+   enddo
+ enddo
 
  !Pressure hPa, half levels and p^kappa
- ltraj%cnv_ple  = 0.01_8*ltraj%ple
- PLO            = 0.5_8*(ltraj%CNV_PLE(:,:,0:LM-1) +  ltraj%CNV_PLE(:,:,1:LM  ) )
- ltraj%PK       = (PLO/1000.0_8)**(lconst%MAPL8_RGAS/lconst%MAPL8_CP)
- TEMP           = dble(traj%t)
+ ltraj%cnv_ple     = 0.01_8*ltraj%ple
+ PLO               = 0.5_8*(ltraj%CNV_PLE(:,:,0:LM-1) +  ltraj%CNV_PLE(:,:,1:LM  ) )
+ ltraj%PK          = (PLO/1000.0_8)**(lconst%MAPL8_RGAS/lconst%MAPL8_CP)
+ TEMP(1:im,1:jm,:) = dble(traj%t(isc:iec,jsc:jec,:))
 
  !Some thermo vars
  ltraj%ptt    = TEMP / ltraj%PK
- ltraj%qvt    = dble(traj%qv)
+ ltraj%qvt(1:im,1:jm,:)    = dble(traj%qv(isc:iec,jsc:jec,:))
  ltraj%cflst  = 0.0_8
 
  if (conf%do_phy_mst .ne. 3) then
    ltraj%cfcnt  = dble(traj%cfcn)
  endif
 
- ltraj%ts     = dble(traj%ts)
- ltraj%frland = dble(traj%frland)
- ltraj%kcbl   = nint(traj%kcbl)
- ltraj%khl    = nint(traj%khl)
- ltraj%khu    = nint(traj%khu)
+ ltraj%ts(1:im,1:jm,:)     = dble(traj%ts(isc:iec,jsc:jec,:))
+ ltraj%frland(1:im,1:jm,:) = dble(traj%frland(isc:iec,jsc:jec,:))
+ ltraj%kcbl(1:im,1:jm,:)   = nint(traj%kcbl(isc:iec,jsc:jec,:))
+ ltraj%khl(1:im,1:jm,:)    = nint(traj%khl(isc:iec,jsc:jec,:))
+ ltraj%khu(1:im,1:jm,:)    = nint(traj%khu(isc:iec,jsc:jec,:))
 
  ltraj%PTT_C = ltraj%PTT
  ltraj%QVT_C = ltraj%QVT
@@ -801,10 +827,10 @@ subroutine set_ltraj(conf,lconst,traj,ltraj)
  enddo
  
  !Split the input large scale and convective cloud into ice and liquid parts.
- ltraj%QILST = dble(traj%QLS) * fQi
- ltraj%QLLST = dble(traj%QLS) * (1-fQi)
- ltraj%QICNT = dble(traj%QCN) * fQi
- ltraj%QLCNT = dble(traj%QCN) * (1-fQi)
+ ltraj%QILST(1:im,1:jm,:) = dble(traj%QLS(isc:iec,jsc:jec,:)) * fQi
+ ltraj%QLLST(1:im,1:jm,:) = dble(traj%QLS(isc:iec,jsc:jec,:)) * (1-fQi)
+ ltraj%QICNT(1:im,1:jm,:) = dble(traj%QCN(isc:iec,jsc:jec,:)) * fQi
+ ltraj%QLCNT(1:im,1:jm,:) = dble(traj%QCN(isc:iec,jsc:jec,:)) * (1-fQi)
  
  !Split the perturbations for total cloud water and ice into the convective and large scale parts.
  !Spilitting is based on fraction of total cloud ice/water that is attributed to large scale and anvil

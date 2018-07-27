@@ -4,7 +4,7 @@ MODULE BLDRIVER
 !the three components of the tri-diagonal matrix used to compute BL diffusion. 
 !Diffusion coefficient is computed using Louis-Lock formulation.
 
-USE MAPL_ConstantsMod
+USE fv3jedi_lm_const_mod
 
 IMPLICIT NONE
 
@@ -14,7 +14,7 @@ PUBLIC BL_DRIVER
 !Saturation vapor pressure table ESTBLX initialization.
 !To be defined for entire module:
 integer, parameter :: DEGSUBS    =  100
-real, parameter :: TMINTBL    =  150.0, TMAXTBL = 333.0
+real(kind_real), parameter :: TMINTBL    =  150.0, TMAXTBL = 333.0
 integer, parameter :: TABLESIZE  =  nint(TMAXTBL-TMINTBL)*DEGSUBS + 1
 
 CONTAINS
@@ -29,51 +29,51 @@ IMPLICIT NONE
 
 !INPUTS
 INTEGER, INTENT(IN) :: IM, JM, LM
-REAL, INTENT(IN) :: DT
+REAL(kind_real), INTENT(IN) :: DT
 
-REAL, INTENT(IN), DIMENSION(:) :: TURBPARAMS
+REAL(kind_real), INTENT(IN), DIMENSION(:) :: TURBPARAMS
 INTEGER, INTENT(IN), DIMENSION(:) :: TURBPARAMSI
 
-REAL, INTENT(IN), DIMENSION(IM,JM,LM) :: U, V, TH, Q, QIT, QLT
-REAL, INTENT(IN), DIMENSION(IM,JM,0:LM) :: P
-REAL, INTENT(IN), DIMENSION(IM,JM) :: FRLAND, VARFLT, FROCEAN
+REAL(kind_real), INTENT(IN), DIMENSION(IM,JM,LM) :: U, V, TH, Q, QIT, QLT
+REAL(kind_real), INTENT(IN), DIMENSION(IM,JM,0:LM) :: P
+REAL(kind_real), INTENT(IN), DIMENSION(IM,JM) :: FRLAND, VARFLT, FROCEAN
 
-REAL, INTENT(IN), DIMENSION(IM,JM) :: CM, CQ
+REAL(kind_real), INTENT(IN), DIMENSION(IM,JM) :: CM, CQ
 
-REAL, INTENT(IN), DIMENSION(IM,JM)    :: USTAR, BSTAR
+REAL(kind_real), INTENT(IN), DIMENSION(IM,JM)    :: USTAR, BSTAR
 
 !INOUTS
-REAL, INTENT(INOUT), DIMENSION(IM,JM) :: ZPBL, CT
+REAL(kind_real), INTENT(INOUT), DIMENSION(IM,JM) :: ZPBL, CT
 
 !OUTPUTS
-REAL, INTENT(OUT), DIMENSION(IM,JM,LM) :: AKS, BKS, CKS
-REAL, INTENT(OUT), DIMENSION(IM,JM,LM) :: AKQ, BKQ, CKQ
-REAL, INTENT(OUT), DIMENSION(IM,JM,LM) :: AKV, BKV, CKV, EKV, FKV
+REAL(kind_real), INTENT(OUT), DIMENSION(IM,JM,LM) :: AKS, BKS, CKS
+REAL(kind_real), INTENT(OUT), DIMENSION(IM,JM,LM) :: AKQ, BKQ, CKQ
+REAL(kind_real), INTENT(OUT), DIMENSION(IM,JM,LM) :: AKV, BKV, CKV, EKV, FKV
 
 !LOCALS
 INTEGER :: I,J
-REAL, DIMENSION(IM,JM,LM) :: Pf, PIf, QI, QL, TV, THV, Zf, DMI
-REAL, DIMENSION(IM,JM,0:LM) :: PI, Z
-REAL, DIMENSION(IM,JM,1:LM-1) :: RDZ
-REAL, DIMENSION(IM,JM,LM) :: T
-REAL, DIMENSION(IM,JM,0:LM) :: Km, Kh
+REAL(kind_real), DIMENSION(IM,JM,LM) :: Pf, PIf, QI, QL, TV, THV, Zf, DMI
+REAL(kind_real), DIMENSION(IM,JM,0:LM) :: PI, Z
+REAL(kind_real), DIMENSION(IM,JM,1:LM-1) :: RDZ
+REAL(kind_real), DIMENSION(IM,JM,LM) :: T
+REAL(kind_real), DIMENSION(IM,JM,0:LM) :: Km, Kh
 
-REAL, DIMENSION(IM,JM,0:LM) :: Ri, DU
-REAL, DIMENSION(IM,JM,0:LM) :: ALH_X, KMLS_X, KHLS_X
+REAL(kind_real), DIMENSION(IM,JM,0:LM) :: Ri, DU
+REAL(kind_real), DIMENSION(IM,JM,0:LM) :: ALH_X, KMLS_X, KHLS_X
 
-REAL, DIMENSION(IM,JM,LM) :: RADLW !dh Note that this is really an input but we would rather not put it in the traj
+REAL(kind_real), DIMENSION(IM,JM,LM) :: RADLW !dh Note that this is really an input but we would rather not put it in the traj
                                    !so for now do not use. Later on add approximate numbers.
 
 !Turb constants
-REAL :: LOUIS,LAMBDAM,LAMBDAM2,LAMBDAH,LAMBDAH2,ZKMENV,ZKHENV,MINTHICK,MINSHEAR,C_B,LAMBDA_B,AKHMMAX
-REAL :: PRANDTLSFC,PRANDTLRAD,BETA_RAD,BETA_SURF,KHRADFAC,KHSFCFAC,TPFAC_SURF,ENTRATE_SURF,PCEFF_SURF,LOUIS_MEMORY
+REAL(kind_real) :: LOUIS,LAMBDAM,LAMBDAM2,LAMBDAH,LAMBDAH2,ZKMENV,ZKHENV,MINTHICK,MINSHEAR,C_B,LAMBDA_B,AKHMMAX
+REAL(kind_real) :: PRANDTLSFC,PRANDTLRAD,BETA_RAD,BETA_SURF,KHRADFAC,KHSFCFAC,TPFAC_SURF,ENTRATE_SURF,PCEFF_SURF,LOUIS_MEMORY
 INTEGER :: KPBLMIN, LOCK_ON, PBLHT_OPTION, RADLW_DEP
 
 !QSATVP TABLE
 integer, parameter :: DEGSUBS    =  100
-real, parameter :: TMINTBL    =  150.0, TMAXTBL = 333.0
+real(kind_real), parameter :: TMINTBL    =  150.0, TMAXTBL = 333.0
 integer, parameter :: TABLESIZE  =  nint(TMAXTBL-TMINTBL)*DEGSUBS + 1
-real, dimension(TABLESIZE) :: ESTBLX
+real(kind_real), dimension(TABLESIZE) :: ESTBLX
 
  !Compute saturation vapour pressure lookup table
  call ESINIT(ESTBLX)
@@ -93,7 +93,7 @@ real, dimension(TABLESIZE) :: ESTBLX
 
  !Caclulate temperature from Exner pressure.
  Pf = 0.5*(P(:,:,0:LM-1) + P(:,:,1:LM))
- PIf = (Pf/MAPL_P00)**(MAPL_RGAS/MAPL_CP)
+ PIf = (Pf/P00)**(RGAS/CP)
  T = PIf*TH
 
  !TurbParams, this goes at the level above.
@@ -306,29 +306,29 @@ subroutine PRELIMINARY( IRUN, LM, DT, T, QV, PHALF, TH, QIT, QLT, &
 
  !INTPUTS
  integer, intent(IN)                    :: IRUN, LM
- real, intent(IN)                       :: DT
- real, intent(IN), dimension(IRUN,LM)   :: T, QV, TH, QIT, QLT
- real, intent(IN), dimension(IRUN,LM+1) :: PHALF
+ real(kind_real), intent(IN)                       :: DT
+ real(kind_real), intent(IN), dimension(IRUN,LM)   :: T, QV, TH, QIT, QLT
+ real(kind_real), intent(IN), dimension(IRUN,LM+1) :: PHALF
 
  !OUTPUTS
- real, intent(OUT), dimension(IRUN,  LM  ) :: ZFULL, TV, PV, DMI, PFULL
- real, intent(OUT), dimension(IRUN,  LM+1) :: ZHALF
- real, intent(OUT), dimension(IRUN,1:LM-1) :: RDZ
+ real(kind_real), intent(OUT), dimension(IRUN,  LM  ) :: ZFULL, TV, PV, DMI, PFULL
+ real(kind_real), intent(OUT), dimension(IRUN,  LM+1) :: ZHALF
+ real(kind_real), intent(OUT), dimension(IRUN,1:LM-1) :: RDZ
 
  !LOCALS
  integer :: I,L
- real :: PKE_atL, PKE_atLp1, TVE
- real :: QL_tot, QI_tot 
+ real(kind_real) :: PKE_atL, PKE_atLp1, TVE
+ real(kind_real) :: QL_tot, QI_tot 
 
  do I = 1, IRUN
 
     !Compute the edge heights using Arakawa-Suarez hydrostatic equation
     ZHALF(I,LM+1) = 0.0
     do L = LM, 1, -1
-       PKE_atLp1  = (PHALF(I,L+1)/MAPL_P00)**MAPL_KAPPA
-       PKE_atL    = (PHALF(I,L  )/MAPL_P00)**MAPL_KAPPA
+       PKE_atLp1  = (PHALF(I,L+1)/P00)**KAPPA
+       PKE_atL    = (PHALF(I,L  )/P00)**KAPPA
 
-       ZHALF(I,L) = ZHALF(I,L+1) + (MAPL_CP/MAPL_GRAV)*TH(I,L)*(PKE_atLp1-PKE_atL)
+       ZHALF(I,L) = ZHALF(I,L+1) + (CP/GRAV)*TH(I,L)*(PKE_atLp1-PKE_atL)
     end do
 
     !Layer height, pressure, and virtual temperatures
@@ -339,7 +339,7 @@ subroutine PRELIMINARY( IRUN, LM, DT, T, QV, PHALF, TH, QIT, QLT, &
        ZFULL(I,L) = 0.5*(ZHALF(I,L)+ZHALF(I,L+1))
        PFULL(I,L) = 0.5*(PHALF(I,L)+PHALF(I,L+1))
 
-       TV(I,L)  = T(I,L) *( 1.0 + MAPL_VIREPS *QV(I,L) - QL_tot - QI_tot ) 
+       TV(I,L)  = T(I,L) *( 1.0 + VIREPS *QV(I,L) - QL_tot - QI_tot ) 
        PV(I,L) = TV(I,L)*(TH(I,L)/T(I,L))
     end do
 
@@ -347,12 +347,12 @@ subroutine PRELIMINARY( IRUN, LM, DT, T, QV, PHALF, TH, QIT, QLT, &
        TVE = (TV(I,L) + TV(I,L+1))*0.5
   
        ! Miscellaneous factors
-       RDZ(I,L) = PHALF(I,L+1) / ( MAPL_RGAS * TVE )
+       RDZ(I,L) = PHALF(I,L+1) / ( RGAS * TVE )
        RDZ(I,L) = RDZ(I,L) / (ZFULL(I,L)-ZFULL(I,L+1))
     end do
 
     do L = 1, LM
-       DMI(I,L) = (MAPL_GRAV*DT)/(PHALF(I,L+1)-PHALF(I,L))
+       DMI(I,L) = (GRAV*DT)/(PHALF(I,L+1)-PHALF(I,L))
     end do
 
     !Running 1-2-1 smooth of bottom 5 levels of Virtual Pot. Temp.
@@ -380,38 +380,38 @@ subroutine LOUIS_DIFF( IRUN,LM,KH,KM,RI,DU,ZPBL,ZZ,ZE,PV,UU,VV,LOUIS,MINSHEAR,MI
 
  !INPUTS
  integer, intent(IN   ) :: IRUN,LM
- real, intent(IN   ) :: LOUIS         ! Louis scheme parameters (usually 5).
- real, intent(IN   ) :: MINSHEAR      ! Min shear allowed in Ri calculation (s-1).
- real, intent(IN   ) :: MINTHICK      ! Min layer thickness (m).
- real, intent(IN   ) :: AKHMMAX       ! Maximum allowe diffusivity (m+2 s-1).
- real, intent(IN   ) :: LAMBDAM       ! Blackadar(1962) length scale parameter for momentum (m).
- real, intent(IN   ) :: LAMBDAM2      ! Second Blackadar parameter for momentum (m).
- real, intent(IN   ) :: LAMBDAH       ! Blackadar(1962) length scale parameter for heat (m).
- real, intent(IN   ) :: LAMBDAH2      ! Second Blackadar parameter for heat (m).
- real, intent(IN   ) :: ZKMENV        ! Transition height for Blackadar param for momentum (m)
- real, intent(IN   ) :: ZKHENV        ! Transition height for Blackadar param for heat     (m)
- real, intent(IN   ) :: ZZ(IRUN,LM)   ! Height of layer center above the surface (m).
- real, intent(IN   ) :: PV(IRUN,LM)   ! Virtual potential temperature at layer center (K).
- real, intent(IN   ) :: UU(IRUN,LM)   ! Eastward velocity at layer center (m s-1).
- real, intent(IN   ) :: VV(IRUN,LM)   ! Northward velocity at layer center (m s-1).
- real, intent(IN   ) :: ZE(IRUN,LM+1) ! Height of layer base above the surface (m).
- real, intent(IN   ) :: ZPBL(IRUN)    ! PBL Depth (m)
+ real(kind_real), intent(IN   ) :: LOUIS         ! Louis scheme parameters (usually 5).
+ real(kind_real), intent(IN   ) :: MINSHEAR      ! Min shear allowed in Ri calculation (s-1).
+ real(kind_real), intent(IN   ) :: MINTHICK      ! Min layer thickness (m).
+ real(kind_real), intent(IN   ) :: AKHMMAX       ! Maximum allowe diffusivity (m+2 s-1).
+ real(kind_real), intent(IN   ) :: LAMBDAM       ! Blackadar(1962) length scale parameter for momentum (m).
+ real(kind_real), intent(IN   ) :: LAMBDAM2      ! Second Blackadar parameter for momentum (m).
+ real(kind_real), intent(IN   ) :: LAMBDAH       ! Blackadar(1962) length scale parameter for heat (m).
+ real(kind_real), intent(IN   ) :: LAMBDAH2      ! Second Blackadar parameter for heat (m).
+ real(kind_real), intent(IN   ) :: ZKMENV        ! Transition height for Blackadar param for momentum (m)
+ real(kind_real), intent(IN   ) :: ZKHENV        ! Transition height for Blackadar param for heat     (m)
+ real(kind_real), intent(IN   ) :: ZZ(IRUN,LM)   ! Height of layer center above the surface (m).
+ real(kind_real), intent(IN   ) :: PV(IRUN,LM)   ! Virtual potential temperature at layer center (K).
+ real(kind_real), intent(IN   ) :: UU(IRUN,LM)   ! Eastward velocity at layer center (m s-1).
+ real(kind_real), intent(IN   ) :: VV(IRUN,LM)   ! Northward velocity at layer center (m s-1).
+ real(kind_real), intent(IN   ) :: ZE(IRUN,LM+1) ! Height of layer base above the surface (m).
+ real(kind_real), intent(IN   ) :: ZPBL(IRUN)    ! PBL Depth (m)
 
  !OUTPUTS
  !These are 1:LM+1 here but 0:LM in the GC - MAYBE JUST SORT THIS OUT?
  !Old code only passed in 1:LM-1 from GC which is 2:LM here.
- real, intent(  OUT) :: KM(IRUN,LM+1) ! Momentum diffusivity at base of each layer (m+2 s-1).
- real, intent(  OUT) :: KH(IRUN,LM+1) ! Heat diffusivity at base of each layer  (m+2 s-1).
- real, intent(  OUT) :: RI(IRUN,LM+1) ! Richardson number
- real, intent(  OUT) :: DU(IRUN,LM+1) ! Magnitude of wind shear (s-1).
- real, intent(  OUT) :: ALH_DIAG(IRUN,LM+1)  ! Blackadar Length Scale diagnostic (m) [Optional] 
- real, intent(  OUT) :: KMLS_DIAG(IRUN,LM+1) ! Momentum diffusivity at base of each layer (m+2 s-1).
- real, intent(  OUT) :: KHLS_DIAG(IRUN,LM+1) ! Heat diffusivity at base of each layer  (m+2 s-1).
+ real(kind_real), intent(  OUT) :: KM(IRUN,LM+1) ! Momentum diffusivity at base of each layer (m+2 s-1).
+ real(kind_real), intent(  OUT) :: KH(IRUN,LM+1) ! Heat diffusivity at base of each layer  (m+2 s-1).
+ real(kind_real), intent(  OUT) :: RI(IRUN,LM+1) ! Richardson number
+ real(kind_real), intent(  OUT) :: DU(IRUN,LM+1) ! Magnitude of wind shear (s-1).
+ real(kind_real), intent(  OUT) :: ALH_DIAG(IRUN,LM+1)  ! Blackadar Length Scale diagnostic (m) [Optional] 
+ real(kind_real), intent(  OUT) :: KMLS_DIAG(IRUN,LM+1) ! Momentum diffusivity at base of each layer (m+2 s-1).
+ real(kind_real), intent(  OUT) :: KHLS_DIAG(IRUN,LM+1) ! Heat diffusivity at base of each layer  (m+2 s-1).
 
  !LOCALS
  integer :: L,Levs,i,j,k
- real    :: ALH, ALM, DZ, DT, TM, PS, LAMBDAM_X, LAMBDAH_X
- real    :: pbllocal, alhfac,almfac
+ real(kind_real)    :: ALH, ALM, DZ, DT, TM, PS, LAMBDAM_X, LAMBDAH_X
+ real(kind_real)    :: pbllocal, alhfac,almfac
 
  almfac = 1.2
  alhfac = 1.2
@@ -456,14 +456,14 @@ subroutine LOUIS_DIFF( IRUN,LM,KH,KM,RI,DU,ZPBL,ZZ,ZE,PV,UU,VV,LOUIS,MINSHEAR,MI
        DU(i,k) = sqrt(DU(i,k))/DZ
 
        !Calc Richardson
-       RI(i,k) = MAPL_GRAV*(DT/DZ)/(TM*( max(DU(i,k), MINSHEAR)**2))
+       RI(i,k) = GRAV*(DT/DZ)/(TM*( max(DU(i,k), MINSHEAR)**2))
 
        !Blackadar (1962) length scale
        LAMBDAM_X = MAX( 0.1 * PBLLOCAL * EXP( -(ZE(i,k) / ZKMENV )**2 ) , LAMBDAM2 )
        LAMBDAH_X = MAX( 0.1 * PBLLOCAL * EXP( -(ZE(i,k) / ZKHENV )**2 ) , LAMBDAH2 )
 
-       ALM = almfac * ( MAPL_KARMAN*ZE(i,k)/( 1.0 + MAPL_KARMAN*(ZE(i,k)/LAMBDAM_X) ) )**2
-       ALH = alhfac * ( MAPL_KARMAN*ZE(i,k)/( 1.0 + MAPL_KARMAN*(ZE(i,k)/LAMBDAH_X) ) )**2
+       ALM = almfac * ( KARMAN*ZE(i,k)/( 1.0 + KARMAN*(ZE(i,k)/LAMBDAM_X) ) )**2
+       ALH = alhfac * ( KARMAN*ZE(i,k)/( 1.0 + KARMAN*(ZE(i,k)/LAMBDAH_X) ) )**2
 
        ALH_DIAG(i,k) = SQRT( ALH )
 
@@ -508,29 +508,29 @@ subroutine TRIDIAG_SETUP(IRUN,LM,DT,KPBLMIN,ZFULL,PFULL,RDZ,DMI,PHALF,&
 
  !INPUTS
  integer, intent(IN)                          :: IRUN,LM,KPBLMIN
- real,    intent(IN)                          :: DT
- real,    intent(IN),    dimension(IRUN,LM)   :: T,Q,TH,U,V,ZFULL,PFULL,DMI,TV
- real,    intent(IN),    dimension(IRUN,LM-1) :: RDZ
- real,    intent(IN),    dimension(IRUN,LM+1) :: PHALF
- real,    intent(IN),    dimension(IRUN  )    :: CT, CQ, CU
+ real(kind_real),    intent(IN)                          :: DT
+ real(kind_real),    intent(IN),    dimension(IRUN,LM)   :: T,Q,TH,U,V,ZFULL,PFULL,DMI,TV
+ real(kind_real),    intent(IN),    dimension(IRUN,LM-1) :: RDZ
+ real(kind_real),    intent(IN),    dimension(IRUN,LM+1) :: PHALF
+ real(kind_real),    intent(IN),    dimension(IRUN  )    :: CT, CQ, CU
 
  !INOUTS
- real,    intent(INOUT), dimension(IRUN,LM+1) :: DIFF_T, DIFF_M
+ real(kind_real),    intent(INOUT), dimension(IRUN,LM+1) :: DIFF_T, DIFF_M
 
  !OUTPUTS
- real,    intent(OUT),   dimension(IRUN,LM)   :: AKQ, AKS, AKV
- real,    intent(OUT),   dimension(IRUN,LM)   :: BKQ, BKS, BKV
- real,    intent(OUT),   dimension(IRUN,LM)   :: CKQ, CKS, CKV
- real,    intent(OUT),   dimension(IRUN,LM)   ::           EKV
- real,    intent(OUT),   dimension(IRUN)      :: ZPBL
+ real(kind_real),    intent(OUT),   dimension(IRUN,LM)   :: AKQ, AKS, AKV
+ real(kind_real),    intent(OUT),   dimension(IRUN,LM)   :: BKQ, BKS, BKV
+ real(kind_real),    intent(OUT),   dimension(IRUN,LM)   :: CKQ, CKS, CKV
+ real(kind_real),    intent(OUT),   dimension(IRUN,LM)   ::           EKV
+ real(kind_real),    intent(OUT),   dimension(IRUN)      :: ZPBL
 
  !LOCALS
- real, dimension(LM+1) :: temparray
+ real(kind_real), dimension(LM+1) :: temparray
  integer :: I,L,locmax
- real    :: maxkh,minlval,thetavs,thetavh,uv2h
- real, parameter :: tcri_crit = 0.25 !PBL-top diagnostic
+ real(kind_real)    :: maxkh,minlval,thetavs,thetavh,uv2h
+ real(kind_real), parameter :: tcri_crit = 0.25 !PBL-top diagnostic
  
- real,             dimension(LM ) :: tcrib
+ real(kind_real),             dimension(LM ) :: tcrib
 
  do I = 1, IRUN
 
@@ -563,7 +563,7 @@ subroutine TRIDIAG_SETUP(IRUN,LM,DT,KPBLMIN,ZFULL,PFULL,RDZ,DMI,PHALF,&
 
        !Fill DIFF_T at level LM+1 with CT * RDZ for diagnostic output
        if (L == LM) then
-          DIFF_T(I,L+1) = CT(I) * (PHALF(I,L+1)/(MAPL_RGAS * TV(I,L))) / ZFULL(I,L)
+          DIFF_T(I,L+1) = CT(I) * (PHALF(I,L+1)/(RGAS * TV(I,L))) / ZFULL(I,L)
        endif
 
        !Water vapor can differ at the surface
@@ -582,17 +582,17 @@ subroutine TRIDIAG_SETUP(IRUN,LM,DT,KPBLMIN,ZFULL,PFULL,RDZ,DMI,PHALF,&
           endif
           AKV(I,L+1) = EKV(I,L) * DMI(I,L+1)
           CKV(I,L) = EKV(I,L) * DMI(I,L)
-          EKV(I,L) = -MAPL_GRAV * EKV(I,L)
+          EKV(I,L) = -GRAV * EKV(I,L)
        end if
 
        if (L == LM) then
           CKV(I,L) = -  CU(I) * DMI(I,L)
-          EKV(I,L) =  MAPL_GRAV *  CU(I)
+          EKV(I,L) =  GRAV *  CU(I)
        end if
 
        !Fill DIFF_M at level LM+1 with CU * RDZ for diagnostic output
        if (L == LM) then
-          DIFF_M(I,L+1) = CU(I) * (PHALF(I,L+1)/(MAPL_RGAS * TV(I,L))) / ZFULL(I,L)
+          DIFF_M(I,L+1) = CU(I) * (PHALF(I,L+1)/(RGAS * TV(I,L))) / ZFULL(I,L)
        endif
 
        !Setup the tridiagonal matrix
@@ -616,20 +616,20 @@ subroutine ORODRAG(IRUN,LM,DT,LAMBDA_B,C_B,FKV,BKV,U,V,ZFULL,VARFLT,PHALF)
 
  !INPUTS
  integer, intent(IN)                        :: IRUN, LM
- real,    intent(IN)                        :: DT, LAMBDA_B, C_B
- real,    intent(IN), dimension(IRUN)       :: VARFLT 
- real,    intent(IN), dimension(IRUN,LM)    :: U, V, ZFULL
- real,    intent(IN), dimension(IRUN,LM+1)  :: PHALF
+ real(kind_real),    intent(IN)                        :: DT, LAMBDA_B, C_B
+ real(kind_real),    intent(IN), dimension(IRUN)       :: VARFLT 
+ real(kind_real),    intent(IN), dimension(IRUN,LM)    :: U, V, ZFULL
+ real(kind_real),    intent(IN), dimension(IRUN,LM+1)  :: PHALF
 
  !INOUTS
- real,    intent(INOUT), dimension(IRUN,LM) :: BKV
+ real(kind_real),    intent(INOUT), dimension(IRUN,LM) :: BKV
 
  !OUTPUTS
- real,    intent(OUT), dimension(IRUN,LM) :: FKV
+ real(kind_real),    intent(OUT), dimension(IRUN,LM) :: FKV
       
  !LOCALS
  integer :: I, L
- real    :: FKV_temp
+ real(kind_real)    :: FKV_temp
 
  do I = 1, IRUN
     do L=LM,1,-1
@@ -664,40 +664,40 @@ subroutine LOCK_DIFF( ncol,nlev,tdtlw_in_dev,u_star_dev,b_star_dev,frland_dev,t_
 
  !INPUTS
  integer, intent(in)                               :: ncol,nlev    
- real,    intent(in)                               :: ESTBLX(:) 
- real,    intent(in),    dimension(ncol)           :: u_star_dev,b_star_dev,frland_dev
- real,    intent(in),    dimension(ncol,nlev)      :: tdtlw_in_dev,t_dev,qv_dev,qit_dev,qlt_dev
- real,    intent(in),    dimension(ncol,nlev)      :: u_dev,v_dev,zfull_dev,pfull_dev
- real,    intent(in),    dimension(ncol,1:nlev+1)  :: zhalf_dev, phalf_dev ! 0:72 in GC, 1:73 here.
- real,    intent(in)                               :: prandtlsfc_const,prandtlrad_const,beta_surf_const,beta_rad_const
- real,    intent(in)                               :: khradfac_const,tpfac_sfc_const,entrate_sfc_const
- real,    intent(in)                               :: pceff_sfc_const,khsfcfac_const
+ real(kind_real),    intent(in)                               :: ESTBLX(:) 
+ real(kind_real),    intent(in),    dimension(ncol)           :: u_star_dev,b_star_dev,frland_dev
+ real(kind_real),    intent(in),    dimension(ncol,nlev)      :: tdtlw_in_dev,t_dev,qv_dev,qit_dev,qlt_dev
+ real(kind_real),    intent(in),    dimension(ncol,nlev)      :: u_dev,v_dev,zfull_dev,pfull_dev
+ real(kind_real),    intent(in),    dimension(ncol,1:nlev+1)  :: zhalf_dev, phalf_dev ! 0:72 in GC, 1:73 here.
+ real(kind_real),    intent(in)                               :: prandtlsfc_const,prandtlrad_const,beta_surf_const,beta_rad_const
+ real(kind_real),    intent(in)                               :: khradfac_const,tpfac_sfc_const,entrate_sfc_const
+ real(kind_real),    intent(in)                               :: pceff_sfc_const,khsfcfac_const
 
  !INOUTS
- real,    intent(inout), dimension(ncol,1:nlev+1)  :: diff_m_dev,diff_t_dev
+ real(kind_real),    intent(inout), dimension(ncol,1:nlev+1)  :: diff_m_dev,diff_t_dev
 
  !LOCALS
- real, parameter :: akmax = 1.e4, zcldtopmax = 3.e3, ramp = 20.
+ real(kind_real), parameter :: akmax = 1.e4, zcldtopmax = 3.e3, ramp = 20.
  integer :: i,j,k,ibot,itmp,ipbl,kmax,kcldtop,kcldbot,kcldtop2,radlw_dep
  logical :: used,keeplook,do_jump_exit
- real :: maxradf, tmpradf,stab
- real :: maxqdot, tmpqdot,wentrmax
- real :: maxinv, qlcrit,ql00,qlm1,Abuoy,Ashear
- real :: wentr_tmp,hlf,vbulkshr,vbulk_scale
- real :: k_entr_tmp,tmpjump,critjump,radperturb,buoypert
- real :: tmp1, tmp2, slmixture
- real :: vsurf3, vshear3,vrad3, vbr3,dsiems
- real :: dslvcptmp,ztmp
- real :: zradtop
- real :: vrad,svpcp,chis,vbrv
- real :: vsurf, qs_dummy, ptmp
- real :: wentr_rad,wentr_pbl,wentr_brv
- real :: convpbl, radpbl
- real, dimension(nlev) :: slv,density,qc,slvcp,hleff,radfq,pblfq,k_m_troen,k_t_troen,k_rad,dqs
+ real(kind_real) :: maxradf, tmpradf,stab
+ real(kind_real) :: maxqdot, tmpqdot,wentrmax
+ real(kind_real) :: maxinv, qlcrit,ql00,qlm1,Abuoy,Ashear
+ real(kind_real) :: wentr_tmp,hlf,vbulkshr,vbulk_scale
+ real(kind_real) :: k_entr_tmp,tmpjump,critjump,radperturb,buoypert
+ real(kind_real) :: tmp1, tmp2, slmixture
+ real(kind_real) :: vsurf3, vshear3,vrad3, vbr3,dsiems
+ real(kind_real) :: dslvcptmp,ztmp
+ real(kind_real) :: zradtop
+ real(kind_real) :: vrad,svpcp,chis,vbrv
+ real(kind_real) :: vsurf, qs_dummy, ptmp
+ real(kind_real) :: wentr_rad,wentr_pbl,wentr_brv
+ real(kind_real) :: convpbl, radpbl
+ real(kind_real), dimension(nlev) :: slv,density,qc,slvcp,hleff,radfq,pblfq,k_m_troen,k_t_troen,k_rad,dqs
  
  !Moved to local as not needed in outputs, but still used in calculations
- real, dimension(ncol,1:nlev+1)  :: k_m_entr_dev,k_t_entr_dev
- real, dimension(ncol)  :: zsml_dev,zradml_dev,zcloud_dev,zradbase_dev
+ real(kind_real), dimension(ncol,1:nlev+1)  :: k_m_entr_dev,k_t_entr_dev
+ real(kind_real), dimension(ncol)  :: zsml_dev,zradml_dev,zcloud_dev,zradbase_dev
 
  qlcrit     = 1.0e-6
  Abuoy      = 0.23
@@ -740,12 +740,12 @@ subroutine LOCK_DIFF( ncol,nlev,tdtlw_in_dev,u_star_dev,b_star_dev,frland_dev,t_
 
     !set up specific humidities and static energies and compute airdensity
     do k = 1, nlev
-       if ( t_dev(i,k) <= MAPL_TICE-ramp ) then
-          HLEFF(k) = MAPL_ALHS
-       else if ( (t_dev(i,k) > MAPL_TICE-ramp) .and. (t_dev(i,k) < MAPL_TICE) ) then
-          HLEFF(k) =  ( (t_dev(i,k)-MAPL_TICE+ramp)*MAPL_ALHL +  (MAPL_TICE -t_dev(i,k)    )*MAPL_ALHS   ) / ramp
+       if ( t_dev(i,k) <= TICE-ramp ) then
+          HLEFF(k) = ALHS
+       else if ( (t_dev(i,k) > TICE-ramp) .and. (t_dev(i,k) < TICE) ) then
+          HLEFF(k) =  ( (t_dev(i,k)-TICE+ramp)*ALHL +  (TICE -t_dev(i,k)    )*ALHS   ) / ramp
        else
-          HLEFF(k) = MAPL_ALHL
+          HLEFF(k) = ALHL
        end if
 
        !Compute sat specific humidity and deriv, Qs not actually needed
@@ -760,9 +760,9 @@ subroutine LOCK_DIFF( ncol,nlev,tdtlw_in_dev,u_star_dev,b_star_dev,frland_dev,t_
        qc(k) = (qit_dev(i,k) + qlt_dev(i,k))
 
        !Compute liquid static energy.
-       slv(k) = MAPL_CP*t_dev(i,k)*(1+MAPL_VIREPS*qv_dev(i,k)-qc(k)) + MAPL_GRAV*zfull_dev(i,k) - hleff(k)*qc(k)
+       slv(k) = CP*t_dev(i,k)*(1+VIREPS*qv_dev(i,k)-qc(k)) + GRAV*zfull_dev(i,k) - hleff(k)*qc(k)
 
-       density(k) = pfull_dev(i,k)/(MAPL_RGAS*(t_dev(i,k) *(1.+MAPL_VIREPS*qv_dev(i,k)-qc(k))))              
+       density(k) = pfull_dev(i,k)/(RGAS*(t_dev(i,k) *(1.+VIREPS*qv_dev(i,k)-qc(k))))              
 
     end do
 
@@ -794,7 +794,7 @@ subroutine LOCK_DIFF( ncol,nlev,tdtlw_in_dev,u_star_dev,b_star_dev,frland_dev,t_
        critjump = 2.0
        if (ipbl .lt. ibot) then 
           do k = ibot, ipbl+1, -1
-             tmpjump =(slv(k-1)-slv(k))/MAPL_CP 
+             tmpjump =(slv(k-1)-slv(k))/CP 
              if (tmpjump .gt. critjump) then
                 ipbl = k
                 zsml_dev(i) = zhalf_dev(i,ipbl)
@@ -804,7 +804,7 @@ subroutine LOCK_DIFF( ncol,nlev,tdtlw_in_dev,u_star_dev,b_star_dev,frland_dev,t_
        end if
 
        !Compute entrainment rate
-       tmp1 = MAPL_GRAV*max(0.1,(slv(ipbl-1)-slv(ipbl))/ MAPL_CP)/(slv(ipbl)/MAPL_CP)
+       tmp1 = GRAV*max(0.1,(slv(ipbl-1)-slv(ipbl))/ CP)/(slv(ipbl)/CP)
        tmp2 = ((vsurf3+vshear3)**(2./3.)) / zsml_dev(i)
 
        wentr_tmp = min( wentrmax,  max(0., (beta_surf_const * (vsurf3 + vshear3)/zsml_dev(i))/(tmp1+tmp2) ) )
@@ -899,18 +899,18 @@ subroutine LOCK_DIFF( ncol,nlev,tdtlw_in_dev,u_star_dev,b_star_dev,frland_dev,t_
              !With diffusion of ql, qi "cloud top" found via these quantities may be above radiation max
              kcldtop2=min( kcldtop+2,nlev)
              maxradf = maxval( -1.*tdtlw_in_dev(i,kcldtop:kcldtop2) )
-             maxradf = maxradf*MAPL_CP*( (phalf_dev(i,kcldtop+1)-phalf_dev(i,kcldtop)) / MAPL_GRAV )
+             maxradf = maxradf*CP*( (phalf_dev(i,kcldtop+1)-phalf_dev(i,kcldtop)) / GRAV )
              maxradf = max( maxradf , 0. ) ! do not consider cloud tops that are heating
 
              !Calculate optimal mixing fraction (chis) for buoyancy reversal. Use effective heat of evap/subl. Ignore diffs across cldtop
              hlf = hleff(kcldtop)
 
              tmp1 = ( slv(kcldtop-1)  -  hlf*qc(kcldtop-1) ) - (slv(kcldtop) - hlf*qc(kcldtop) )
-             tmp1 = dqs(kcldtop)*tmp1/MAPL_CP
+             tmp1 = dqs(kcldtop)*tmp1/CP
 
              tmp2 = ( qv_dev(i,kcldtop-1)   +  qc(kcldtop-1) ) - ( qv_dev(i,kcldtop)  +  qc(kcldtop)   )  
    
-             chis = -qc(kcldtop)*( 1 + hlf * dqs(kcldtop) / MAPL_CP )
+             chis = -qc(kcldtop)*( 1 + hlf * dqs(kcldtop) / CP )
 
              if ( ( tmp2 - tmp1 ) >= 0.0 ) then
                 chis = 0.
@@ -925,9 +925,9 @@ subroutine LOCK_DIFF( ncol,nlev,tdtlw_in_dev,u_star_dev,b_star_dev,frland_dev,t_
              slmixture = ( 1.0-chis ) * ( slv(kcldtop) - hlf*qc(kcldtop)   )   +  chis  * ( slv(kcldtop-1)  -  hlf*qc(kcldtop-1) )
 
              !Compute temperature of parcel at cloud top, svpcp.
-             svpcp = slmixture /MAPL_CP
+             svpcp = slmixture /CP
 
-             buoypert   = ( slmixture - slv(kcldtop) )/MAPL_CP
+             buoypert   = ( slmixture - slv(kcldtop) )/CP
 
              !Calculate my best guess at the LCs' D parameter attributed to Siems et al.
              stab       = slv(kcldtop-1) - slv(kcldtop)
@@ -947,7 +947,7 @@ subroutine LOCK_DIFF( ncol,nlev,tdtlw_in_dev,u_star_dev,b_star_dev,frland_dev,t_
              critjump     = 0.3
              svpcp = svpcp - radperturb
 
-             slvcp = slv/MAPL_CP
+             slvcp = slv/CP
 
              if (kcldtop .lt. ibot) then 
                 call radml_depth(i,ncol,nlev,kcldtop,ibot,svpcp,zradtop,critjump,do_jump_exit,&
@@ -964,13 +964,13 @@ subroutine LOCK_DIFF( ncol,nlev,tdtlw_in_dev,u_star_dev,b_star_dev,frland_dev,t_
                 !Only do this is above is true, else skip to the end
    
                 !Compute radiation driven scale
-                vrad3 = MAPL_GRAV*zradml_dev(i)*maxradf/density(kcldtop)/slv(kcldtop)   
+                vrad3 = GRAV*zradml_dev(i)*maxradf/density(kcldtop)/slv(kcldtop)   
 
                 !tmp1 here should be the buoyancy jump at cloud top SAK has it w/ resp to parcel property - svpcp. Im not sure about that.
-                tmp1 = MAPL_GRAV*max(0.1,((slv(kcldtop-1)/MAPL_CP)-svpcp))/(slv(kcldtop)/MAPL_CP)
+                tmp1 = GRAV*max(0.1,((slv(kcldtop-1)/CP)-svpcp))/(slv(kcldtop)/CP)
 
                 !Straightforward buoyancy jump across cloud top
-                tmp1 = MAPL_GRAV*max( 0.1, ( slv(kcldtop-1)-slv(kcldtop) )/MAPL_CP ) / ( slv(kcldtop) /MAPL_CP )
+                tmp1 = GRAV*max( 0.1, ( slv(kcldtop-1)-slv(kcldtop) )/CP ) / ( slv(kcldtop) /CP )
 
                 !Compute buoy rev driven scale
                 vbr3  = ( max( tmp1*zcloud_dev(i), 0.)**3 )
@@ -1046,7 +1046,7 @@ subroutine LOCK_DIFF( ncol,nlev,tdtlw_in_dev,u_star_dev,b_star_dev,frland_dev,t_
                       if (ztmp.gt.0.) then
    
                          radfq(k) = 1.
-                         k_entr_tmp = khradfac_const*MAPL_KARMAN*( vrad+vbrv )*ztmp*zradml_dev(i)*ztmp*((1.-ztmp)**0.5)
+                         k_entr_tmp = khradfac_const*KARMAN*( vrad+vbrv )*ztmp*zradml_dev(i)*ztmp*((1.-ztmp)**0.5)
                          k_entr_tmp = min ( k_entr_tmp, akmax )
                          k_rad(k) = k_entr_tmp
                          k_t_entr_dev (i,k) = k_t_entr_dev(i,k) + k_entr_tmp
@@ -1098,18 +1098,18 @@ subroutine mpbl_depth(i,ncol,nlev,tpfac, entrate, pceff, t, q, u, v, z, p, b_sta
 
  !INPUTS
  integer, intent(in)                       :: i, nlev, ncol
- real,    intent(in)                       :: ESTBLX(:)
- real,    intent(in), dimension(ncol,nlev) :: t, z, q, p, u, v
- real,    intent(in), dimension(ncol)      :: b_star, u_star
- real,    intent(in)                       :: tpfac, entrate, pceff
+ real(kind_real),    intent(in)                       :: ESTBLX(:)
+ real(kind_real),    intent(in), dimension(ncol,nlev) :: t, z, q, p, u, v
+ real(kind_real),    intent(in), dimension(ncol)      :: b_star, u_star
+ real(kind_real),    intent(in)                       :: tpfac, entrate, pceff
 
  !OUTPUTS
  integer, intent(out)                       :: ipbl
- real,    intent(out),dimension(ncol)       :: ztop
+ real(kind_real),    intent(out),dimension(ncol)       :: ztop
 
  !LOCALS
- real :: tep,z1,z2,t1,t2,qp,pp,qsp,dqp,dqsp,u1,v1,u2,v2,du
- real :: ws,k_t_ref,entfr, tpfac_x, entrate_x,vscale,ptmp
+ real(kind_real) :: tep,z1,z2,t1,t2,qp,pp,qsp,dqp,dqsp,u1,v1,u2,v2,du
+ real(kind_real) :: ws,k_t_ref,entfr, tpfac_x, entrate_x,vscale,ptmp
  integer :: k
 
  !Calculate surface parcel properties
@@ -1120,7 +1120,7 @@ subroutine mpbl_depth(i,ncol,nlev,tpfac, entrate, pceff, t, q, u, v, z, p, b_sta
  vscale    = 0.25 / 100. ! change of .25 m s-1 in 100 m
 
  !tpfac scales up bstar by inv. ratio of heat-bubble area to stagnant area
- tep  = tep * (1.+ tpfac * b_star(i)/MAPL_GRAV)
+ tep  = tep * (1.+ tpfac * b_star(i)/GRAV)
 
  !Search for level where this is exceeded              
  t1   = t(i,nlev)
@@ -1146,7 +1146,7 @@ subroutine mpbl_depth(i,ncol,nlev,tpfac, entrate, pceff, t, q, u, v, z, p, b_sta
     qp  = qp  + entfr*(q(i,k)-qp)
 
     !Dry adiabatic ascent through one layer. Static energy conserved. 
-    tep = tep - MAPL_GRAV*( z2-z1 )/MAPL_CP
+    tep = tep - GRAV*( z2-z1 )/CP
 
     !Environmental air entrained
     tep = tep + entfr*(t(i,k)-tep)
@@ -1155,10 +1155,10 @@ subroutine mpbl_depth(i,ncol,nlev,tpfac, entrate, pceff, t, q, u, v, z, p, b_sta
     ptmp = pp*0.01
     call DQSAT_sub_sca(dqsp,qsp,tep,ptmp,ESTBLX)
 
-    dqp = max( qp - qsp, 0. )/(1.+(MAPL_ALHL/MAPL_CP)*dqsp )
+    dqp = max( qp - qsp, 0. )/(1.+(ALHL/CP)*dqsp )
     qp  = qp - dqp
     !"Precipitation efficiency" basically means fraction of condensation heating that gets applied to parcel
-    tep = tep  + pceff * MAPL_ALHL * dqp/MAPL_CP  
+    tep = tep  + pceff * ALHL * dqp/CP  
 
     !If parcel temperature (tep) colder than env (t2) OR if entrainment too big, declare this the PBL top
     if ( (t2 .ge. tep) .or. ( entfr .ge. 0.9899 ) ) then
@@ -1184,17 +1184,17 @@ subroutine radml_depth(i, ncol, nlev, toplev, botlev, svp, zt, critjump, do_jump
 
  !INPUTS
  integer, intent(in)                         :: i, toplev, botlev, ncol, nlev
- real,    intent(in)                         :: svp, zt, critjump
- real,    intent(in), dimension(nlev)        :: t
- real,    intent(in), dimension(ncol,nlev)   :: zf
- real,    intent(in), dimension(ncol,nlev+1) :: zh
+ real(kind_real),    intent(in)                         :: svp, zt, critjump
+ real(kind_real),    intent(in), dimension(nlev)        :: t
+ real(kind_real),    intent(in), dimension(ncol,nlev)   :: zf
+ real(kind_real),    intent(in), dimension(ncol,nlev+1) :: zh
  logical, intent(in)                         :: do_jump_exit
 
  !OUTPUTS
- real,    intent(out), dimension(ncol)        :: zb, zml
+ real(kind_real),    intent(out), dimension(ncol)        :: zb, zml
 
  !LOCALS
- real    :: svpar,h1,h2,t1,t2,entrate,entfr
+ real(kind_real)    :: svpar,h1,h2,t1,t2,entrate,entfr
  integer :: k
 
  !Initialize zml
@@ -1259,15 +1259,15 @@ subroutine diffusivity_pbl2(i, ncol, lm, h, kfac, k_ent, vsurf, frland, zm, k_m,
 
  !INPUTS
  integer, intent(in)                         :: i, lm, ncol
- real,    intent(in), dimension(ncol)        :: h, frland
- real,    intent(in)                         :: k_ent, vsurf, kfac 
- real,    intent(in), dimension(ncol,1:lm+1) :: zm
+ real(kind_real),    intent(in), dimension(ncol)        :: h, frland
+ real(kind_real),    intent(in)                         :: k_ent, vsurf, kfac 
+ real(kind_real),    intent(in), dimension(ncol,1:lm+1) :: zm
 
  !OUTPUTS
- real,    intent(out), dimension(lm)         :: k_m, k_t
+ real(kind_real),    intent(out), dimension(lm)         :: k_m, k_t
 
  !LOCALS
- real :: EE, hin, kfacx 
+ real(kind_real) :: EE, hin, kfacx 
  integer :: k, kk
 
  !Kluge. Raise KHs over land
@@ -1285,11 +1285,11 @@ subroutine diffusivity_pbl2(i, ncol, lm, h, kfac, k_ent, vsurf, frland, zm, k_m,
  end do
 
  if ( vsurf*h(i) .gt. 0. ) then
-    EE  = 1.0 - sqrt( k_ent / ( kfacx * MAPL_KARMAN * vsurf * h(i) ) )
+    EE  = 1.0 - sqrt( k_ent / ( kfacx * KARMAN * vsurf * h(i) ) )
     EE  = max( EE , 0.7 )  ! If EE is too small, then punt, as LCs
     do k = 1, lm
        if ( ( zm(i,k) .le. h(i) ) .and.  ( zm(i,k) .gt. hin )  ) then
-          k_t(k) = kfacx * MAPL_KARMAN * vsurf * ( zm(i,k)-hin ) * ( 1. - EE*( (zm(i,k)-hin)/(h(i)-hin) ))**2
+          k_t(k) = kfacx * KARMAN * vsurf * ( zm(i,k)-hin ) * ( 1. - EE*( (zm(i,k)-hin)/(h(i)-hin) ))**2
        end if
     end do
  endif
@@ -1306,15 +1306,15 @@ subroutine ESINIT(ESTBLX)
  IMPLICIT NONE
 
  !OUTPUT
- real, dimension(TABLESIZE) :: ESTBLX
+ real(kind_real), dimension(TABLESIZE) :: ESTBLX
 
  !LOCALS
- real, parameter :: ZEROC = 273.16, TMIX = -20.0
+ real(kind_real), parameter :: ZEROC = 273.16, TMIX = -20.0
 
- real, dimension(TABLESIZE) :: ESTBLE, ESTBLW
+ real(kind_real), dimension(TABLESIZE) :: ESTBLE, ESTBLW
 
  integer :: I
- real    :: T, DELTA_T
+ real(kind_real)    :: T, DELTA_T
 
  DELTA_T = 1.0/DEGSUBS
 
@@ -1348,14 +1348,14 @@ subroutine QSATLQU0(QS,TL)
  IMPLICIT NONE
 
  !INPUTS
- real :: TL!, TMAXTBL
+ real(kind_real) :: TL!, TMAXTBL
 
  !OUTPUTS
- real :: QS
+ real(kind_real) :: QS
 
  !LOCALS
- real, parameter :: ZEROC   = 273.16
- real, parameter :: TMINLQU = ZEROC - 40.0
+ real(kind_real), parameter :: ZEROC   = 273.16
+ real(kind_real), parameter :: TMINLQU = ZEROC - 40.0
 
  real*8,  parameter :: B6 = 6.136820929E-11*100.0
  real*8,  parameter :: B5 = 2.034080948E-8 *100.0
@@ -1394,16 +1394,16 @@ subroutine QSATICE0(QS,TL)
  IMPLICIT NONE   
       
  !INPUTS
- real :: TL
+ real(kind_real) :: TL
 
  !OUTPUTS
- real :: QS
+ real(kind_real) :: QS
 
  !LOCALS
- real, parameter :: ZEROC = 273.16, TMINSTR = -95.0
- real, parameter :: TMINICE = ZEROC + TMINSTR
+ real(kind_real), parameter :: ZEROC = 273.16, TMINSTR = -95.0
+ real(kind_real), parameter :: TMINICE = ZEROC + TMINSTR
 
- real, parameter :: TSTARR1 = -75.0, TSTARR2 = -65.0, TSTARR3 = -50.0,  TSTARR4 = -40.0
+ real(kind_real), parameter :: TSTARR1 = -75.0, TSTARR2 = -65.0, TSTARR3 = -50.0,  TSTARR4 = -40.0
 
  real*8,  parameter :: BI6= 1.838826904E-10*100.0
  real*8,  parameter :: BI5= 4.838803174E-8 *100.0
@@ -1427,7 +1427,7 @@ subroutine QSATICE0(QS,TL)
  real*8,  parameter :: S21= 0.401390832E+0 *100.0
  real*8,  parameter :: S20= 0.535098336E+1 *100.0
 
- real :: TX, TI, TT, W, EX
+ real(kind_real) :: TX, TI, TT, W, EX
 
  TX = TL
 
@@ -1470,17 +1470,17 @@ subroutine DQSAT_sub_sca(DQSi,QSSi,TEMP,PLO,ESTBLX)
  IMPLICIT NONE
 
  !Inputs
- real :: TEMP, PLO
- real :: ESTBLX(:)
+ real(kind_real) :: TEMP, PLO
+ real(kind_real) :: ESTBLX(:)
 
  !Outputs
- real :: DQSi, QSSi
+ real(kind_real) :: DQSi, QSSi
 
  !Locals
- real, parameter :: MAX_MIXING_RATIO = 1.0
- real,    parameter :: ESFAC = MAPL_H2OMW/MAPL_AIRMW
+ real(kind_real), parameter :: MAX_MIXING_RATIO = 1.0
+ real(kind_real),    parameter :: ESFAC = H2OMW/AIRMW
 
- real :: TL, TT, TI, DQSAT, QSAT, DQQ, QQ, PL, PP, DD
+ real(kind_real) :: TL, TT, TI, DQSAT, QSAT, DQQ, QQ, PL, PP, DD
  integer :: IT
 
  TL = TEMP

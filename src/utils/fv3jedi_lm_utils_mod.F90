@@ -44,12 +44,20 @@ type :: fv3jedi_lm_traj
   real(kind_real), allocatable, dimension(:,:)   :: kcbl, ts, khl, khu
 end type fv3jedi_lm_traj
 
+!> Compute ice fraction from temperature
 public IceFraction
-
 interface IceFraction
  module procedure IceFraction_r4
  module procedure IceFraction_r8
 end interface
+
+!> Compute pressures from delp
+public compute_pressures
+interface compute_pressures
+ module procedure compute_pressures_r4
+ module procedure compute_pressures_r8
+end interface
+
 
 ! ------------------------------------------------------------------------------
 contains
@@ -258,17 +266,17 @@ subroutine icefraction_r4(temp, icefrct)
  real(4), parameter :: t_ice_all = 233.16_4, t_ice_max = 273.16_4
  integer, parameter :: icefrpwr = 4
 
-  icefrct  = 0.00_4
-  if ( temp <= t_ice_all ) then
-     icefrct = 1.000_4
-  else if ( (temp > t_ice_all) .and. (temp <= t_ice_max) ) then
-     icefrct = 1.00_4 -  ( temp - t_ice_all ) / ( t_ice_max - t_ice_all )
-  end if
+ icefrct  = 0.00_4
+ if ( temp <= t_ice_all ) then
+    icefrct = 1.000_4
+ else if ( (temp > t_ice_all) .and. (temp <= t_ice_max) ) then
+    icefrct = 1.00_4 -  ( temp - t_ice_all ) / ( t_ice_max - t_ice_all )
+ end if
 
-  icefrct = min(icefrct,1.00_4)
-  icefrct = max(icefrct,0.00_4)
+ icefrct = min(icefrct,1.00_4)
+ icefrct = max(icefrct,0.00_4)
 
-  icefrct = icefrct**icefrpwr
+ icefrct = icefrct**icefrpwr
 
 end subroutine icefraction_r4
 
@@ -286,20 +294,82 @@ subroutine icefraction_r8(temp, icefrct)
  real(8), parameter :: t_ice_all = 233.16_8, t_ice_max = 273.16_8
  integer, parameter :: icefrpwr = 4
 
-  icefrct  = 0.0_8
-  if ( temp <= t_ice_all ) then
-     icefrct = 1.000_8
-  else if ( (temp > t_ice_all) .and. (temp <= t_ice_max) ) then
-     icefrct = 1.00_8 -  ( temp - t_ice_all ) / ( t_ice_max - t_ice_all )
-  end if
+ icefrct  = 0.0_8
+ if ( temp <= t_ice_all ) then
+    icefrct = 1.000_8
+ else if ( (temp > t_ice_all) .and. (temp <= t_ice_max) ) then
+    icefrct = 1.00_8 -  ( temp - t_ice_all ) / ( t_ice_max - t_ice_all )
+ end if
 
-  icefrct = min(icefrct,1.00_8)
-  icefrct = max(icefrct,0.00_8)
+ icefrct = min(icefrct,1.00_8)
+ icefrct = max(icefrct,0.00_8)
 
-  icefrct = icefrct**icefrpwr
+ icefrct = icefrct**icefrpwr
 
 end subroutine icefraction_r8
 
 ! ------------------------------------------------------------------------------
+
+subroutine compute_pressues_r4(im,jm,lm,ptop,delp,pe,p,pk)
+
+ integer, intent(in)  :: im,jm,lm
+ real(4), intent(in)  :: delp(1:im,1:jm,1:lm) !Pressure thickness
+ real(4), intent(out) :: pe  (1:im,1:jm,0:lm) !Pressure at edges
+ real(4), intent(out) :: p   (1:im,1:jm,1:lm) !Pressure at mid-point
+ real(4), intent(out) :: pk  (1:im,1:jm,1:lm) !Pressure to the kappa at mid-point
+ 
+ real(4) :: lpe(1:im,1:jm,0:lm)
+
+ !Pressure at the level edge
+ pe(:,:,0) = ptop
+ do l=1,lm
+    pe(:,:,l) = pe(:,:,l-1) + delp(:,:,l)
+ end do
+
+ !Pressure mid-point
+ p(:,:,1:lm) = 0.5_4 * (pe(:,:,1:lm) + pe(:,:,0:lm-1))
+
+ !Log of edge pressure
+ lpe = log(pe)
+
+ !pe to the kappa
+ pek = pe**kappa
+
+ !p to the kappa
+ pk(:,:,1:lm) = (pek(:,:,1:lm)-pek(:,:,0:lm-1))/(kappa*(lpe(:,:,1:lm)-lpe(:,:,0:lm-1)))
+
+endsubroutine compute_pressues_r4
+
+! ------------------------------------------------------------------------------
+
+subroutine compute_pressues_r8(im,jm,lm,ptop,delp,pe,p,pk)
+
+ integer, intent(in)  :: im,jm,lm
+ real(8), intent(in)  :: delp(1:im,1:jm,1:lm) !Pressure thickness
+ real(8), intent(out) :: pe  (1:im,1:jm,0:lm) !Pressure at edges
+ real(8), intent(out) :: p   (1:im,1:jm,1:lm) !Pressure at mid-point
+ real(8), intent(out) :: pk  (1:im,1:jm,1:lm) !Pressure to the kappa at mid-point
+ 
+ real(8) :: lpe(1:im,1:jm,0:lm)
+
+ !Pressure at the level edge
+ pe(:,:,0) = ptop
+ do l=1,lm
+    pe(:,:,l) = pe(:,:,l-1) + delp(:,:,l)
+ end do
+
+ !Pressure mid-point
+ p(:,:,1:lm) = 0.5_8 * (pe(:,:,1:lm) + pe(:,:,0:lm-1))
+
+ !Log of edge pressure
+ lpe = log(pe)
+
+ !pe to the kappa
+ pek = pe**kappa
+
+ !p to the kappa
+ pk(:,:,1:lm) = (pek(:,:,1:lm)-pek(:,:,0:lm-1))/(kappa*(lpe(:,:,1:lm)-lpe(:,:,0:lm-1)))
+
+endsubroutine compute_pressues_r8
 
 end module fv3jedi_lm_utils_mod
