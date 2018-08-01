@@ -452,16 +452,16 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  
  else
  
-   DO l = 1,LM
-     DO j = 1,JM
-       DO i = 1,IM
+   do l = 1,lm
+     do j = 1,jm
+       do i = 1,im
          call IceFraction( p_t(i,j,l), fQi(i,j,l) )
        enddo
      enddo
-  enddo
+   enddo
  
-  QIT1(1:im,1:jm,:) = (traj%QLS(isc:iec,jsc:jec,:) + traj%QCN(isc:iec,jsc:jec,:)) * fQi(1:im,1:jm,:)
-  QLT1(1:im,1:jm,:) = (traj%QLS(isc:iec,jsc:jec,:) + traj%QCN(isc:iec,jsc:jec,:)) * (1-fQi(1:im,1:jm,:))
+   QIT1(1:im,1:jm,:) = (traj%QLS(isc:iec,jsc:jec,:) + traj%QCN(isc:iec,jsc:jec,:)) * fQi(1:im,1:jm,:)
+   QLT1(1:im,1:jm,:) = (traj%QLS(isc:iec,jsc:jec,:) + traj%QCN(isc:iec,jsc:jec,:)) * (1-fQi(1:im,1:jm,:))
  
  endif
 

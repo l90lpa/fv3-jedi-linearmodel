@@ -434,12 +434,8 @@ subroutine step_tl(self,conf,traj,pert)
  lpert%qicnp(1:im,1:jm,:) = dble(pert%qi(isc:iec,jsc:jec,:)) * ltraj%icnf(1:im,1:jm,:)
  lpert%qllsp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:)) * ltraj%llsf(1:im,1:jm,:)
  lpert%qlcnp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:)) * ltraj%lcnf(1:im,1:jm,:)
- lpert%cflsp = 0.0_8
- lpert%cfcnp = 0.0_8
-
- !if (conf%do_phy_mst .ne. 3) then
- !  lpert%cfcnp(1:im,1:jm,:) = dble(pert%cfcn(isc:iec,jsc:jec,:))
- !endif
+ lpert%cflsp(1:im,1:jm,:) = 0.0_8
+ lpert%cfcnp(1:im,1:jm,:) = dble(pert%cfcn(isc:iec,jsc:jec,:))
 
  ltraj%cnv_dqldtt  = 0.0_8
  ltraj%cnv_mfdt    = 0.0_8
@@ -496,13 +492,13 @@ subroutine step_tl(self,conf,traj,pert)
                        lcnst%mapl8_tice, lcnst%mapl8_rvap, lcnst%mapl8_p00, conf%do_phy_mst        )
 
  !Back to pert
- pert%u(isc:iec,jsc:jec,:)  = real(lpert%up (1:im,1:jm,:),kind_real)
- pert%v(isc:iec,jsc:jec,:)  = real(lpert%vp (1:im,1:jm,:),kind_real)
- pert%t(isc:iec,jsc:jec,:)  = real(lpert%ptp(1:im,1:jm,:) * ltraj%pk(1:im,1:jm,:) / p00**kappa,kind_real)
- pert%qv(isc:iec,jsc:jec,:) = real(lpert%qvp(1:im,1:jm,:),kind_real)
- pert%qi(isc:iec,jsc:jec,:) = real(lpert%qilsp(1:im,1:jm,:) + lpert%qicnp(1:im,1:jm,:),kind_real)
- pert%ql(isc:iec,jsc:jec,:) = real(lpert%qllsp(1:im,1:jm,:) + lpert%qlcnp(1:im,1:jm,:),kind_real)
- !if (conf%do_phy_mst.ne.3) pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
+ pert%u(isc:iec,jsc:jec,:)    = real(lpert%up (1:im,1:jm,:),kind_real)
+ pert%v(isc:iec,jsc:jec,:)    = real(lpert%vp (1:im,1:jm,:),kind_real)
+ pert%t(isc:iec,jsc:jec,:)    = real(lpert%ptp(1:im,1:jm,:) * ltraj%pk(1:im,1:jm,:) / p00**kappa,kind_real)
+ pert%qv(isc:iec,jsc:jec,:)   = real(lpert%qvp(1:im,1:jm,:),kind_real)
+ pert%qi(isc:iec,jsc:jec,:)   = real(lpert%qilsp(1:im,1:jm,:) + lpert%qicnp(1:im,1:jm,:),kind_real)
+ pert%ql(isc:iec,jsc:jec,:)   = real(lpert%qllsp(1:im,1:jm,:) + lpert%qlcnp(1:im,1:jm,:),kind_real)
+ pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
 
 endsubroutine step_tl
 
@@ -551,12 +547,8 @@ subroutine step_ad(self,conf,traj,pert)
  lpert%qicnp(1:im,1:jm,:) = dble(pert%qi(isc:iec,jsc:jec,:))
  lpert%qllsp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:))
  lpert%qlcnp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:))
- lpert%cflsp = 0.0_8
- lpert%cfcnp = 0.0_8
-
- !if (conf%do_phy_mst .ne. 3) then
- !  lpert%cfcnp(1:im,1:jm,:) = dble(pert%cfcn(isc:iec,jsc:jec,:))
- !endif
+ lpert%cflsp(1:im,1:jm,:) = 0.0_8
+ lpert%cfcnp(1:im,1:jm,:) = dble(pert%cfcn(isc:iec,jsc:jec,:))
 
  ltraj%cnv_dqldtt  = 0.0_8
  ltraj%cnv_mfdt    = 0.0_8
@@ -613,15 +605,15 @@ subroutine step_ad(self,conf,traj,pert)
  enddo
  
  !Back to pert
- pert%u(isc:iec,jsc:jec,:)  = real(lpert%up (1:im,1:jm,:),kind_real)
- pert%v(isc:iec,jsc:jec,:)  = real(lpert%vp (1:im,1:jm,:),kind_real)
- pert%t(isc:iec,jsc:jec,:)  = real(lpert%ptp(1:im,1:jm,:) * p00**kappa,kind_real) / ltraj%pk(1:im,1:jm,:)
- pert%qv(isc:iec,jsc:jec,:) = real(lpert%qvp(1:im,1:jm,:),kind_real)
- pert%qi(isc:iec,jsc:jec,:) = real(lpert%qilsp(1:im,1:jm,:)*ltraj%ilsf(1:im,1:jm,:) + &
-                                   lpert%qicnp(1:im,1:jm,:)*ltraj%icnf(1:im,1:jm,:),kind_real)
- pert%ql(isc:iec,jsc:jec,:) = real(lpert%qllsp(1:im,1:jm,:)*ltraj%llsf(1:im,1:jm,:) + &
-                                   lpert%qlcnp(1:im,1:jm,:)*ltraj%lcnf(1:im,1:jm,:),kind_real)
- !if (conf%do_phy_mst.ne.3) pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
+ pert%u   (isc:iec,jsc:jec,:) = real(lpert%up (1:im,1:jm,:),kind_real)
+ pert%v   (isc:iec,jsc:jec,:) = real(lpert%vp (1:im,1:jm,:),kind_real)
+ pert%t   (isc:iec,jsc:jec,:) = real(lpert%ptp(1:im,1:jm,:) * p00**kappa,kind_real) / ltraj%pk(1:im,1:jm,:)
+ pert%qv  (isc:iec,jsc:jec,:) = real(lpert%qvp(1:im,1:jm,:),kind_real)
+ pert%qi  (isc:iec,jsc:jec,:) = real(lpert%qilsp(1:im,1:jm,:)*ltraj%ilsf(1:im,1:jm,:) + &
+                                     lpert%qicnp(1:im,1:jm,:)*ltraj%icnf(1:im,1:jm,:),kind_real)
+ pert%ql  (isc:iec,jsc:jec,:) = real(lpert%qllsp(1:im,1:jm,:)*ltraj%llsf(1:im,1:jm,:) + &
+                                     lpert%qlcnp(1:im,1:jm,:)*ltraj%lcnf(1:im,1:jm,:),kind_real)
+ pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
 
 endsubroutine step_ad
 
@@ -729,9 +721,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  ltraj%qvt(1:im,1:jm,:) = dble(traj%qv(isc:iec,jsc:jec,:))
  ltraj%cflst  = 0.0_8
 
- if (conf%do_phy_mst .ne. 3) then
-   ltraj%cfcnt(1:im,1:jm,:)  = dble(traj%cfcn(isc:iec,jsc:jec,:))
- endif
+ ltraj%cfcnt(1:im,1:jm,:)  = dble(traj%cfcn(isc:iec,jsc:jec,:))
 
  ltraj%ts    (1:im,1:jm) = dble(traj%ts    (isc:iec,jsc:jec))
  ltraj%frland(1:im,1:jm) = dble(traj%frland(isc:iec,jsc:jec))

@@ -31,6 +31,9 @@ type fv3jedi_lm_type
   procedure :: step_nl
   procedure :: step_tl
   procedure :: step_ad
+  procedure :: final_nl
+  procedure :: final_tl
+  procedure :: final_ad
   procedure :: delete
 end type
 
@@ -114,6 +117,8 @@ subroutine init_tl(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
+ call ipert_to_zero(self%pert)
+
  if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%init_tl(self%conf,self%pert,self%traj)
  call self%fv3jedi_lm_physics%init_tl(self%conf,self%pert,self%traj)
 
@@ -126,6 +131,8 @@ subroutine init_ad(self)
  implicit none
 
  class(fv3jedi_lm_type), intent(inout) :: self
+
+ call ipert_to_zero(self%pert)
 
  if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%init_ad(self%conf,self%pert,self%traj)
  call self%fv3jedi_lm_physics%init_ad(self%conf,self%pert,self%traj)
@@ -153,8 +160,10 @@ subroutine step_tl(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
+ call ipert_to_zero(self%pert)
  if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%step_tl(self%conf,self%traj,self%pert)
  call self%fv3jedi_lm_physics%step_tl(self%conf,self%traj,self%pert)
+ call ipert_to_zero(self%pert)
 
 endsubroutine step_tl
 
@@ -166,10 +175,44 @@ subroutine step_ad(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
+ call ipert_to_zero(self%pert)
  call self%fv3jedi_lm_physics%step_ad(self%conf,self%traj,self%pert)
  if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%step_ad(self%conf,self%traj,self%pert)
+ call ipert_to_zero(self%pert)
 
 endsubroutine step_ad
+
+! ------------------------------------------------------------------------------
+
+subroutine final_nl(self)
+
+ implicit none
+ class(fv3jedi_lm_type), intent(inout) :: self
+
+
+endsubroutine final_nl
+
+! ------------------------------------------------------------------------------
+
+subroutine final_tl(self)
+
+ implicit none
+ class(fv3jedi_lm_type), intent(inout) :: self
+
+ call ipert_to_zero(self%pert)
+
+endsubroutine final_tl
+
+! ------------------------------------------------------------------------------
+
+subroutine final_ad(self)
+
+ implicit none
+ class(fv3jedi_lm_type), intent(inout) :: self
+
+ call ipert_to_zero(self%pert)
+
+endsubroutine final_ad
 
 ! ------------------------------------------------------------------------------
 
@@ -189,6 +232,21 @@ subroutine delete(self)
  call deallocate_pert(self%pert)
 
 endsubroutine delete
+
+! ------------------------------------------------------------------------------
+
+subroutine ipert_to_zero(pert)
+
+ !> Intenal part of pert to zero
+
+ implicit none
+ type(fv3jedi_lm_pert), intent(inout) :: pert
+
+ pert%ua = 0.0_kind_real
+ pert%va = 0.0_kind_real
+ pert%cfcn = 0.0_kind_real
+
+endsubroutine ipert_to_zero
 
 ! ------------------------------------------------------------------------------
 

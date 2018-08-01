@@ -355,8 +355,8 @@ subroutine step_tl(self,conf,traj,pert)
  FV_AtmP => self%FV_AtmP
 
 
- ! Make sure everything is zero
- ! ----------------------------
+ ! Set diagnostics to zeros
+ ! ------------------------
  call zero_pert_vars(FV_AtmP(1))
 
 
@@ -364,6 +364,12 @@ subroutine step_tl(self,conf,traj,pert)
  !-----------------------------------------
  call traj_to_fv3(self,conf,traj)
  call pert_to_fv3(self,conf,pert)
+
+ 
+ !A-grid winds are diagnostic
+ !---------------------------
+ FV_AtmP(1)%uap = 0.0
+ FV_AtmP(1)%vap = 0.0
 
 
  !Edge of pert always needs to be filled
@@ -433,8 +439,8 @@ subroutine step_tl(self,conf,traj,pert)
  call fv3_to_pert(self,conf,pert)
 
 
- ! Make sure everything is zero
- ! ----------------------------
+ ! Set diagnostics to zeros
+ ! ------------------------
  call zero_pert_vars(FV_AtmP(1))
 
 
@@ -462,8 +468,8 @@ subroutine step_ad(self,conf,traj,pert)
  FV_AtmP => self%FV_AtmP
 
 
- ! Make sure everything is zero
- ! ----------------------------
+ ! Set diagnostics to zeros
+ ! ------------------------
  call zero_pert_vars(FV_AtmP(1))
 
 
@@ -655,15 +661,21 @@ subroutine step_ad(self,conf,traj,pert)
  call nullify_domain()
 
 
+ !A-grid winds are diagnostic
+ !---------------------------
+ FV_AtmP(1)%uap = 0.0
+ FV_AtmP(1)%vap = 0.0
+
+
  !Copy from fv3 back to pert structure
  !------------------------------------
  call fv3_to_pert(self,conf,pert)
 
  
- ! Make sure everything is zero
- ! ----------------------------
+ ! Set diagnostics to zeros
+ ! ------------------------
  call zero_pert_vars(FV_AtmP(1))
- 
+
 
 endsubroutine step_ad
 
@@ -706,14 +718,14 @@ subroutine traj_to_fv3(self,conf,traj)
 
  !Zero the halos
  !--------------
- self%FV_Atm(1)%u    = 0.0
- self%FV_Atm(1)%v    = 0.0
- self%FV_Atm(1)%pt   = 0.0
- self%FV_Atm(1)%delp = 0.0
- self%FV_Atm(1)%q    = 0.0
- self%FV_Atm(1)%w    = 0.0
- self%FV_Atm(1)%delz = 0.0
- self%FV_Atm(1)%phis = 0.0
+ self%FV_Atm(1)%u     = 0.0
+ self%FV_Atm(1)%v     = 0.0
+ self%FV_Atm(1)%pt    = 0.0
+ self%FV_Atm(1)%delp  = 0.0
+ self%FV_Atm(1)%q     = 0.0
+ self%FV_Atm(1)%w     = 0.0
+ self%FV_Atm(1)%delz  = 0.0
+ self%FV_Atm(1)%phis  = 0.0
  self%FV_Atm(1)%pe    = 0.0
  self%FV_Atm(1)%peln  = 0.0
  self%FV_Atm(1)%pk    = 0.0
@@ -739,16 +751,12 @@ subroutine traj_to_fv3(self,conf,traj)
  self%FV_Atm(1)%pt  (self%isc:self%iec,self%jsc:self%jec,:) = traj%t   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_Atm(1)%delp(self%isc:self%iec,self%jsc:self%jec,:) = traj%delp(self%isc:self%iec,self%jsc:self%jec,:)
 
- if (conf%do_phy_mst == 0) then
-    self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,1) = traj%qv(self%isc:self%iec,self%jsc:self%jec,:)
-    self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,2) = traj%ql(self%isc:self%iec,self%jsc:self%jec,:)
-    self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,3) = traj%qi(self%isc:self%iec,self%jsc:self%jec,:)
-    self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,4) = traj%o3(self%isc:self%iec,self%jsc:self%jec,:)
- else
-    self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,1) = traj%qv  (self%isc:self%iec,self%jsc:self%jec,:)
-    self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,2) = traj%qls (self%isc:self%iec,self%jsc:self%jec,:)
-    self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,3) = traj%qcn (self%isc:self%iec,self%jsc:self%jec,:)
-    self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,4) = traj%o3  (self%isc:self%iec,self%jsc:self%jec,:)
+ self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,1) = traj%qv(self%isc:self%iec,self%jsc:self%jec,:)
+ self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,2) = traj%ql(self%isc:self%iec,self%jsc:self%jec,:)
+ self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,3) = traj%qi(self%isc:self%iec,self%jsc:self%jec,:)
+ self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,4) = traj%o3(self%isc:self%iec,self%jsc:self%jec,:)
+
+ if (conf%do_phy_mst .ne. 0) then
     self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,5) = traj%cfcn(self%isc:self%iec,self%jsc:self%jec,:)
  endif
 
@@ -847,7 +855,9 @@ subroutine pert_to_fv3(self,conf,pert)
  self%FV_AtmP(1)%qp    = 0.0
  self%FV_AtmP(1)%wp    = 0.0
  self%FV_AtmP(1)%delzp = 0.0
- 
+ self%FV_AtmP(1)%uap   = 0.0
+ self%FV_AtmP(1)%vap   = 0.0
+
  self%FV_AtmP(1)%up   (self%isc:self%iec,self%jsc:self%jec,:) = pert%u   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_AtmP(1)%vp   (self%isc:self%iec,self%jsc:self%jec,:) = pert%v   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_AtmP(1)%ptp  (self%isc:self%iec,self%jsc:self%jec,:) = pert%T   (self%isc:self%iec,self%jsc:self%jec,:)
@@ -858,7 +868,7 @@ subroutine pert_to_fv3(self,conf,pert)
  self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,3) = pert%qi(self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4) = pert%o3(self%isc:self%iec,self%jsc:self%jec,:)
 
- if (conf%do_phy_mst /= 0) then
+ if (conf%do_phy_mst .ne. 0) then
    self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,5) = pert%cfcn(self%isc:self%iec,self%jsc:self%jec,:)
  endif
 
@@ -867,8 +877,8 @@ subroutine pert_to_fv3(self,conf,pert)
     self%FV_AtmP(1)%wp   (self%isc:self%iec,self%jsc:self%jec,:) = pert%w   (self%isc:self%iec,self%jsc:self%jec,:)
  endif
 
- self%FV_AtmP(1)%uap(self%isc:self%iec,self%jsc:self%jec,:) = pert%ua(self%isc:self%iec,self%jsc:self%jec,:)
- self%FV_AtmP(1)%vap(self%isc:self%iec,self%jsc:self%jec,:) = pert%va(self%isc:self%iec,self%jsc:self%jec,:)
+ self%FV_AtmP(1)%uap(self%isc:self%iec,self%jsc:self%jec,:) = 0.0!pert%ua(self%isc:self%iec,self%jsc:self%jec,:)
+ self%FV_AtmP(1)%vap(self%isc:self%iec,self%jsc:self%jec,:) = 0.0!pert%va(self%isc:self%iec,self%jsc:self%jec,:)
 
 endsubroutine pert_to_fv3
 
@@ -878,7 +888,7 @@ subroutine fv3_to_pert(self,conf,pert)
 
  implicit none
 
- class(fv3jedi_lm_dynamics_type), intent(in) :: self
+ class(fv3jedi_lm_dynamics_type), intent(inout) :: self
  type(fv3jedi_lm_conf), intent(in)    :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
@@ -892,7 +902,7 @@ subroutine fv3_to_pert(self,conf,pert)
  pert%qi(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,3)
  pert%o3(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4)
 
- if (conf%do_phy_mst /= 0) then
+ if (conf%do_phy_mst .ne. 0) then
   pert%cfcn(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,5)
  endif
 
@@ -901,8 +911,18 @@ subroutine fv3_to_pert(self,conf,pert)
    pert%w   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%wp   (self%isc:self%iec,self%jsc:self%jec,:)
  endif
 
- pert%ua(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%uap(self%isc:self%iec,self%jsc:self%jec,:)
- pert%va(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%vap(self%isc:self%iec,self%jsc:self%jec,:)
+ pert%ua(self%isc:self%iec,self%jsc:self%jec,:) = 0.0!self%FV_AtmP(1)%uap(self%isc:self%iec,self%jsc:self%jec,:)
+ pert%va(self%isc:self%iec,self%jsc:self%jec,:) = 0.0!self%FV_AtmP(1)%vap(self%isc:self%iec,self%jsc:self%jec,:)
+
+ self%FV_AtmP(1)%up    = 0.0
+ self%FV_AtmP(1)%vp    = 0.0
+ self%FV_AtmP(1)%ptp   = 0.0
+ self%FV_AtmP(1)%delpp = 0.0
+ self%FV_AtmP(1)%qp    = 0.0
+ self%FV_AtmP(1)%wp    = 0.0
+ self%FV_AtmP(1)%delzp = 0.0
+ self%FV_AtmP(1)%uap   = 0.0
+ self%FV_AtmP(1)%vap   = 0.0
 
 endsubroutine fv3_to_pert
 
