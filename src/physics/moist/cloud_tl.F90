@@ -167,7 +167,7 @@ SUBROUTINE CLOUD_DRIVER_D(dt, im, jm, lm, th, thd, q, qd, ple, cnv_dqldt&
   real(8) :: t_p_presink, q_p_presink
   real(8) ::  ql_ls_p_presink, ql_con_p_presink
   real(8) ::  qi_ls_p_presink, qi_con_p_presink
-  real(8) ::  cf_con_p_presink
+  !real(8) ::  cf_con_p_presink
 
 !Highest level of calculations
   ktop = 30
@@ -497,7 +497,7 @@ SUBROUTINE CLOUD_DRIVER_D(dt, im, jm, lm, th, thd, q, qd, ple, cnv_dqldt&
         qi_con_p_presink = qi_cond(i,j,k)
         ql_ls_p_presink = ql_lsd(i,j,k)
         ql_con_p_presink = ql_cond(i,j,k)
-        cf_con_p_presink = cf_cond(i,j,k)
+        !cf_con_p_presink = cf_cond(i,j,k)
 
 !Clean up where too much overall cloud.
         cf_totd = cf_lsd(i, j, k) + cf_cond(i, j, k)
