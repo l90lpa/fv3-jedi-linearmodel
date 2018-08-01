@@ -4,9 +4,14 @@ use fv3jedi_lm_kinds_mod
 use fv3jedi_lm_utils_mod
 
 use fv3jedi_lm_dynamics_mod, only: fv3jedi_lm_dynamics_type
-use fv3jedi_lm_physics_mod, only: fv3jedi_lm_physics_type
+use fv3jedi_lm_physics_mod,  only: fv3jedi_lm_physics_type
 
 !> Top level for fv3jedi linearized model
+
+!> Combines fv3 tlm/adm with the GEOS tlm/adm physics
+!> All developed by NASA's Global Modeling and Assimilation Office
+!> daniel.holdaway@nasa.gov, Code 610.1 Goddard Space Flight Center, 
+!> Greenbelt, MD 20771 USA
 
 implicit none
 private
@@ -46,15 +51,13 @@ subroutine create(self,dt,npx,npy,npz,ptop,ak,bk)
  self%conf%dt = dt
  self%conf%ptop = ptop
 
- self%conf%do_phy_mst = 1
-
  allocate(self%conf%ak(npz+1))
  allocate(self%conf%bk(npz+1))
  self%conf%ak = ak
  self%conf%bk = bk
 
+ !Call dynamics create, provides the model grid
  call self%fv3jedi_lm_dynamics%create(self%conf)
- call self%fv3jedi_lm_physics%create(self%conf)
 
  !Make grid available to all components
  self%conf%isc = self%fv3jedi_lm_dynamics%FV_Atm(1)%bd%isc
@@ -65,13 +68,23 @@ subroutine create(self,dt,npx,npy,npz,ptop,ak,bk)
  self%conf%ied = self%fv3jedi_lm_dynamics%FV_Atm(1)%bd%ied
  self%conf%jsd = self%fv3jedi_lm_dynamics%FV_Atm(1)%bd%jsd
  self%conf%jed = self%fv3jedi_lm_dynamics%FV_Atm(1)%bd%jed
- 
  self%conf%npx = npx
  self%conf%npy = npy
  self%conf%npz = npz
-
- !Convenience
  self%conf%hydrostatic = self%fv3jedi_lm_dynamics%FV_Atm(1)%flagstruct%hydrostatic
+
+ self%conf%im = npx-1
+ self%conf%jm = npy-1
+ self%conf%lm = npz
+
+ !Call the physics create
+ call self%fv3jedi_lm_physics%create(self%conf)
+
+ !Sanity checks
+ if ((self%conf%npx .ne. npx) .or. (self%conf%npy .ne. npy) .or. (self%conf%npz .ne. npz) ) then
+  if (self%conf%rpe) print*, 'fv3jedi tlm/adm, problem dynamics creating different grid than inputs created for'
+  call exit(1)
+ endif
 
  !Allocate main traj and pert structures
  call allocate_traj(self%traj,self%conf%isc,self%conf%iec,self%conf%jsc,self%conf%jec,&
@@ -88,7 +101,7 @@ subroutine init_nl(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- call self%fv3jedi_lm_dynamics%init_nl(self%conf,self%pert,self%traj)
+ if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%init_nl(self%conf,self%pert,self%traj)
  call self%fv3jedi_lm_physics%init_nl(self%conf,self%pert,self%traj)
 
 endsubroutine init_nl
@@ -101,7 +114,7 @@ subroutine init_tl(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- call self%fv3jedi_lm_dynamics%init_tl(self%conf,self%pert,self%traj)
+ if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%init_tl(self%conf,self%pert,self%traj)
  call self%fv3jedi_lm_physics%init_tl(self%conf,self%pert,self%traj)
 
 endsubroutine init_tl
@@ -114,7 +127,7 @@ subroutine init_ad(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- call self%fv3jedi_lm_dynamics%init_ad(self%conf,self%pert,self%traj)
+ if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%init_ad(self%conf,self%pert,self%traj)
  call self%fv3jedi_lm_physics%init_ad(self%conf,self%pert,self%traj)
 
 endsubroutine init_ad
@@ -127,7 +140,7 @@ subroutine step_nl(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- call self%fv3jedi_lm_dynamics%step_nl(self%conf,self%traj)
+ if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%step_nl(self%conf,self%traj)
  call self%fv3jedi_lm_physics%step_nl(self%conf,self%traj)
 
 endsubroutine step_nl
@@ -140,7 +153,7 @@ subroutine step_tl(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- call self%fv3jedi_lm_dynamics%step_tl(self%conf,self%traj,self%pert)
+ if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%step_tl(self%conf,self%traj,self%pert)
  call self%fv3jedi_lm_physics%step_tl(self%conf,self%traj,self%pert)
 
 endsubroutine step_tl
@@ -154,7 +167,7 @@ subroutine step_ad(self)
  class(fv3jedi_lm_type), intent(inout) :: self
 
  call self%fv3jedi_lm_physics%step_ad(self%conf,self%traj,self%pert)
- call self%fv3jedi_lm_dynamics%step_ad(self%conf,self%traj,self%pert)
+ if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%step_ad(self%conf,self%traj,self%pert)
 
 endsubroutine step_ad
 

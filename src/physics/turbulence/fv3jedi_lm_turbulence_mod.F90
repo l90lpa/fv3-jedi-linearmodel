@@ -25,18 +25,18 @@ type local_traj_turbulence
   real(kind_real), allocatable, dimension(:,:,:) :: aks, bks, cks
   real(kind_real), allocatable, dimension(:,:,:) :: akv, bkv, ckv
   real(kind_real), allocatable, dimension(:,:,:) :: pk
+  logical :: set = .false.
 endtype local_traj_turbulence
 
 !> Local constants object
 type local_cnst_turbulence
-  integer :: im,jm,lm
-  real(kind_real), dimension(22)   :: TURBPARAMS
-  integer, dimension(4) :: TURBPARAMSI
+  real(kind_real), dimension(22) :: TURBPARAMS
+  integer,         dimension(4)  :: TURBPARAMSI
 endtype local_cnst_turbulence
 
-!> turbulence class (self)
+!> Turbulence class (self)
 type fv3jedi_lm_turbulence_type
- type(local_traj_turbulence) :: ltraj
+ type(local_traj_turbulence), allocatable :: ltraj(:)
  type(local_cnst_turbulence) :: lcnst
  contains
   procedure :: create
@@ -61,16 +61,20 @@ subroutine create(self,conf)
  type(fv3jedi_lm_conf), intent(in)    :: conf
 
  real(kind_real), allocatable, dimension(:) :: pref
- integer :: l
+ integer :: l, n
 
- self%lcnst%im = conf%npx
- self%lcnst%jm = conf%npy
- self%lcnst%lm = conf%npz
+ if (conf%saveltraj) then
+   allocate(self%ltraj(conf%nt))
+   do n = 1,conf%nt
+     call allocate_ltraj(conf%im,conf%jm,conf%lm,self%ltraj(n))
+   enddo
+ else 
+   allocate(self%ltraj(1))
+   call allocate_ltraj(conf%im,conf%jm,conf%lm,self%ltraj(1))
+ endif
 
- call allocate_ltraj(self%lcnst%im,self%lcnst%jm,self%lcnst%lm,self%ltraj)
-
- allocate(pref(0:self%lcnst%lm))
- DO l = 0,self%lcnst%lm
+ allocate(pref(0:conf%lm))
+ DO l = 0,conf%lm
    pref(l) = conf%AK(l+1) + conf%BK(l+1)*p00
  enddo
 
@@ -148,38 +152,64 @@ subroutine step_nl(self,conf,traj)
 
  implicit none
 
- class(fv3jedi_lm_turbulence_type), intent(inout), target :: self
- type(fv3jedi_lm_traj), intent(inout) :: traj
- type(fv3jedi_lm_conf), intent(in) :: conf
+ class(fv3jedi_lm_turbulence_type), target, intent(inout) :: self
+ type(fv3jedi_lm_traj), target,             intent(inout) :: traj
+ type(fv3jedi_lm_conf),                     intent(in)    :: conf
 
- integer :: i,j,k
  type(local_traj_turbulence), pointer :: ltraj
- type(local_cnst_turbulence), pointer :: lcnst
+ real(kind_real), pointer, dimension(:,:,:) :: p_u
+ real(kind_real), pointer, dimension(:,:,:) :: p_v
+ real(kind_real), pointer, dimension(:,:,:) :: p_t
+ real(kind_real), pointer, dimension(:,:,:) :: p_delp
+ real(kind_real), pointer, dimension(:,:,:) :: p_qv
+ real(kind_real), pointer, dimension(:,:,:) :: p_qi
+ real(kind_real), pointer, dimension(:,:,:) :: p_ql
+ real(kind_real), pointer, dimension(:,:,:) :: p_o3
 
- integer :: im,jm,lm
+ !Pointers with ind starting at 1
+ p_u    => traj%u
+ p_v    => traj%v
+ p_t    => traj%t
+ p_delp => traj%delp
+ p_qv   => traj%qv
+ p_qi   => traj%qi
+ p_ql   => traj%ql
+ p_o3   => traj%o3
+ 
+ !Convenience pointers
+ if (conf%saveltraj) then
+   ltraj => self%ltraj(conf%n)
+ else
+   ltraj => self%ltraj(1)
+ endif
 
  !Set up the local trajectory
- call set_ltraj(conf,self%lcnst,traj,self%ltraj)
+ if (.not. ltraj%set) call set_ltraj(conf,self%lcnst,traj,ltraj)
 
- !Convenience pointers
- ltraj => self%ltraj
- lcnst => self%lcnst
+ !t2pt 
+ p_t = p00**kappa * p_t / ltraj%pk
 
- im = lcnst%im
- jm = lcnst%jm
- lm = lcnst%lm
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_u ,1,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_v ,1,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%aks,ltraj%bks,ltraj%cks,p_t ,1,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qv,1,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qi,1,0)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_ql,1,0)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_o3,1,0)
 
- traj%t = traj%t / ltraj%pk
-
- call vtrisolvepert(im,jm,lm,ltraj%akv,ltraj%bkv,ltraj%ckv,traj%u ,1,1)
- call vtrisolvepert(im,jm,lm,ltraj%akv,ltraj%bkv,ltraj%ckv,traj%v ,1,1)
- call vtrisolvepert(im,jm,lm,ltraj%aks,ltraj%bks,ltraj%cks,traj%t ,1,1)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,traj%qv,1,1)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,traj%qi,1,0)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,traj%ql,1,0)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,traj%o3,1,0)
-
- traj%t = traj%t * ltraj%pk 
+ !pt2t 
+ p_t = ltraj%pk * p_t / p00**kappa
+ 
+ !Nullify
+ nullify(p_u)
+ nullify(p_v)
+ nullify(p_t)
+ nullify(p_delp)
+ nullify(p_qv)
+ nullify(p_qi)
+ nullify(p_ql)
+ nullify(p_o3)
+ nullify(ltraj)
 
 endsubroutine step_nl
 
@@ -190,38 +220,66 @@ subroutine step_tl(self,conf,traj,pert)
  implicit none
 
  class(fv3jedi_lm_turbulence_type), target, intent(inout) :: self
- type(fv3jedi_lm_conf), intent(in)    :: conf
- type(fv3jedi_lm_traj), intent(in)    :: traj
- type(fv3jedi_lm_pert), intent(inout) :: pert
+ type(fv3jedi_lm_conf),                     intent(in)    :: conf
+ type(fv3jedi_lm_traj),                     intent(in)    :: traj
+ type(fv3jedi_lm_pert), target,             intent(inout) :: pert
 
- integer :: i,j,k
  type(local_traj_turbulence), pointer :: ltraj
- type(local_cnst_turbulence), pointer :: lcnst
+ real(kind_real), pointer, dimension(:,:,:) :: p_u
+ real(kind_real), pointer, dimension(:,:,:) :: p_v
+ real(kind_real), pointer, dimension(:,:,:) :: p_t
+ real(kind_real), pointer, dimension(:,:,:) :: p_delp
+ real(kind_real), pointer, dimension(:,:,:) :: p_qv
+ real(kind_real), pointer, dimension(:,:,:) :: p_qi
+ real(kind_real), pointer, dimension(:,:,:) :: p_ql
+ real(kind_real), pointer, dimension(:,:,:) :: p_o3
 
- integer :: im,jm,lm
-
- !Set up the local trajectory
- call set_ltraj(conf,self%lcnst,traj,self%ltraj)
+ !Pointers with ind starting at 1
+ p_u    => pert%u
+ p_v    => pert%v
+ p_t    => pert%t
+ p_delp => pert%delp
+ p_qv   => pert%qv
+ p_qi   => pert%qi
+ p_ql   => pert%ql
+ p_o3   => pert%o3
 
  !Convenience pointers
- ltraj => self%ltraj
- lcnst => self%lcnst
+ if (conf%saveltraj) then
+   ltraj => self%ltraj(conf%n)
+ else
+   ltraj => self%ltraj(1)
+ endif
 
- im = lcnst%im
- jm = lcnst%jm
- lm = lcnst%lm
+ !Set up the local trajectory
+ if (.not. ltraj%set) call set_ltraj(conf,self%lcnst,traj,ltraj)
+ 
+ !t2pt 
+ p_t = p00**kappa * p_t / ltraj%pk
 
- pert%t = pert%t / ltraj%pk 
+ print*, ltraj%akv(1,1,50),ltraj%bkv(1,1,50),ltraj%ckv(1,1,50)
 
- call vtrisolvepert(im,jm,lm,ltraj%akv,ltraj%bkv,ltraj%ckv,pert%u ,1,1)
- call vtrisolvepert(im,jm,lm,ltraj%akv,ltraj%bkv,ltraj%ckv,pert%v ,1,1)
- call vtrisolvepert(im,jm,lm,ltraj%aks,ltraj%bks,ltraj%cks,pert%t ,1,1)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%qv,1,1)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%qi,1,0)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%ql,1,0)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%o3,1,0)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_u ,1,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_v ,1,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%aks,ltraj%bks,ltraj%cks,p_t ,1,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qv,1,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qi,1,0)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_ql,1,0)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_o3,1,0)
 
- pert%t = pert%t * ltraj%pk 
+ !pt2t 
+ p_t = ltraj%pk * p_t / p00**kappa
+ 
+ !Nullify
+ nullify(p_u)
+ nullify(p_v)
+ nullify(p_t)
+ nullify(p_delp)
+ nullify(p_qv)
+ nullify(p_qi)
+ nullify(p_ql)
+ nullify(p_o3)
+ nullify(ltraj)
 
 endsubroutine step_tl
 
@@ -232,49 +290,86 @@ subroutine step_ad(self,conf,traj,pert)
  implicit none
 
  class(fv3jedi_lm_turbulence_type), target, intent(inout) :: self
- type(fv3jedi_lm_conf), intent(in)    :: conf
- type(fv3jedi_lm_traj), intent(in)    :: traj
- type(fv3jedi_lm_pert), intent(inout) :: pert
+ type(fv3jedi_lm_conf),                     intent(in)    :: conf
+ type(fv3jedi_lm_traj),                     intent(in)    :: traj
+ type(fv3jedi_lm_pert), target,             intent(inout) :: pert
 
- integer :: i,j,k
  type(local_traj_turbulence), pointer :: ltraj
- type(local_cnst_turbulence), pointer :: lcnst
+ real(kind_real), pointer, dimension(:,:,:) :: p_u
+ real(kind_real), pointer, dimension(:,:,:) :: p_v
+ real(kind_real), pointer, dimension(:,:,:) :: p_t
+ real(kind_real), pointer, dimension(:,:,:) :: p_delp
+ real(kind_real), pointer, dimension(:,:,:) :: p_qv
+ real(kind_real), pointer, dimension(:,:,:) :: p_qi
+ real(kind_real), pointer, dimension(:,:,:) :: p_ql
+ real(kind_real), pointer, dimension(:,:,:) :: p_o3
 
- integer :: im,jm,lm
+ !Pointers with ind starting at 1
+ p_u    => pert%u
+ p_v    => pert%v
+ p_t    => pert%t
+ p_delp => pert%delp
+ p_qv   => pert%qv
+ p_qi   => pert%qi
+ p_ql   => pert%ql
+ p_o3   => pert%o3
+ 
+ !Convenience pointers
+ if (conf%saveltraj) then
+   ltraj => self%ltraj(conf%n)
+ else
+   ltraj => self%ltraj(1)
+ endif
 
  !Set up the local trajectory
- call set_ltraj(conf,self%lcnst,traj,self%ltraj)
+ if (.not. ltraj%set) call set_ltraj(conf,self%lcnst,traj,ltraj)
 
- !Convenience pointers
- ltraj => self%ltraj
- lcnst => self%lcnst
+ !t2pt adjoint 
+ p_t = ltraj%pk * p_t / p00**kappa
 
- im = lcnst%im
- jm = lcnst%jm
- lm = lcnst%lm
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_u ,2,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_v ,2,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%aks,ltraj%bks,ltraj%cks,p_t ,2,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qv,2,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qi,2,0)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_ql,2,0)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_o3,2,0)
 
- pert%t = pert%t * ltraj%pk
-
- call vtrisolvepert(im,jm,lm,ltraj%akv,ltraj%bkv,ltraj%ckv,pert%u ,2,1)
- call vtrisolvepert(im,jm,lm,ltraj%akv,ltraj%bkv,ltraj%ckv,pert%v ,2,1)
- call vtrisolvepert(im,jm,lm,ltraj%aks,ltraj%bks,ltraj%cks,pert%t ,2,1)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%qv,2,1)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%qi,2,0)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%ql,2,0)
- call vtrisolvepert(im,jm,lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%o3,2,0)
-
- pert%t = pert%t / ltraj%pk
+ !pt2t adjoint
+ p_t = p00**kappa * p_t / ltraj%pk
+ 
+ !Nullify
+ nullify(p_u)
+ nullify(p_v)
+ nullify(p_t)
+ nullify(p_delp)
+ nullify(p_qv)
+ nullify(p_qi)
+ nullify(p_ql)
+ nullify(p_o3)
+ nullify(ltraj)
 
 endsubroutine step_ad
 
 ! ------------------------------------------------------------------------------
 
-subroutine delete(self)
+subroutine delete(self,conf)
 
  implicit none
  class(fv3jedi_lm_turbulence_type), intent(inout) :: self
+ type(fv3jedi_lm_conf),             intent(in)    :: conf
 
- call deallocate_ltraj(self%ltraj)
+ integer :: n
+
+ if (conf%saveltraj) then
+   do n = 1,conf%nt
+     call deallocate_ltraj(self%ltraj(n))
+   enddo
+ else 
+   call deallocate_ltraj(self%ltraj(1))
+ endif
+ 
+ deallocate(self%ltraj)
 
 endsubroutine delete
 
@@ -282,10 +377,10 @@ endsubroutine delete
 
 subroutine set_ltraj(conf,lcnst,traj,ltraj)
 
- type(fv3jedi_lm_conf),       intent(in)    :: conf
- type(local_cnst_turbulence), intent(in)    :: lcnst
- type(fv3jedi_lm_traj),       intent(in)    :: traj
- type(local_traj_turbulence), intent(inout) :: ltraj
+ type(fv3jedi_lm_conf),         intent(in)    :: conf
+ type(local_cnst_turbulence),   intent(in)    :: lcnst
+ type(fv3jedi_lm_traj), target, intent(in)    :: traj
+ type(local_traj_turbulence),   intent(inout) :: ltraj
 
  integer :: i,j,l,im,jm,lm,isc,iec,jsc,jec 
 
@@ -296,49 +391,73 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  real(kind_real), allocatable, dimension(:,:,:) :: QIT1, QLT1
  real(kind_real), allocatable, dimension(:,:,:) :: fQi
 
+ real(kind_real), pointer, dimension(:,:,:) :: p_u
+ real(kind_real), pointer, dimension(:,:,:) :: p_v
+ real(kind_real), pointer, dimension(:,:,:) :: p_t
+ real(kind_real), pointer, dimension(:,:,:) :: p_delp
+ real(kind_real), pointer, dimension(:,:,:) :: p_qv
+ real(kind_real), pointer, dimension(:,:)   :: p_frland
+ real(kind_real), pointer, dimension(:,:)   :: p_frocean
+ real(kind_real), pointer, dimension(:,:)   :: p_varflt
+ real(kind_real), pointer, dimension(:,:)   :: p_cm
+ real(kind_real), pointer, dimension(:,:)   :: p_cq
+ real(kind_real), pointer, dimension(:,:)   :: p_ustar
+ real(kind_real), pointer, dimension(:,:)   :: p_bstar
 
- im = lcnst%im
- jm = lcnst%jm
- lm = lcnst%lm
+ im = conf%im
+ jm = conf%jm
+ lm = conf%lm
 
  isc = conf%isc
  iec = conf%iec
  jsc = conf%jsc
  jec = conf%jec
 
- allocate(PTT1 (im,jm,lm))
- allocate(ZPBL1(im,jm))
- allocate(CT1  (im,jm))
- allocate(EKV  (im,jm,lm))
- allocate(FKV  (im,jm,lm))
- allocate(pet  (im,jm,0:lm))
- allocate(pmt  (im,jm,lm))
- allocate(QIT1 (im,jm,lm))
- allocate(QLT1 (im,jm,lm))
- allocate(fQi  (im,jm,lm))
+ allocate(PTT1 (1:im,1:jm,1:lm))
+ allocate(EKV  (1:im,1:jm,1:lm))
+ allocate(FKV  (1:im,1:jm,1:lm))
+ allocate(pet  (1:im,1:jm,0:lm))
+ allocate(pmt  (1:im,1:jm,1:lm))
+ allocate(QIT1 (1:im,1:jm,1:lm))
+ allocate(QLT1 (1:im,1:jm,1:lm))
+ allocate(fQi  (1:im,1:jm,1:lm))
+ allocate(ZPBL1(1:im,1:jm))
+ allocate(CT1  (1:im,1:jm))
+
+ p_u       => traj%u
+ p_v       => traj%v
+ p_t       => traj%t
+ p_delp    => traj%delp
+ p_qv      => traj%qv
+ p_frland  => traj%FRLAND
+ p_frocean => traj%FROCEAN
+ p_varflt  => traj%VARFLT
+ p_cm      => traj%CM
+ p_cq      => traj%CQ
+ p_ustar   => traj%USTAR
+ p_bstar   => traj%BSTAR
 
  !Compute pressures from delp
- call compute_pressures(im,jm,lm,conf%ptop,traj%delp(isc:iec,jsc:jec,:),&
-                        pet,pmt,ltraj%pk)
+ call compute_pressures(im,jm,lm,conf%ptop,p_delp,pet,pmt,ltraj%pk)
 
  !Use local copied to avoid overwrite
  ZPBL1(1:im,1:jm) = traj%ZPBL(isc:iec,jsc:jec)
- CT1(1:im,1:jm) = traj%CT(isc:iec,jsc:jec)
+ CT1  (1:im,1:jm) = traj%CT  (isc:iec,jsc:jec)
 
- ptt1(1:im,1:jm,:) = traj%t(isc:iec,jsc:jec,:) * ltraj%pk(1:im,1:jm,:)
+ ptt1 = p00**kappa * p_t / ltraj%pk
 
  !Calculate total cloud ice and liquid trajectory
  if (conf%do_phy_mst == 0) then
  
-    QIT1 = traj%QI(isc:iec,jsc:jec,:)
-    QLT1 = traj%QL(isc:iec,jsc:jec,:)
+    QIT1(1:im,1:jm,:) = traj%QI(isc:iec,jsc:jec,:)
+    QLT1(1:im,1:jm,:) = traj%QL(isc:iec,jsc:jec,:)
  
  else
  
    DO l = 1,LM
      DO j = 1,JM
        DO i = 1,IM
-         call IceFraction( traj%t(isc+i-1,jsc+j-1,l), fQi(i,j,l) )
+         call IceFraction( p_t(i,j,l), fQi(i,j,l) )
        enddo
      enddo
   enddo
@@ -362,33 +481,32 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  !Call boundary layer routine. These routines will return the lower (AK*), main (BK*),
  !and upper (CK*) diagonals.
  
- call BL_DRIVER( IM           , &
-                 JM           , &
-                 LM           , &
-                 conf%DT           , &
-                 traj%U          , &
-                 traj%V          , &
-                 PTT1         , &
-                 traj%QV          , &
-                 PET          , &
-                 QIT1         , &
-                 QLT1         , &
-                 traj%FRLAND       , &
-                 traj%FROCEAN      , &
-                 traj%VARFLT       , &
-                 ZPBL1        , &
-                 traj%CM           , &
-                 CT1          , &
-                 traj%CQ           , &
-                 lcnst%TURBPARAMS   , &
-                 lcnst%TURBPARAMSI  , &
-                 traj%USTAR        , &
-                 traj%BSTAR        , &
+ call BL_DRIVER( IM                             , &
+                 JM                             , &
+                 LM                             , &
+                 conf%DT                        , &
+                 p_u                            , &
+                 p_v                            , &
+                 PTT1                           , &
+                 p_QV                           , &
+                 PET                            , &
+                 QIT1                           , &
+                 QLT1                           , &
+                 p_FRLAND                       , &
+                 p_FROCEAN                      , &
+                 p_VARFLT                       , &
+                 ZPBL1                          , &
+                 p_CM                           , &
+                 CT1                            , &
+                 p_CQ                           , &
+                 lcnst%TURBPARAMS               , &
+                 lcnst%TURBPARAMSI              , &
+                 p_USTAR                        , &
+                 p_BSTAR                        , &
                  ltraj%AKS, ltraj%BKS, ltraj%CKS, &
                  ltraj%AKQ, ltraj%BKQ, ltraj%CKQ, &
                  ltraj%AKV, ltraj%BKV, ltraj%CKV, &
-                 EKV, FKV       &
-               )
+                 EKV, FKV                         )
 
  !Solver part 1, perform LU decomposition
  call VTRILUPERT(IM,JM,LM,ltraj%AKV,ltraj%BKV,ltraj%CKV)
@@ -405,6 +523,21 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  deallocate(QIT1 )
  deallocate(QLT1 )
  deallocate(fQi  )
+
+ nullify(p_u)
+ nullify(p_v)
+ nullify(p_t)
+ nullify(p_delp)
+ nullify(p_qv)
+ nullify(p_frland)
+ nullify(p_frocean)
+ nullify(p_varflt)
+ nullify(p_cm)
+ nullify(p_cq)
+ nullify(p_ustar)
+ nullify(p_bstar)
+
+ if (conf%saveltraj) ltraj%set = .true.
 
 endsubroutine set_ltraj
 
@@ -455,7 +588,7 @@ subroutine vtrilupert(im,jm,lm,a,b,c)
 
  implicit none
 
- integer,                   intent(in   ) :: im, jm, lm
+ integer,                              intent(in   ) :: im, jm, lm
  real(kind_real), dimension(im,jm,lm), intent(in   ) :: c
  real(kind_real), dimension(im,jm,lm), intent(inout) :: a, b
 
@@ -478,7 +611,7 @@ subroutine vtrisolvepert(im,jm,lm,a,b,c,y,phase,ygswitch)
  implicit none
 
  !arguments
- integer,                   intent(in   ) :: im, jm, lm, phase, ygswitch
+ integer,                              intent(in   ) :: im, jm, lm, phase, ygswitch
  real(kind_real), dimension(im,jm,lm), intent(in   ) :: a, b, c
  real(kind_real), dimension(im,jm,lm), intent(inout) :: y
 

@@ -12,16 +12,21 @@ public :: allocate_traj, deallocate_traj, copy_traj
 
 !> Fortran derived type to hold the linearized model configuration
 type :: fv3jedi_lm_conf
-  real(kind_real) :: dt                  !<Model time step
-  real(kind_real) :: ptop                !<Pressure of top level
-  integer         :: isc,iec,jsc,jec     !<Grid, compute region
-  integer         :: isd,ied,jsd,jed     !<Grid, with halo
-  integer         :: npx, npy, npz       !<Number of grid points
-  integer         :: do_dyn
-  integer         :: do_phy_trb
-  integer         :: do_phy_mst
-  real(kind_real), allocatable, dimension(:) :: ak, bk
-  logical         :: hydrostatic
+  real(kind_real) :: dt                                !<Model time step
+  logical         :: saveltraj = .false.               !<Option to save local trajectories (physics)
+  integer         :: n = 1                             !<Current time step in window
+  integer         :: nt = 1                            !<Number of timesteps in window
+  real(kind_real) :: ptop                              !<Pressure of top level
+  integer         :: isc,iec,jsc,jec                   !<Cube grid, compute region
+  integer         :: isd,ied,jsd,jed                   !<Cube grid, with halo
+  integer         :: npx, npy, npz                     !<Number of grid points, dynamics
+  integer         :: im, jm, lm                        !<Number of grid points, physics, 1:im etc
+  integer         :: do_dyn = 1                        !<Dynamics switch
+  integer         :: do_phy_trb = 1                    !<Physics switch for BL turb
+  integer         :: do_phy_mst = 1                    !<Physics switch for convection and cloud
+  real(kind_real), allocatable, dimension(:) :: ak, bk !<Vertical grid
+  logical         :: hydrostatic                       !<Hydrostatic dy core
+  logical         :: rpe                               !<True if root process
 end type fv3jedi_lm_conf
 
 !> Fortran derived type to hold the linearized model increment

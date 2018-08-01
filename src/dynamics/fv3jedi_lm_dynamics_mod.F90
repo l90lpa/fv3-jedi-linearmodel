@@ -62,7 +62,7 @@ subroutine create(self,conf)
  implicit none
 
  class(fv3jedi_lm_dynamics_type), target, intent(inout) :: self
- type(fv3jedi_lm_conf), intent(in)    :: conf
+ type(fv3jedi_lm_conf), intent(inout)    :: conf
 
  logical, allocatable :: grids_on_this_pe(:)
  integer :: p_split
@@ -71,7 +71,6 @@ subroutine create(self,conf)
 
  type(fv_atmos_type), pointer :: FV_Atm(:)
 
-  print*, 'dan: dyn create'
 
   call fv_init(self%FV_Atm, conf%dt, grids_on_this_pe, p_split)
 
@@ -105,12 +104,7 @@ subroutine create(self,conf)
   FV_Atm(1)%delz = 0.0
   FV_Atm(1)%q_con = 0.0
 
-  deallocate(FV_Atm(1)%q)
-  if (conf%do_phy_mst == 0) then
-     allocate(FV_Atm(1)%q(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,4))
-  else
-     allocate(FV_Atm(1)%q(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,5))
-  endif
+  f_coriolis_angle = 0.0
 
   !fC and f0
   if (FV_Atm(1)%flagstruct%grid_type == 4) then
@@ -152,11 +146,18 @@ subroutine create(self,conf)
   !Initialze the perturbation fv3 structure
   call fv_init_pert(self%FV_Atm,self%FV_AtmP)
 
-  deallocate(self%FV_AtmP(1)%qp)
+  !Not using field_table here to allocate q based on hardwiring
+  deallocate(FV_Atm(1)%q,self%FV_AtmP(1)%qp)
   if (conf%do_phy_mst == 0) then
+     allocate(FV_Atm(1)%q(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,4))
      allocate(self%FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,4))
+     FV_Atm(1)%ncnst = 4
+     FV_Atm(1)%flagstruct%ncnst = 4
   else
+     allocate(FV_Atm(1)%q(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,5))
      allocate(self%FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,5))
+     FV_Atm(1)%ncnst = 5
+     FV_Atm(1)%flagstruct%ncnst = 5
   endif
 
   !Global
@@ -208,6 +209,9 @@ subroutine create(self,conf)
   self%jsd = FV_Atm(1)%bd%jsd
   self%jed = FV_Atm(1)%bd%jed
   self%npz = FV_Atm(1)%npz
+
+  conf%rpe = .false.
+  if (mpp_pe() == mpp_root_pe()) conf%rpe = .true.
 
 endsubroutine create
 
@@ -263,7 +267,6 @@ subroutine step_nl(self,conf,traj)
  type(fv_atmos_type), pointer :: FV_Atm(:)
  integer :: i,j,k
 
- print*, 'dan: dyn step_nl'
 
  !Convenience pointer to the main FV_Atm structure
  !------------------------------------------------
@@ -278,7 +281,7 @@ subroutine step_nl(self,conf,traj)
  ! MPP set domain
  ! --------------
  call set_domain(FV_Atm(1)%domain)
- 
+
  
  !Propagate FV3 one time step
  !---------------------------
@@ -345,22 +348,22 @@ subroutine step_tl(self,conf,traj,pert)
  type(fv_atmos_pert_type), pointer :: FV_AtmP(:)
  integer :: i,j,k
 
-print*, 'dan step_tl'
 
  !Convenience pointer to the main FV_Atm structure
  !------------------------------------------------
  FV_Atm => self%FV_Atm
  FV_AtmP => self%FV_AtmP
 
- !Copy from traj/pert to the fv3 structures
- !-----------------------------------------
- call traj_to_fv3(self,conf,traj)
- call pert_to_fv3(self,conf,pert)
-
 
  ! Make sure everything is zero
  ! ----------------------------
  call zero_pert_vars(FV_AtmP(1))
+
+
+ !Copy from traj/pert to the fv3 structures
+ !-----------------------------------------
+ call traj_to_fv3(self,conf,traj)
+ call pert_to_fv3(self,conf,pert)
 
 
  !Edge of pert always needs to be filled
@@ -434,7 +437,6 @@ print*, 'dan step_tl'
  ! ----------------------------
  call zero_pert_vars(FV_AtmP(1))
 
- print*, 'dan step_tl done'
 
 endsubroutine step_tl
 
@@ -449,14 +451,21 @@ subroutine step_ad(self,conf,traj,pert)
  type(fv3jedi_lm_traj), intent(in)    :: traj
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
-  type(fv_atmos_type), pointer :: FV_Atm(:)
+ type(fv_atmos_type), pointer :: FV_Atm(:)
  type(fv_atmos_pert_type), pointer :: FV_AtmP(:)
  integer :: i,j,k
+
 
  !Convenience pointer to the main FV_Atm structure
  !------------------------------------------------
  FV_Atm  => self%FV_Atm
  FV_AtmP => self%FV_AtmP
+
+
+ ! Make sure everything is zero
+ ! ----------------------------
+ call zero_pert_vars(FV_AtmP(1))
+
 
  !Copy from traj/pert to the fv3 structures
  !-----------------------------------------
@@ -586,11 +595,6 @@ subroutine step_ad(self,conf,traj,pert)
  endif
  
  
- ! Make sure everything is zero
- ! ----------------------------
- call zero_pert_vars(FV_AtmP(1))
- 
- 
  ! Backward adjoint sweep of the dynamics
  ! --------------------------------------
  call fv_dynamics_bwd(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,                      &
@@ -655,6 +659,11 @@ subroutine step_ad(self,conf,traj,pert)
  !------------------------------------
  call fv3_to_pert(self,conf,pert)
 
+ 
+ ! Make sure everything is zero
+ ! ----------------------------
+ call zero_pert_vars(FV_AtmP(1))
+ 
 
 endsubroutine step_ad
 
@@ -694,7 +703,9 @@ subroutine traj_to_fv3(self,conf,traj)
 
  integer :: i,j,k
 
+
  !Zero the halos
+ !--------------
  self%FV_Atm(1)%u    = 0.0
  self%FV_Atm(1)%v    = 0.0
  self%FV_Atm(1)%pt   = 0.0
@@ -702,8 +713,27 @@ subroutine traj_to_fv3(self,conf,traj)
  self%FV_Atm(1)%q    = 0.0
  self%FV_Atm(1)%w    = 0.0
  self%FV_Atm(1)%delz = 0.0
+ self%FV_Atm(1)%phis = 0.0
+ self%FV_Atm(1)%pe    = 0.0
+ self%FV_Atm(1)%peln  = 0.0
+ self%FV_Atm(1)%pk    = 0.0
+ self%FV_Atm(1)%pkz   = 0.0
+ self%FV_Atm(1)%ua    = 0.0
+ self%FV_Atm(1)%va    = 0.0
+ self%FV_Atm(1)%uc    = 0.0
+ self%FV_Atm(1)%vc    = 0.0
+ self%FV_Atm(1)%omga  = 0.0
+ self%FV_Atm(1)%mfx   = 0.0
+ self%FV_Atm(1)%mfy   = 0.0
+ self%FV_Atm(1)%cx    = 0.0
+ self%FV_Atm(1)%cy    = 0.0
+ self%FV_Atm(1)%ze0   = 0.0
+ self%FV_Atm(1)%q_con = 0.0
+ self%FV_Atm(1)%ps    = 0.0
 
- !Copy grid part
+
+ !Copy from traj
+ !--------------
  self%FV_Atm(1)%u   (self%isc:self%iec,self%jsc:self%jec,:) = traj%u   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_Atm(1)%v   (self%isc:self%iec,self%jsc:self%jec,:) = traj%v   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_Atm(1)%pt  (self%isc:self%iec,self%jsc:self%jec,:) = traj%t   (self%isc:self%iec,self%jsc:self%jec,:)
@@ -726,9 +756,6 @@ subroutine traj_to_fv3(self,conf,traj)
     self%FV_Atm(1)%delz(self%isc:self%iec  ,self%jsc:self%jec  ,:  ) = traj%delz(self%isc:self%iec  ,self%jsc:self%jec  ,:  )
     self%FV_Atm(1)%w   (self%isc:self%iec  ,self%jsc:self%jec  ,:  ) = traj%w   (self%isc:self%iec  ,self%jsc:self%jec  ,:  )
  endif
-
- self%FV_Atm(1)%ua(self%isc:self%iec,self%jsc:self%jec,:) = traj%ua(self%isc:self%iec,self%jsc:self%jec,:)
- self%FV_Atm(1)%va(self%isc:self%iec,self%jsc:self%jec,:) = traj%va(self%isc:self%iec,self%jsc:self%jec,:)
 
  self%FV_Atm(1)%phis(self%isc:self%iec,self%jsc:self%jec) = traj%phis(self%isc:self%iec,self%jsc:self%jec)
 
@@ -756,31 +783,11 @@ subroutine traj_to_fv3(self,conf,traj)
  call mpp_update_domains(self%FV_Atm(1)%phis, self%FV_Atm(1)%domain, complete=.true.)
 
  
- ! Zero parts of the trajectory that are recomputed or outputs
- ! -----------------------------------------------------------
- self%FV_Atm(1)%pe    = 0.0
- self%FV_Atm(1)%peln  = 0.0
- self%FV_Atm(1)%pk    = 0.0
- self%FV_Atm(1)%pkz   = 0.0
- self%FV_Atm(1)%ua    = 0.0
- self%FV_Atm(1)%va    = 0.0
- self%FV_Atm(1)%uc    = 0.0
- self%FV_Atm(1)%vc    = 0.0
- self%FV_Atm(1)%omga  = 0.0
- self%FV_Atm(1)%mfx   = 0.0
- self%FV_Atm(1)%mfy   = 0.0
- self%FV_Atm(1)%cx    = 0.0
- self%FV_Atm(1)%cy    = 0.0
- self%FV_Atm(1)%ze0   = 0.0
- self%FV_Atm(1)%q_con = 0.0
-
-
  !Compute the other pressure variables needed by FV3
  !--------------------------------------------------
  call compute_fv3_pressures( self%isc, self%iec, self%jsc, self%jec, self%isd, self%ied, self%jsd, self%jed, &
                              self%npz, kappa, self%FV_Atm(1)%ptop, &
                              self%FV_Atm(1)%delp, self%FV_Atm(1)%pe, self%FV_Atm(1)%pk, self%FV_Atm(1)%pkz, self%FV_Atm(1)%peln )
-
 
 endsubroutine traj_to_fv3
 

@@ -147,8 +147,8 @@ subroutine delete(self,conf)
  class(fv3jedi_lm_physics_type), intent(inout) :: self
  type(fv3jedi_lm_conf), intent(in)    :: conf
 
- if (conf%do_phy_mst.ne.0) call self%fv3jedi_lm_moist%delete()
- if (conf%do_phy_trb.ne.0) call self%fv3jedi_lm_turbulence%delete()
+ if (conf%do_phy_mst.ne.0) call self%fv3jedi_lm_moist%delete(conf)
+ if (conf%do_phy_trb.ne.0) call self%fv3jedi_lm_turbulence%delete(conf)
 
 endsubroutine delete
 
