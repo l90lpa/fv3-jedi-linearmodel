@@ -257,8 +257,6 @@ subroutine step_tl(self,conf,traj,pert)
  !t2pt 
  p_t = p00**kappa * p_t / ltraj%pk
 
- print*, ltraj%akv(1,1,50),ltraj%bkv(1,1,50),ltraj%ckv(1,1,50)
-
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_u ,1,1)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_v ,1,1)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%aks,ltraj%bks,ltraj%cks,p_t ,1,1)
