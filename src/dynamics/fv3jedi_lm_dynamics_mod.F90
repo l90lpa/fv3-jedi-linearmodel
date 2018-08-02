@@ -37,7 +37,7 @@ type fv3jedi_lm_dynamics_type
  integer         :: isd,ied,jsd,jed     !<Grid, with halo
  integer         :: npz                 !<Number of vertical levels
  integer :: cp_dyn_ind
- integer :: linmodtest = 1
+ integer :: linmodtest = 0
  contains
   procedure :: create
   procedure :: init_nl
