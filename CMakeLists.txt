@@ -43,6 +43,14 @@ set( FV3_LINKER_LANGUAGE CXX )
 #              COMPONENTS unit_test_framework )
 #include_directories( ${Boost_INCLUDE_DIR} )
 
+# LAPACK
+ecbuild_add_option( FEATURE LAPACK
+                    DESCRIPTION "Linear Algebra PACKage"
+                    REQUIRED_PACKAGES "LAPACK REQUIRED" )
+if (NOT HAVE_LAPACK)
+  ecbuild_error("LAPACK_LIBRARIES not defined")
+endif()
+
 # MPI
 ecbuild_add_option( FEATURE MPI DEFAULT ON
                     DESCRIPTION "Support for MPI distributed parallelism"
@@ -73,7 +81,7 @@ add_definitions( ${COMPDEFS} )
 # Export package info
 ################################################################################
 
-list( APPEND FV3_TPLS MPI fms )
+list( APPEND FV3_TPLS LAPACK MPI fms )
 
 set( FV3_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src
                       ${CMAKE_Fortran_MODULE_DIRECTORY} )

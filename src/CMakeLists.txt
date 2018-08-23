@@ -100,7 +100,7 @@ physics/turbulence/blsimp.F90
 
 ecbuild_add_library( TARGET   fv3
                      SOURCES  ${fv3_src_files}
-                     LIBS     ${NETCDF_LIBRARIES} ${FMS_LIBRARIES}
+                     LIBS     ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} ${FMS_LIBRARIES}
                      INCLUDES ${FMS_INCLUDES}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
