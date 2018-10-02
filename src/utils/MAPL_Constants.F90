@@ -1,17 +1,7 @@
 module MAPL_ConstantsMod
 
-!  $Id: MAPL_Constants.F90,v 1.7 2018/04/02 15:19:55 mathomp4 Exp $
-
 implicit none
 private
-
-
-!=============================================================================
-!BOP
-
-! !MODULE: -- A container module for global constants
-
-! !PUBLIC VARIABLES:
 
 integer,parameter, public :: MAPL_R8 = selected_real_kind(12) ! 8 byte real
 integer,parameter, public :: MAPL_R4 = selected_real_kind( 6) ! 4 byte real
@@ -71,9 +61,4 @@ real, parameter, public :: MAPL_RHO_SEAWATER  = 1026.0          ! sea water dens
 real, parameter, public :: MAPL_RHO_SEAICE    = 917.0           ! sea ice   density [kg/m^3]. SA: should it be = 917  kg/m^3?
 real, parameter, public :: MAPL_RHO_SNOW      = 330.0           ! snow density      [kg/m^3]. SA: should it be = 330  kg/m^3?
 
-
-
-!EOP
-
 end module MAPL_CONSTANTSMOD
-

@@ -850,6 +850,9 @@ SUBROUTINE CLOUD_DRIVER_B(dt, im, jm, lm, th, thb, q, qb, ple, cnv_dqldt&
         !cf_con_p_presink = (1.0-SINKfilt_CF) * cf_conb(i,j,k)
         !cf_conb(i,j,k) = SINKfilt_CF * cf_conb(i,j,k)
 
+        cf_con_p_presink = 0.0
+        cf_conb(i,j,k) = 0.0
+
         CALL POPREAL8(qi_con(i, j, k))
         tempb12 = qi_con(i, j, k)*qi_conb(i, j, k)
         qi_conb(i, j, k) = qit_tmp*qt_tmpi_2*qi_conb(i, j, k)

@@ -32,7 +32,9 @@ set( CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_BASE} -O3 -qopt-report0 
 # DEBUG FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_DEBUG   "${CMAKE_Fortran_FLAGS_BASE} -g -O0 -debug -nolib-inline -fno-inline-functions -assume protect_parens,minus0 -prec-div -prec-sqrt -check bounds -check uninit -fp-stack-check -ftrapuv -warn unused -init=snan,arrays" )
+#set( CMAKE_Fortran_FLAGS_DEBUG   "${CMAKE_Fortran_FLAGS_BASE} -g -O0 -debug -nolib-inline -fno-inline-functions -assume protect_parens,minus0 -prec-div -prec-sqrt -check bounds -check uninit -fp-stack-check -ftrapuv -warn unused -init=snan,arrays" )
+
+set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -r8 -g -check bounds -traceback -warn -heap-arrays -fpe-all=0 -fpe:0 -check assume -check format -check output_conversion -check pointers -check stack -check uninit" )
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
