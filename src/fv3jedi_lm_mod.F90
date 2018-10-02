@@ -104,7 +104,7 @@ subroutine init_nl(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%init_nl(self%conf,self%pert,self%traj)
+ if (self%conf%do_dyn == 1) call self%fv3jedi_lm_dynamics%init_nl(self%conf,self%pert,self%traj)
  call self%fv3jedi_lm_physics%init_nl(self%conf,self%pert,self%traj)
 
 endsubroutine init_nl
@@ -119,7 +119,7 @@ subroutine init_tl(self)
 
  call ipert_to_zero(self%pert)
 
- if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%init_tl(self%conf,self%pert,self%traj)
+ if (self%conf%do_dyn == 1) call self%fv3jedi_lm_dynamics%init_tl(self%conf,self%pert,self%traj)
  call self%fv3jedi_lm_physics%init_tl(self%conf,self%pert,self%traj)
 
 endsubroutine init_tl
@@ -134,7 +134,7 @@ subroutine init_ad(self)
 
  call ipert_to_zero(self%pert)
 
- if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%init_ad(self%conf,self%pert,self%traj)
+ if (self%conf%do_dyn == 1) call self%fv3jedi_lm_dynamics%init_ad(self%conf,self%pert,self%traj)
  call self%fv3jedi_lm_physics%init_ad(self%conf,self%pert,self%traj)
 
 endsubroutine init_ad
@@ -147,7 +147,7 @@ subroutine step_nl(self)
 
  class(fv3jedi_lm_type), intent(inout) :: self
 
- if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%step_nl(self%conf,self%traj)
+ if (self%conf%do_dyn == 1) call self%fv3jedi_lm_dynamics%step_nl(self%conf,self%traj)
  call self%fv3jedi_lm_physics%step_nl(self%conf,self%traj)
 
 endsubroutine step_nl
@@ -161,7 +161,7 @@ subroutine step_tl(self)
  class(fv3jedi_lm_type), intent(inout) :: self
 
  call ipert_to_zero(self%pert)
- if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%step_tl(self%conf,self%traj,self%pert)
+ if (self%conf%do_dyn == 1) call self%fv3jedi_lm_dynamics%step_tl(self%conf,self%traj,self%pert)
  call self%fv3jedi_lm_physics%step_tl(self%conf,self%traj,self%pert)
  call ipert_to_zero(self%pert)
 
@@ -177,7 +177,7 @@ subroutine step_ad(self)
 
  call ipert_to_zero(self%pert)
  call self%fv3jedi_lm_physics%step_ad(self%conf,self%traj,self%pert)
- if (self%conf%do_dyn) call self%fv3jedi_lm_dynamics%step_ad(self%conf,self%traj,self%pert)
+ if (self%conf%do_dyn == 1) call self%fv3jedi_lm_dynamics%step_ad(self%conf,self%traj,self%pert)
  call ipert_to_zero(self%pert)
 
 endsubroutine step_ad
