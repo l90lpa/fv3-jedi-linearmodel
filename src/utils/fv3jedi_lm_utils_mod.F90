@@ -22,6 +22,7 @@ type :: fv3jedi_lm_conf
   integer         :: npx, npy, npz                     !<Number of grid points, dynamics
   integer         :: im, jm, lm                        !<Number of grid points, physics, 1:im etc
   integer         :: do_dyn = 1                        !<Dynamics switch
+  integer         :: do_phy = 1                        !<Physics switch
   integer         :: do_phy_trb = 1                    !<Physics switch for BL turb
   integer         :: do_phy_mst = 1                    !<Physics switch for convection and cloud
   real(kind_real), allocatable, dimension(:) :: ak, bk !<Vertical grid
@@ -114,6 +115,7 @@ subroutine deallocate_pert(pert)
  if(allocated(pert%ql)  ) deallocate(pert%ql)
  if(allocated(pert%qi)  ) deallocate(pert%qi)
  if(allocated(pert%o3)  ) deallocate(pert%o3)
+ if(allocated(pert%cfcn)) deallocate(pert%cfcn)
  if(allocated(pert%w)   ) deallocate(pert%w)
  if(allocated(pert%delz)) deallocate(pert%delz)
 

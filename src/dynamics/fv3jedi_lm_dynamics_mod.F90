@@ -20,7 +20,7 @@ use fv_pressure_mod,     only: compute_fv3_pressures, compute_fv3_pressures_tlm,
 use tapenade_iter, only: cp_iter, cp_iter_controls, initialize_cp_iter, finalize_cp_iter
 use tapenade_iter, only: cp_mod_ini, cp_mod_mid, cp_mod_end, pushrealarray, poprealarray
 
-!> Top level for fv3jedi linearized model
+!> Top level for fv3jedi linearized dynamical core
 
 implicit none
 private
@@ -65,12 +65,11 @@ subroutine create(self,conf)
  type(fv3jedi_lm_conf), intent(inout)    :: conf
 
  logical, allocatable :: grids_on_this_pe(:)
- integer :: p_split
+ integer :: p_split = 1
  integer :: i,j,tmp
  real(kind_real) :: f_coriolis_angle
 
  type(fv_atmos_type), pointer :: FV_Atm(:)
-
 
   call fv_init(self%FV_Atm, conf%dt, grids_on_this_pe, p_split)
 
@@ -100,31 +99,31 @@ subroutine create(self,conf)
                                  FV_Atm(1)%flagstruct%npz) )
   allocate  ( FV_Atm(1)%q_con(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,&
                                  FV_Atm(1)%flagstruct%npz) )
-  FV_Atm(1)%w = 0.0
-  FV_Atm(1)%delz = 0.0
-  FV_Atm(1)%q_con = 0.0
+  FV_Atm(1)%w = 0.0_kind_real
+  FV_Atm(1)%delz = 0.0_kind_real
+  FV_Atm(1)%q_con = 0.0_kind_real
 
-  f_coriolis_angle = 0.0
+  f_coriolis_angle = 0.0_kind_real
 
   !fC and f0
   if (FV_Atm(1)%flagstruct%grid_type == 4) then
-     FV_Atm(1)%gridstruct%fC(:,:) = 2.*omega*sin(FV_Atm(1)%flagstruct%deglat/180.*pi)
-     FV_Atm(1)%gridstruct%f0(:,:) = 2.*omega*sin(FV_Atm(1)%flagstruct%deglat/180.*pi)
+     FV_Atm(1)%gridstruct%fC(:,:) = 2.0_kind_real*omega*sin(FV_Atm(1)%flagstruct%deglat/180.0_kind_real*pi)
+     FV_Atm(1)%gridstruct%f0(:,:) = 2.0_kind_real*omega*sin(FV_Atm(1)%flagstruct%deglat/180.0_kind_real*pi)
   else
-     if (f_coriolis_angle == -999.0) then
-        FV_Atm(1)%gridstruct%fC(:,:) = 0.0
-        FV_Atm(1)%gridstruct%f0(:,:) = 0.0
+     if (f_coriolis_angle == -999.0_kind_real) then
+        FV_Atm(1)%gridstruct%fC(:,:) = 0.0_kind_real
+        FV_Atm(1)%gridstruct%f0(:,:) = 0.0_kind_real
      else
         do j=FV_Atm(1)%bd%jsd,FV_Atm(1)%bd%jed+1
            do i=FV_Atm(1)%bd%isd,FV_Atm(1)%bd%ied+1
-              FV_Atm(1)%gridstruct%fC(i,j) = 2.*omega*( -COS(FV_Atm(1)%gridstruct%grid(i,j,1))*&
+              FV_Atm(1)%gridstruct%fC(i,j) = 2.0_kind_real*omega*( -COS(FV_Atm(1)%gridstruct%grid(i,j,1))*&
                                              COS(FV_Atm(1)%gridstruct%grid(i,j,2))*SIN(f_coriolis_angle) + &
                                              SIN(FV_Atm(1)%gridstruct%grid(i,j,2))*COS(f_coriolis_angle) )
            enddo
         enddo
         do j=FV_Atm(1)%bd%jsd,FV_Atm(1)%bd%jed
            do i=FV_Atm(1)%bd%isd,FV_Atm(1)%bd%ied
-              FV_Atm(1)%gridstruct%f0(i,j) = 2.*omega*( -COS(FV_Atm(1)%gridstruct%agrid(i,j,1))*&
+              FV_Atm(1)%gridstruct%f0(i,j) = 2.0_kind_real*omega*( -COS(FV_Atm(1)%gridstruct%agrid(i,j,1))*&
                                              COS(FV_Atm(1)%gridstruct%agrid(i,j,2))*SIN(f_coriolis_angle) + &
                                              SIN(FV_Atm(1)%gridstruct%agrid(i,j,2))*COS(f_coriolis_angle) )
            enddo
@@ -149,16 +148,14 @@ subroutine create(self,conf)
   !Not using field_table here to allocate q based on hardwiring
   deallocate(FV_Atm(1)%q,self%FV_AtmP(1)%qp)
   if (conf%do_phy_mst == 0) then
-     allocate(FV_Atm(1)%q(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,4))
-     allocate(self%FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,4))
      FV_Atm(1)%ncnst = 4
-     FV_Atm(1)%flagstruct%ncnst = 4
   else
-     allocate(FV_Atm(1)%q(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,5))
-     allocate(self%FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,5))
      FV_Atm(1)%ncnst = 5
-     FV_Atm(1)%flagstruct%ncnst = 5
   endif
+
+  FV_Atm(1)%flagstruct%ncnst = FV_Atm(1)%ncnst
+  allocate(     FV_Atm (1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,FV_Atm(1)%ncnst))
+  allocate(self%FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,FV_Atm(1)%ncnst))
 
   !Global
   cp_iter_controls%cp_i  = 0
@@ -718,30 +715,30 @@ subroutine traj_to_fv3(self,conf,traj)
 
  !Zero the halos
  !--------------
- self%FV_Atm(1)%u     = 0.0
- self%FV_Atm(1)%v     = 0.0
- self%FV_Atm(1)%pt    = 0.0
- self%FV_Atm(1)%delp  = 0.0
- self%FV_Atm(1)%q     = 0.0
- self%FV_Atm(1)%w     = 0.0
- self%FV_Atm(1)%delz  = 0.0
- self%FV_Atm(1)%phis  = 0.0
- self%FV_Atm(1)%pe    = 0.0
- self%FV_Atm(1)%peln  = 0.0
- self%FV_Atm(1)%pk    = 0.0
- self%FV_Atm(1)%pkz   = 0.0
- self%FV_Atm(1)%ua    = 0.0
- self%FV_Atm(1)%va    = 0.0
- self%FV_Atm(1)%uc    = 0.0
- self%FV_Atm(1)%vc    = 0.0
- self%FV_Atm(1)%omga  = 0.0
- self%FV_Atm(1)%mfx   = 0.0
- self%FV_Atm(1)%mfy   = 0.0
- self%FV_Atm(1)%cx    = 0.0
- self%FV_Atm(1)%cy    = 0.0
- self%FV_Atm(1)%ze0   = 0.0
- self%FV_Atm(1)%q_con = 0.0
- self%FV_Atm(1)%ps    = 0.0
+ self%FV_Atm(1)%u     = 0.0_kind_real
+ self%FV_Atm(1)%v     = 0.0_kind_real
+ self%FV_Atm(1)%pt    = 0.0_kind_real
+ self%FV_Atm(1)%delp  = 0.0_kind_real
+ self%FV_Atm(1)%q     = 0.0_kind_real
+ self%FV_Atm(1)%w     = 0.0_kind_real
+ self%FV_Atm(1)%delz  = 0.0_kind_real
+ self%FV_Atm(1)%phis  = 0.0_kind_real
+ self%FV_Atm(1)%pe    = 0.0_kind_real
+ self%FV_Atm(1)%peln  = 0.0_kind_real
+ self%FV_Atm(1)%pk    = 0.0_kind_real
+ self%FV_Atm(1)%pkz   = 0.0_kind_real
+ self%FV_Atm(1)%ua    = 0.0_kind_real
+ self%FV_Atm(1)%va    = 0.0_kind_real
+ self%FV_Atm(1)%uc    = 0.0_kind_real
+ self%FV_Atm(1)%vc    = 0.0_kind_real
+ self%FV_Atm(1)%omga  = 0.0_kind_real
+ self%FV_Atm(1)%mfx   = 0.0_kind_real
+ self%FV_Atm(1)%mfy   = 0.0_kind_real
+ self%FV_Atm(1)%cx    = 0.0_kind_real
+ self%FV_Atm(1)%cy    = 0.0_kind_real
+ self%FV_Atm(1)%ze0   = 0.0_kind_real
+ self%FV_Atm(1)%q_con = 0.0_kind_real
+ self%FV_Atm(1)%ps    = 0.0_kind_real
 
 
  !Copy from traj
@@ -813,18 +810,15 @@ subroutine fv3_to_traj(self,conf,traj)
  traj%v   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%v   (self%isc:self%iec,self%jsc:self%jec,:)
  traj%t   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%pt  (self%isc:self%iec,self%jsc:self%jec,:)
  traj%delp(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%delp(self%isc:self%iec,self%jsc:self%jec,:)
- if (conf%do_phy_mst == 0) then
-   traj%qv(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,1)
-   traj%ql(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,2)
-   traj%qi(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,3)
-   traj%o3(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,4)
- else
-   traj%qv  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,1)
-   traj%qls (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,2)
-   traj%qcn (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,3)
-   traj%o3  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,4)
+ traj%qv  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,1)
+ traj%ql  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,2)
+ traj%qi  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,3)
+ traj%o3  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,4)
+
+ if (conf%do_phy_mst .ne. 0) then
    traj%cfcn(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,5)
  endif
+
  if (.not. self%FV_Atm(1)%flagstruct%hydrostatic) then
     traj%delz(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%delz(self%isc:self%iec,self%jsc:self%jec,:)
     traj%w   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%w   (self%isc:self%iec,self%jsc:self%jec,:)
