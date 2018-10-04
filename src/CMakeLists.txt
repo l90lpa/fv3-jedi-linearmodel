@@ -1,77 +1,5 @@
-list( APPEND fv3_src_files
+list( APPEND fv3jedilm_src_files
 fv3jedi_lm_mod.F90
-dynamics/fv3jedi_lm_dynamics_mod.F90
-dynamics/atmos_cubed_sphere/model/a2b_edge.F90
-dynamics/atmos_cubed_sphere/model/boundary.F90
-dynamics/atmos_cubed_sphere/model/dyn_core.F90
-dynamics/atmos_cubed_sphere/model/fastexp.c
-dynamics/atmos_cubed_sphere/model/fv_arrays.F90
-dynamics/atmos_cubed_sphere/model/fv_cmp.F90
-dynamics/atmos_cubed_sphere/model/fv_control.F90
-dynamics/atmos_cubed_sphere/model/fv_dynamics.F90
-dynamics/atmos_cubed_sphere/model/fv_fill.F90
-dynamics/atmos_cubed_sphere/model/fv_grid_utils.F90
-dynamics/atmos_cubed_sphere/model/fv_mapz.F90
-dynamics/atmos_cubed_sphere/model/fv_nesting.F90
-dynamics/atmos_cubed_sphere/model/fv_sg.F90
-dynamics/atmos_cubed_sphere/model/fv_tracer2d.F90
-dynamics/atmos_cubed_sphere/model/fv_update_phys.F90
-dynamics/atmos_cubed_sphere/model/lin_cloud_microphys.F90
-dynamics/atmos_cubed_sphere/model/nh_core.F90
-dynamics/atmos_cubed_sphere/model/nh_utils.F90
-dynamics/atmos_cubed_sphere/model/sw_core.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/a2b_edge_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/a2b_edge_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/boundary_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/boundary_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/dyn_core_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/dyn_core_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_arrays_nlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_control_nlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_dynamics_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_dynamics_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_grid_utils_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_grid_utils_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_mapz_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_mapz_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_mp_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_mp_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_nesting_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_nesting_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_pressure.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_restart_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_restart_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_sg_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_sg_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_tracer2d_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/fv_tracer2d_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/nh_core_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/nh_core_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/nh_utils_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/nh_utils_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/sw_core_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/sw_core_tlm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/tp_core_adm.F90
-dynamics/atmos_cubed_sphere/model_tlmadm/tp_core_tlm.F90
-dynamics/atmos_cubed_sphere/model/tp_core.F90
-dynamics/atmos_cubed_sphere/tools/external_ic.F90
-dynamics/atmos_cubed_sphere/tools/external_sst.F90
-dynamics/atmos_cubed_sphere/tools/fv_climate_nudge.F90
-dynamics/atmos_cubed_sphere/tools/fv_diagnostics.F90
-dynamics/atmos_cubed_sphere/tools/fv_eta.F90
-dynamics/atmos_cubed_sphere/tools/fv_grid_tools.F90
-dynamics/atmos_cubed_sphere/tools/fv_io.F90
-dynamics/atmos_cubed_sphere/tools/fv_mp_mod.F90
-dynamics/atmos_cubed_sphere/tools/fv_nudge.F90
-dynamics/atmos_cubed_sphere/tools/fv_restart.F90
-dynamics/atmos_cubed_sphere/tools/fv_surf_map.F90
-dynamics/atmos_cubed_sphere/tools/fv_timing.F90
-dynamics/atmos_cubed_sphere/tools/fv_treat_da_inc.F90
-dynamics/atmos_cubed_sphere/tools/init_hydro.F90
-dynamics/atmos_cubed_sphere/tools/read_climate_nudge_data.F90
-dynamics/atmos_cubed_sphere/tools/sim_nc_mod.F90
-dynamics/atmos_cubed_sphere/tools/sorted_index.F90
-dynamics/atmos_cubed_sphere/tools/test_cases.F90
 physics/fv3jedi_lm_physics_mod.F90
 physics/moist/cloud_ad.F90
 physics/moist/cloud.F90
@@ -93,8 +21,27 @@ utils/tapenade/adStack.c
 utils/tapenade/tapenade_iter.F90
 )
 
-ecbuild_add_library( TARGET   fv3
-                     SOURCES  ${fv3_src_files}
+function(PREPEND var prefix )
+    set ( listVar "" )
+    foreach (f ${ARGN})
+        list (APPEND listVar "${prefix}/${f}")
+    endforeach(f)
+    set ( ${var} "${listVar}" PARENT_SCOPE )
+endfunction(PREPEND)
+
+add_subdirectory(dynamics)
+add_subdirectory(physics)
+add_subdirectory(utils)
+
+
+list( APPEND fv3jedilm_src_files
+    ${dynamics_src_files}
+    ${physics_src_files}
+    ${utils_src_files}
+)
+
+ecbuild_add_library( TARGET   fv3jedilm
+                     SOURCES  ${fv3jedilm_src_files}
                      LIBS     ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} ${FMS_LIBRARIES}
                      INCLUDES ${FMS_INCLUDES}
                      INSTALL_HEADERS LISTED

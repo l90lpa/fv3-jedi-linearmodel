@@ -4,12 +4,12 @@
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 ################################################################################
-# FV3
+# FV3JEDILM
 ################################################################################
 
 cmake_minimum_required( VERSION 3.3.2 FATAL_ERROR )
 
-project( fv3 C CXX Fortran )
+project( fv3jedilm C CXX Fortran )
 
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH} )
 
@@ -31,7 +31,7 @@ ecbuild_declare_project()
 ecbuild_enable_fortran( REQUIRED )
 ecbuild_add_cxx11_flags()
 
-set( FV3_LINKER_LANGUAGE CXX )
+set( FV3JEDILM_LINKER_LANGUAGE CXX )
 
 ################################################################################
 # Dependencies
@@ -81,27 +81,27 @@ add_definitions( ${COMPDEFS} )
 # Export package info
 ################################################################################
 
-list( APPEND FV3_TPLS LAPACK MPI fms )
+list( APPEND FV3JEDILM_TPLS LAPACK MPI fms )
 
-set( FV3_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src
+set( FV3JEDILM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src
                       ${CMAKE_Fortran_MODULE_DIRECTORY} )
-set( FV3_LIBRARIES fv3 )
+set( FV3JEDILM_LIBRARIES fv3jedilm )
 
-get_directory_property( FV3_DEFINITIONS COMPILE_DEFINITIONS )
+get_directory_property( FV3JEDILM_DEFINITIONS COMPILE_DEFINITIONS )
 
-foreach( _tpl ${FV3_TPLS} )
+foreach( _tpl ${FV3JEDILM_TPLS} )
   string( TOUPPER ${_tpl} TPL )
-  list( APPEND FV3_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )
-  list( APPEND FV3_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} ${${TPL}_TPL_INCLUDE_DIRS} )
-  list( APPEND FV3_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
+  list( APPEND FV3JEDILM_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )
+  list( APPEND FV3JEDILM_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} ${${TPL}_TPL_INCLUDE_DIRS} )
+  list( APPEND FV3JEDILM_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
 
 ################################################################################
 # Sources
 ################################################################################
 
-include( fv3_compiler_flags )
-include_directories( ${FV3_INCLUDE_DIRS} ${FV3_EXTRA_INCLUDE_DIRS} )
+include( fv3jedilm_compiler_flags )
+include_directories( ${FV3JEDILM_INCLUDE_DIRS} ${FV3JEDILM_EXTRA_INCLUDE_DIRS} )
 
 add_subdirectory( src )
 
@@ -110,7 +110,7 @@ add_subdirectory( src )
 ################################################################################
 
 # prepares a tar.gz of the sources and/or binaries
-ecbuild_install_project( NAME fv3 )
+ecbuild_install_project( NAME fv3jedilm )
 
 # print the summary of the configuration
 ecbuild_print_summary()
