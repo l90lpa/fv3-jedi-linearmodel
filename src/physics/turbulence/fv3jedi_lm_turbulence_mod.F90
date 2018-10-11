@@ -167,14 +167,14 @@ subroutine step_nl(self,conf,traj)
  real(kind_real), pointer, dimension(:,:,:) :: p_o3
 
  !Pointers with ind starting at 1
- p_u    => traj%u
- p_v    => traj%v
- p_t    => traj%t
- p_delp => traj%delp
- p_qv   => traj%qv
- p_qi   => traj%qi
- p_ql   => traj%ql
- p_o3   => traj%o3
+ p_u   (1:conf%im,1:conf%jm,1:conf%lm) => traj%u
+ p_v   (1:conf%im,1:conf%jm,1:conf%lm) => traj%v
+ p_t   (1:conf%im,1:conf%jm,1:conf%lm) => traj%t
+ p_delp(1:conf%im,1:conf%jm,1:conf%lm) => traj%delp
+ p_qv  (1:conf%im,1:conf%jm,1:conf%lm) => traj%qv
+ p_qi  (1:conf%im,1:conf%jm,1:conf%lm) => traj%qi
+ p_ql  (1:conf%im,1:conf%jm,1:conf%lm) => traj%ql
+ p_o3  (1:conf%im,1:conf%jm,1:conf%lm) => traj%o3
  
  !Convenience pointers
  if (conf%saveltraj) then
@@ -235,14 +235,14 @@ subroutine step_tl(self,conf,traj,pert)
  real(kind_real), pointer, dimension(:,:,:) :: p_o3
 
  !Pointers with ind starting at 1
- p_u    => pert%u
- p_v    => pert%v
- p_t    => pert%t
- p_delp => pert%delp
- p_qv   => pert%qv
- p_qi   => pert%qi
- p_ql   => pert%ql
- p_o3   => pert%o3
+ p_u   (1:conf%im,1:conf%jm,1:conf%lm) => pert%u
+ p_v   (1:conf%im,1:conf%jm,1:conf%lm) => pert%v
+ p_t   (1:conf%im,1:conf%jm,1:conf%lm) => pert%t
+ p_delp(1:conf%im,1:conf%jm,1:conf%lm) => pert%delp
+ p_qv  (1:conf%im,1:conf%jm,1:conf%lm) => pert%qv
+ p_qi  (1:conf%im,1:conf%jm,1:conf%lm) => pert%qi
+ p_ql  (1:conf%im,1:conf%jm,1:conf%lm) => pert%ql
+ p_o3  (1:conf%im,1:conf%jm,1:conf%lm) => pert%o3
 
  !Convenience pointers
  if (conf%saveltraj) then
@@ -303,14 +303,14 @@ subroutine step_ad(self,conf,traj,pert)
  real(kind_real), pointer, dimension(:,:,:) :: p_o3
 
  !Pointers with ind starting at 1
- p_u    => pert%u
- p_v    => pert%v
- p_t    => pert%t
- p_delp => pert%delp
- p_qv   => pert%qv
- p_qi   => pert%qi
- p_ql   => pert%ql
- p_o3   => pert%o3
+ p_u   (1:conf%im,1:conf%jm,1:conf%lm) => pert%u
+ p_v   (1:conf%im,1:conf%jm,1:conf%lm) => pert%v
+ p_t   (1:conf%im,1:conf%jm,1:conf%lm) => pert%t
+ p_delp(1:conf%im,1:conf%jm,1:conf%lm) => pert%delp
+ p_qv  (1:conf%im,1:conf%jm,1:conf%lm) => pert%qv
+ p_qi  (1:conf%im,1:conf%jm,1:conf%lm) => pert%qi
+ p_ql  (1:conf%im,1:conf%jm,1:conf%lm) => pert%ql
+ p_o3  (1:conf%im,1:conf%jm,1:conf%lm) => pert%o3
  
  !Convenience pointers
  if (conf%saveltraj) then
@@ -422,18 +422,18 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  allocate(ZPBL1(1:im,1:jm))
  allocate(CT1  (1:im,1:jm))
 
- p_u       => traj%u
- p_v       => traj%v
- p_t       => traj%t
- p_delp    => traj%delp
- p_qv      => traj%qv
- p_frland  => traj%FRLAND
- p_frocean => traj%FROCEAN
- p_varflt  => traj%VARFLT
- p_cm      => traj%CM
- p_cq      => traj%CQ
- p_ustar   => traj%USTAR
- p_bstar   => traj%BSTAR
+ p_u      (1:im,1:jm,1:lm) => traj%u
+ p_v      (1:im,1:jm,1:lm) => traj%v
+ p_t      (1:im,1:jm,1:lm) => traj%t
+ p_delp   (1:im,1:jm,1:lm) => traj%delp
+ p_qv     (1:im,1:jm,1:lm) => traj%qv
+ p_frland (1:im,1:jm)      => traj%FRLAND
+ p_frocean(1:im,1:jm)      => traj%FROCEAN
+ p_varflt (1:im,1:jm)      => traj%VARFLT
+ p_cm     (1:im,1:jm)      => traj%CM
+ p_cq     (1:im,1:jm)      => traj%CQ
+ p_ustar  (1:im,1:jm)      => traj%USTAR
+ p_bstar  (1:im,1:jm)      => traj%BSTAR
 
  !Compute pressures from delp
  call compute_pressures(im,jm,lm,conf%ptop,p_delp,pet,pmt,ltraj%pk)

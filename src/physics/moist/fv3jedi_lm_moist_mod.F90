@@ -287,7 +287,7 @@ subroutine step_nl(self,conf,traj)
  type(fv3jedi_lm_traj), target,        intent(inout) :: traj
  type(fv3jedi_lm_conf),                 intent(in)   :: conf
 
- integer :: i,j,k,im,jm,lm,isc,iec,jsc,jec
+ integer :: i,j,im,jm,lm,isc,iec,jsc,jec
  type(local_traj_moist), pointer :: ltraj
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lcnst
@@ -400,7 +400,7 @@ subroutine step_tl(self,conf,traj,pert)
  type(fv3jedi_lm_traj), intent(in)    :: traj
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
- integer :: i,j,k,im,jm,lm,isc,iec,jsc,jec
+ integer :: i,j,im,jm,lm,isc,iec,jsc,jec
  type(local_traj_moist), pointer :: ltraj
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lcnst
@@ -513,7 +513,7 @@ subroutine step_ad(self,conf,traj,pert)
  type(fv3jedi_lm_traj), intent(in)    :: traj
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
- integer :: i,j,k,im,jm,lm,isc,iec,jsc,jec
+ integer :: i,j,im,jm,lm,isc,iec,jsc,jec
  type(local_traj_moist), pointer :: ltraj
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lcnst
@@ -670,8 +670,6 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  real(8), parameter :: PMIN_DET = 3000.0, AUTOC_CN_OCN  = 2.5e-3, AUTOC_CN_LAND = AUTOC_CN_OCN
  integer :: maxcondep
 
- real(kind_real), pointer, dimension(:,:,:) :: p_delp
-
  im  = conf%im
  jm  = conf%jm
  lm  = conf%lm
@@ -704,9 +702,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  ltraj%vt(1:im,1:jm,:) = dble(traj%v(isc:iec,jsc:jec,:))
 
  !Pressure hPa, half levels and p^kappa
- p_delp => traj%delp
- call compute_pressures(im,jm,lm,conf%ptop,p_delp,ltraj%ple,plo,ltraj%pk)
- nullify(p_delp)
+ call compute_pressures(im,jm,lm,conf%ptop,traj%delp(isc:iec,jsc:jec,:),ltraj%ple,plo,ltraj%pk)
 
  !Potential temperature from temperature (use proper pk form to get pt)
  ltraj%PTT(1:im,1:jm,:) = p00**kappa * dble(traj%t(isc:iec,jsc:jec,:)) / ltraj%pk(1:im,1:jm,:)
@@ -984,21 +980,6 @@ subroutine allocate_ltraj(im,jm,lm,ltraj)
 
  integer, intent(in) :: im,jm,lm
  type(local_traj_moist), intent(inout) :: ltraj
-
-  real(8), allocatable, dimension(:,:,:) :: UT, VT, PTT, QVT
-  real(8), allocatable, dimension(:,:)   :: TS, FRLAND
-  integer, allocatable, dimension(:,:)   :: KCBL, KHu, KHl
-  real(8), allocatable, dimension(:,:,:) :: PLE, CNV_PLE, PK
-  real(8), allocatable, dimension(:,:,:) :: CNV_DQLDTT, CNV_MFDT, CNV_PRC3T, CNV_UPDFT
-  real(8), allocatable, dimension(:,:,:) :: PTT_C, QVT_C
-  real(8), allocatable, dimension(:,:,:) :: CNV_DQLDTT_C, CNV_MFDT_C, CNV_PRC3T_C, CNV_UPDFT_C
-  integer, allocatable, dimension(:,:)   :: SEEDRAS
-  real(8), allocatable, dimension(:,:)   :: CO_AUTO
-  integer, allocatable, dimension(:,:)   :: DOCONVEC
-  real(8), allocatable, dimension(:,:,:) :: WGT0, WGT1  
-  real(8), allocatable, dimension(:,:,:) :: QILST, QLLST, QICNT, QLCNT
-  real(8), allocatable, dimension(:,:,:) :: CFLST, CFCNT
-  real(8), allocatable, dimension(:,:,:) :: ILSF, ICNF, LLSF, LCNF
 
  !double precision trajectories
  allocate(ltraj%ut(im,jm,lm)          )

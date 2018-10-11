@@ -77,8 +77,8 @@ subroutine create(self,dt,npx,npy,npz,ptop,ak,bk)
  self%conf%hydrostatic = self%fv3jedi_lm_dynamics%FV_Atm(1)%flagstruct%hydrostatic
 
  !Physics grid
- self%conf%im = self%conf%npx-1
- self%conf%jm = self%conf%npy-1
+ self%conf%im = (self%conf%iec-self%conf%isc+1)
+ self%conf%jm = (self%conf%jec-self%conf%jsc+1)
  self%conf%lm = self%conf%npz
 
  !All physics switch
