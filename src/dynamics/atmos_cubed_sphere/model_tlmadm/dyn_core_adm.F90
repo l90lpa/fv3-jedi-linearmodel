@@ -25,10 +25,10 @@ module dyn_core_adm_mod
                                 domain2d
   use fv_mp_adm_mod,      only: mpp_get_boundary_adm, mpp_update_domains_adm
   use mpp_parameter_mod,  only: CORNER
-  use fv_mp_mod,          only: is_master
+  use fv_mp_nlm_mod,          only: is_master
   use fv_mp_adm_mod,      only: start_group_halo_update, complete_group_halo_update
   use fv_mp_adm_mod,      only: start_group_halo_update_adm
-  use fv_mp_mod,          only: group_halo_update_type
+  use fv_mp_nlm_mod,          only: group_halo_update_type
   use sw_core_adm_mod,    only: c_sw, d_sw
   use sw_core_adm_mod,    only: c_sw_fwd, c_sw_bwd, d_sw_fwd, d_sw_bwd
   use a2b_edge_adm_mod,   only: a2b_ord2, a2b_ord4
@@ -38,31 +38,31 @@ module dyn_core_adm_mod
   use nh_core_adm_mod,    only: Riem_Solver3_bwd, Riem_Solver_C_bwd, update_dz_c_bwd, update_dz_d_bwd, nest_halo_nh_bwd
   use tp_core_adm_mod,    only: copy_corners
   use tp_core_adm_mod,    only: copy_corners_adm
-  use fv_timing_mod,      only: timing_on, timing_off
-  use fv_diagnostics_mod, only: prt_maxmin, fv_time, prt_mxm
+  use fv_timing_nlm_mod,      only: timing_on, timing_off
+  use fv_diagnostics_nlm_mod, only: prt_maxmin, fv_time, prt_mxm
 #ifdef ROT3
-  use fv_update_phys_mod, only: update_dwinds_phys
+  use fv_update_phys_nlm_mod, only: update_dwinds_phys
 #endif
 #if defined (ADA_NUDGE)
   use fv_ada_nudge_mod,   only: breed_slp_inline_ada
 #else
-  use fv_nwp_nudge_mod,   only: breed_slp_inline, do_adiabatic_init
+  use fv_nwp_nudge_nlm_mod,   only: breed_slp_inline, do_adiabatic_init
 #endif
   use diag_manager_mod,   only: send_data
-  use fv_arrays_mod,      only: fv_grid_type, fv_flags_type, fv_nest_type, fv_diag_type, &
+  use fv_arrays_nlm_mod,      only: fv_grid_type, fv_flags_type, fv_nest_type, fv_diag_type, &
                                 fv_grid_bounds_type, R_GRID
 
   use boundary_adm_mod,   only: extrapolation_BC,  nested_grid_BC_apply_intT
   use boundary_adm_mod,   only: nested_grid_BC_apply_intT_adm
 
 #ifdef SW_DYNAMICS
-  use test_cases_mod,     only: test_case, case9_forcing1, case9_forcing2
+  use test_cases_nlm_mod,     only: test_case, case9_forcing1, case9_forcing2
 #endif
 
   use tapenade_iter,      only: pushcontrol, popcontrol, pushinteger, popinteger, &
                                 pushrealarray, poprealarray, pushrealarray_adm, poprealarray_adm
 
-  use fv_arrays_nlm_mod,  only: fv_flags_pert_type, fpp
+  use fv_arrays_tlmadm_mod,  only: fv_flags_pert_type, fpp
 
 implicit none
 private
@@ -82,10 +82,6 @@ public :: dyn_core_bwd, del2_cubed_bwd
 !  real, allocatable ::  rf(:)
   logical:: RFF_initialized = .false.
   integer :: kmax=1
-
-!---- version number -----
-  character(len=128) :: version = '$Id: dyn_core_adm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of dyn_core in reverse (adjoint) mode, forward sweep (with options split(a2b_edge_mod.a2b_ord4 a2b_edge_mod

@@ -23,27 +23,27 @@ module fv_nesting_tlm_mod
    use fv_mp_tlm_mod,       only: mpp_update_domains_tlm
    use field_manager_mod,   only: MODEL_ATMOS
    use tracer_manager_mod,  only: get_tracer_index
-   use fv_sg_mod,           only: neg_adj3
+   use fv_sg_nlm_mod,           only: neg_adj3
    use mpp_domains_mod,     only: mpp_get_data_domain, mpp_get_compute_domain, mpp_get_global_domain
    use mpp_domains_mod,     only: DGRID_NE, domain2D
    use fv_restart_tlm_mod,  only: d2a_setup, d2c_setup
    use fv_restart_tlm_mod,  only: d2c_setup_tlm
    use mpp_mod,             only: mpp_sync_self, mpp_sync, mpp_send, mpp_recv, mpp_error, FATAL
    use mpp_domains_mod,     only: mpp_global_sum, BITWISE_EFP_SUM, BITWISE_EXACT_SUM
-   use boundary_mod,        only: update_coarse_grid
-   use boundary_mod,        only: nested_grid_BC_send, nested_grid_BC_recv, nested_grid_BC_save_proc
-   use fv_mp_mod,           only: is, ie, js, je, isd, ied, jsd, jed, isc, iec, jsc, jec
-   use fv_arrays_mod,       only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_nest_BC_type_3D
-   use fv_arrays_mod,       only: allocate_fv_nest_BC_type, fv_atmos_type, fv_grid_bounds_type
-   use fv_grid_utils_mod,   only: ptop_min, g_sum, cubed_to_latlon, f_p
-   use init_hydro_mod,      only: p_var
+   use boundary_nlm_mod,        only: update_coarse_grid
+   use boundary_nlm_mod,        only: nested_grid_BC_send, nested_grid_BC_recv, nested_grid_BC_save_proc
+   use fv_mp_nlm_mod,           only: is, ie, js, je, isd, ied, jsd, jed, isc, iec, jsc, jec
+   use fv_arrays_nlm_mod,       only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_nest_BC_type_3D
+   use fv_arrays_nlm_mod,       only: allocate_fv_nest_BC_type, fv_atmos_type, fv_grid_bounds_type
+   use fv_grid_utils_nlm_mod,   only: ptop_min, g_sum, cubed_to_latlon, f_p
+   use init_hydro_nlm_mod,      only: p_var
    use constants_mod,       only: grav, pi=>pi_8, radius, hlv, rdgas, cp_air, rvgas, cp_vapor, kappa
-   use fv_mapz_mod,         only: mappm
-   use fv_timing_mod,       only: timing_on, timing_off
-   use fv_mp_mod,           only: is_master
-   use fv_mp_mod,           only: mp_reduce_sum
-   use fv_diagnostics_mod,  only: sphum_ll_fix, range_check
-   use sw_core_mod,         only: divergence_corner, divergence_corner_nest
+   use fv_mapz_nlm_mod,         only: mappm
+   use fv_timing_nlm_mod,       only: timing_on, timing_off
+   use fv_mp_nlm_mod,           only: is_master
+   use fv_mp_nlm_mod,           only: mp_reduce_sum
+   use fv_diagnostics_nlm_mod,  only: sphum_ll_fix, range_check
+   use sw_core_nlm_mod,         only: divergence_corner, divergence_corner_nest
 
 implicit none
    logical :: RF_initialized = .false.
@@ -65,10 +65,6 @@ implicit none
 private
 public :: twoway_nesting, setup_nested_grid_BCs
 public :: setup_nested_grid_BCs_tlm
-
-!---- version number -----
-   character(len=128) :: version = '$Id: fv_nesting_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of setup_nested_grid_bcs in forward (tangent) mode:

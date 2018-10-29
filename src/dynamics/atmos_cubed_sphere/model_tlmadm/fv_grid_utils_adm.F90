@@ -22,20 +22,20 @@
 #include <fms_platform.h>
  use constants_mod,   only: omega, pi=>pi_8, cnst_radius=>radius
  use mpp_mod,         only: FATAL, mpp_error, WARNING
- use external_sst_mod, only: i_sst, j_sst, sst_ncep, sst_anom
+ use external_sst_nlm_mod, only: i_sst, j_sst, sst_ncep, sst_anom
  use mpp_domains_mod, only: mpp_update_domains, DGRID_NE, mpp_global_sum, mpp_global_sum_ad
  use fv_mp_adm_mod,   only: mpp_update_domains_adm
  use mpp_domains_mod, only: BITWISE_EXACT_SUM, domain2d, BITWISE_EFP_SUM
  use mpp_parameter_mod, only: AGRID_PARAM=>AGRID, CGRID_NE_PARAM=>CGRID_NE
  use mpp_parameter_mod, only: CORNER, SCALAR_PAIR
 
- use fv_arrays_mod,   only: fv_atmos_type, fv_grid_type, fv_grid_bounds_type, &
+ use fv_arrays_nlm_mod,   only: fv_atmos_type, fv_grid_type, fv_grid_bounds_type, &
                             R_GRID
- use fv_eta_mod,      only: set_eta
- use fv_mp_mod,       only: ng, is_master
- use fv_mp_mod,       only: mp_reduce_sum, mp_reduce_min, mp_reduce_max
- use fv_mp_mod,       only: fill_corners, XDir, YDir
- use fv_timing_mod,   only: timing_on, timing_off
+ use fv_eta_nlm_mod,      only: set_eta
+ use fv_mp_nlm_mod,       only: ng, is_master
+ use fv_mp_nlm_mod,       only: mp_reduce_sum, mp_reduce_min, mp_reduce_max
+ use fv_mp_nlm_mod,       only: fill_corners, XDir, YDir
+ use fv_timing_nlm_mod,   only: timing_on, timing_off
 
  use tapenade_iter, only: pushcontrol, popcontrol, pushinteger, popinteger, &
                           pushrealarray, poprealarray, pushrealarray_adm, poprealarray_adm
@@ -79,10 +79,6 @@ public c2l_ord2_bwd, g_sum_adm
 !#endif
 !   MODULE PROCEDURE fill_ghost_r8
 ! END INTERFACE
-
-!---- version number -----
- character(len=128) :: version = '$Id: fv_grid_utils_adm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
- character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
   SUBROUTINE GRID_UTILS_INIT(atm, npx, npy, npz, non_ortho, grid_type, &

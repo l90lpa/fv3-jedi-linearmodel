@@ -19,25 +19,25 @@
 !***********************************************************************
  module sw_core_adm_mod
 
- use fv_mp_mod,        only: ng
+ use fv_mp_nlm_mod,        only: ng
  use tp_core_adm_mod,  only: fv_tp_2d, pert_ppm, copy_corners
  use tp_core_adm_mod,  only: fv_tp_2d_adm, fv_tp_2d_fwd, fv_tp_2d_bwd, copy_corners_adm, pert_ppm_adm
- use fv_mp_mod,        only: XDir, YDir
- use fv_mp_mod,        only: fill_corners
+ use fv_mp_nlm_mod,        only: XDir, YDir
+ use fv_mp_nlm_mod,        only: fill_corners
  use fv_mp_adm_mod,    only: fill_corners_adm
- use fv_arrays_mod,    only: fv_grid_type, fv_grid_bounds_type, fv_flags_type, r_grid
+ use fv_arrays_nlm_mod,    only: fv_grid_type, fv_grid_bounds_type, fv_flags_type, r_grid
  use a2b_edge_adm_mod, only: a2b_ord4
  use a2b_edge_adm_mod, only: a2b_ord4_fwd, a2b_ord4_bwd, a2b_ord4_adm
- use fv_arrays_mod,    only: fvprc
+ use fv_arrays_nlm_mod,    only: fvprc
 
  use tapenade_iter, only: pushcontrol, popcontrol, pushinteger, popinteger, &
                           pushrealarray, poprealarray, pushrealarray_adm, poprealarray_adm
 
 #ifdef SW_DYNAMICS
- use test_cases_mod,   only: test_case
+ use test_cases_nlm_mod,   only: test_case
 #endif
 
- use fv_arrays_nlm_mod, only: fpp
+ use fv_arrays_tlmadm_mod, only: fpp
 
  implicit none
 

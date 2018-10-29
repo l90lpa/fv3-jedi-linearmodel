@@ -27,7 +27,7 @@ module nh_utils_adm_mod
    use tp_core_adm_mod,   only: fv_tp_2d_fwd, fv_tp_2d_bwd, fv_tp_2d_adm
    use sw_core_adm_mod,   only: fill_4corners, del6_vt_flux
    use sw_core_adm_mod,   only: fill_4corners_fwd, fill_4corners_bwd, del6_vt_flux_adm
-   use fv_arrays_mod,     only: fv_grid_bounds_type, fv_grid_type
+   use fv_arrays_nlm_mod,     only: fv_grid_bounds_type, fv_grid_type
 
    use tapenade_iter, only: pushcontrol, popcontrol, pushinteger, popinteger, &
                             pushrealarray, poprealarray, pushrealarray_adm, poprealarray_adm
