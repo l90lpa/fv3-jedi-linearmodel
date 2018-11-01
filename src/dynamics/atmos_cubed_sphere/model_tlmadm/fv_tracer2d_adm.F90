@@ -20,17 +20,17 @@
 module fv_tracer2d_adm_mod
    use tp_core_adm_mod,   only: fv_tp_2d
    use tp_core_adm_mod,   only: fv_tp_2d_fwd, fv_tp_2d_bwd, fv_tp_2d_adm
-   use fv_mp_mod,         only: mp_reduce_max
-   use fv_mp_mod,         only: ng, mp_gather, is_master
-   use fv_mp_mod,         only: group_halo_update_type
+   use fv_mp_nlm_mod,         only: mp_reduce_max
+   use fv_mp_nlm_mod,         only: ng, mp_gather, is_master
+   use fv_mp_nlm_mod,         only: group_halo_update_type
    use fv_mp_adm_mod,     only: start_group_halo_update, complete_group_halo_update
    use fv_mp_adm_mod,     only: start_group_halo_update_adm
    use mpp_domains_mod,   only: mpp_update_domains, mpp_get_boundary, CGRID_NE, domain2d
    use fv_mp_adm_mod,     only: mpp_update_domains_adm
-   use fv_timing_mod,     only: timing_on, timing_off
+   use fv_timing_nlm_mod,     only: timing_on, timing_off
    use boundary_adm_mod,  only: nested_grid_BC_apply_intT
    use boundary_adm_mod,  only: nested_grid_BC_apply_intT_adm
-   use fv_arrays_mod,     only: fv_grid_type, fv_flags_type, fv_nest_type, fv_atmos_type, fv_grid_bounds_type
+   use fv_arrays_nlm_mod,     only: fv_grid_type, fv_flags_type, fv_nest_type, fv_atmos_type, fv_grid_bounds_type
    use mpp_mod,           only: mpp_error, FATAL, mpp_broadcast, mpp_send, mpp_recv, mpp_sum, mpp_max
 
    use tapenade_iter, only: pushcontrol, popcontrol, pushinteger, popinteger, &
@@ -43,10 +43,6 @@ public :: tracer_2d_fwd, tracer_2d_nested_fwd, tracer_2d_1L_fwd
 public :: tracer_2d_bwd, tracer_2d_nested_bwd, tracer_2d_1L_bwd
 
 real, allocatable, dimension(:,:,:) :: nest_fx_west_accum, nest_fx_east_accum, nest_fx_south_accum, nest_fx_north_accum
-
-!---- version number -----
-   character(len=128) :: version = '$Id: fv_tracer2d_adm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of tracer_2d_1l in reverse (adjoint) mode, forward sweep (with options split(a2b_edge_mod.a2b_ord4 a2b_edge

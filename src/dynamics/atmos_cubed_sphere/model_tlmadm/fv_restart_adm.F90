@@ -28,10 +28,6 @@ private
 public :: d2c_setup, d2a_setup
 public :: d2c_setup_fwd, d2c_setup_bwd
 
-!---- version number -----
-  character(len=128) :: version = '$Id: fv_restart_adm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
-
 CONTAINS
 !  Differentiation of d2c_setup in reverse (adjoint) mode, forward sweep (with options split(a2b_edge_mod.a2b_ord4 a2b_edge_mo
 !d.a2b_ord2 dyn_core_mod.dyn_core dyn_core_mod.pk3_halo dyn_core_mod.pln_halo dyn_core_mod.pe_halo dyn_core_mod.adv_pe dyn_core_m

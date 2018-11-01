@@ -20,17 +20,17 @@
 module fv_tracer2d_tlm_mod
    use tp_core_tlm_mod,   only: fv_tp_2d, copy_corners
    use tp_core_tlm_mod,   only: fv_tp_2d_tlm, copy_corners_tlm
-   use fv_mp_mod,         only: mp_reduce_max
-   use fv_mp_mod,         only: ng, mp_gather, is_master
-   use fv_mp_mod,         only: group_halo_update_type
+   use fv_mp_nlm_mod,         only: mp_reduce_max
+   use fv_mp_nlm_mod,         only: ng, mp_gather, is_master
+   use fv_mp_nlm_mod,         only: group_halo_update_type
    use fv_mp_tlm_mod,     only: start_group_halo_update, complete_group_halo_update
    use fv_mp_tlm_mod,     only: start_group_halo_update_tlm
    use mpp_domains_mod,   only: mpp_update_domains, mpp_get_boundary, CGRID_NE, domain2d
    use fv_mp_tlm_mod,     only: mpp_update_domains_tlm, mpp_get_boundary_tlm
-   use fv_timing_mod,     only: timing_on, timing_off
+   use fv_timing_nlm_mod,     only: timing_on, timing_off
    use boundary_tlm_mod,  only: nested_grid_BC_apply_intT
    use boundary_tlm_mod,  only: nested_grid_BC_apply_intT_tlm
-   use fv_arrays_mod,     only: fv_grid_type, fv_flags_type, fv_nest_type, fv_atmos_type, fv_grid_bounds_type
+   use fv_arrays_nlm_mod,     only: fv_grid_type, fv_flags_type, fv_nest_type, fv_atmos_type, fv_grid_bounds_type
    use mpp_mod,           only: mpp_error, FATAL, mpp_broadcast, mpp_send, mpp_recv, mpp_sum, mpp_max
 
 implicit none
@@ -40,10 +40,6 @@ public :: tracer_2d, tracer_2d_nested, tracer_2d_1L
 public :: tracer_2d_tlm, tracer_2d_nested_tlm, tracer_2d_1L_tlm
 
 real, allocatable, dimension(:,:,:) :: nest_fx_west_accum, nest_fx_east_accum, nest_fx_south_accum, nest_fx_north_accum
-
-!---- version number -----
-   character(len=128) :: version = '$Id: fv_tracer2d_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of tracer_2d_1l in forward (tangent) mode:

@@ -25,10 +25,10 @@ module dyn_core_tlm_mod
                                 domain2d
   use fv_mp_tlm_mod,      only: mpp_get_boundary_tlm, mpp_update_domains_tlm
   use mpp_parameter_mod,  only: CORNER
-  use fv_mp_mod,          only: is_master
+  use fv_mp_nlm_mod,          only: is_master
   use fv_mp_tlm_mod,      only: start_group_halo_update, complete_group_halo_update
   use fv_mp_tlm_mod,      only: start_group_halo_update_tlm
-  use fv_mp_mod,          only: group_halo_update_type
+  use fv_mp_nlm_mod,          only: group_halo_update_type
   use sw_core_tlm_mod,    only: c_sw, d_sw
   use sw_core_tlm_mod,    only: c_sw_tlm, d_sw_tlm
   use a2b_edge_tlm_mod,   only: a2b_ord2, a2b_ord4
@@ -37,28 +37,28 @@ module dyn_core_tlm_mod
   use nh_core_tlm_mod,    only: Riem_Solver3_tlm, Riem_Solver_C_tlm, update_dz_c_tlm, update_dz_d_tlm, nest_halo_nh_tlm
   use tp_core_tlm_mod,    only: copy_corners
   use tp_core_tlm_mod,    only: copy_corners_tlm
-  use fv_timing_mod,      only: timing_on, timing_off
-  use fv_diagnostics_mod, only: prt_maxmin, fv_time, prt_mxm
+  use fv_timing_nlm_mod,      only: timing_on, timing_off
+  use fv_diagnostics_nlm_mod, only: prt_maxmin, fv_time, prt_mxm
 #ifdef ROT3
-  use fv_update_phys_mod, only: update_dwinds_phys
+  use fv_update_phys_nlm_mod, only: update_dwinds_phys
 #endif
 #if defined (ADA_NUDGE)
   use fv_ada_nudge_mod,   only: breed_slp_inline_ada
 #else
-  use fv_nwp_nudge_mod,   only: breed_slp_inline, do_adiabatic_init
+  use fv_nwp_nudge_nlm_mod,   only: breed_slp_inline, do_adiabatic_init
 #endif
   use diag_manager_mod,   only: send_data
-  use fv_arrays_mod,      only: fv_grid_type, fv_flags_type, fv_nest_type, fv_diag_type, &
+  use fv_arrays_nlm_mod,      only: fv_grid_type, fv_flags_type, fv_nest_type, fv_diag_type, &
                                 fv_grid_bounds_type, R_GRID
 
   use boundary_tlm_mod,   only: extrapolation_BC,  nested_grid_BC_apply_intT
   use boundary_tlm_mod,   only: nested_grid_BC_apply_intT_tlm
 
 #ifdef SW_DYNAMICS
-  use test_cases_mod,     only: test_case, case9_forcing1, case9_forcing2
+  use test_cases_nlm_mod,     only: test_case, case9_forcing1, case9_forcing2
 #endif
 
-  use fv_arrays_nlm_mod,  only: fv_flags_pert_type, fpp
+  use fv_arrays_tlmadm_mod,  only: fv_flags_pert_type, fpp
 
 implicit none
 private
@@ -77,10 +77,6 @@ public :: dyn_core_tlm, del2_cubed_tlm
 !  real, allocatable ::  rf(:)
   logical:: RFF_initialized = .false.
   integer :: kmax=1
-
-!---- version number -----
-  character(len=128) :: version = '$Id: dyn_core_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of dyn_core in forward (tangent) mode:

@@ -1,7 +1,7 @@
 module fv_mp_adm_mod
 
-use fv_arrays_mod,   only : R_GRID
-use fv_arrays_nlm_mod,only : fv_timing_onoff
+use fv_arrays_nlm_mod,   only : R_GRID
+use fv_arrays_tlmadm_mod,only : fv_timing_onoff
 use mpp_domains_mod, only : domain2D
 use mpp_domains_mod, only : mpp_start_group_update, mpp_complete_group_update
 use mpp_domains_mod, only : mpp_group_update_initialized
@@ -15,11 +15,11 @@ use mpp_domains_mod, only : mpp_global_sum
 
 use mpp_domains_mod, only : mpp_update_domains_ad, mpp_get_boundary_ad
 
-use fv_mp_mod, only : XDir, YDir, ng
-use fv_mp_mod, only : is, ie, js, je
-use fv_mp_mod, only : isd, ied, jsd, jed
+use fv_mp_nlm_mod, only : XDir, YDir, ng
+use fv_mp_nlm_mod, only : is, ie, js, je
+use fv_mp_nlm_mod, only : isd, ied, jsd, jed
 
-use fv_timing_mod, only: timing_on, timing_off
+use fv_timing_nlm_mod, only: timing_on, timing_off
 
 use tapenade_iter, only: pushcontrol, popcontrol, pushinteger, popinteger, &
                          pushrealarray, poprealarray, pushrealarray_adm, poprealarray_adm
@@ -31,7 +31,7 @@ private
 
 integer :: commglobal, ierror, npes
 
-!fv_mp_mod routines
+!fv_mp_nlm_mod routines
 public complete_group_halo_update
 public start_group_halo_update, start_group_halo_update_adm
 public fill_corners_adm
@@ -40,7 +40,7 @@ public fill_corners_adm
 public mpp_update_domains_adm, mpp_get_boundary_adm, mpp_global_sum_adm
 
 
-! Regular fv_mp_mod routines
+! Regular fv_mp_nlm_mod routines
 ! --------------------------
 interface start_group_halo_update
   module procedure start_var_group_update_2d

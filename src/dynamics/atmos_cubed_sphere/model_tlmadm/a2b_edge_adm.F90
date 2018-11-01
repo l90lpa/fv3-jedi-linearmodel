@@ -19,12 +19,12 @@
 !***********************************************************************
 module a2b_edge_adm_mod
 
-  use fv_grid_utils_mod, only: great_circle_dist
+  use fv_grid_utils_nlm_mod, only: great_circle_dist
 #ifdef VAN2
-  use fv_grid_utils_mod, only: van2
+  use fv_grid_utils_nlm_mod, only: van2
 #endif
 
-  use fv_arrays_mod,     only: fv_grid_type, R_GRID
+  use fv_arrays_nlm_mod,     only: fv_grid_type, R_GRID
 
   use tapenade_iter, only: pushcontrol, popcontrol, pushinteger, popinteger, &
                            pushrealarray, poprealarray, pushrealarray_adm, poprealarray_adm
@@ -47,10 +47,6 @@ module a2b_edge_adm_mod
   public :: a2b_ord2, a2b_ord4, &
             a2b_ord2_fwd, a2b_ord4_fwd, &
             a2b_ord2_bwd, a2b_ord4_bwd, a2b_ord4_adm
-
-!---- version number -----
-  character(len=128) :: version = '$Id: a2b_edge_adm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of a2b_ord4 in reverse (adjoint) mode (with options split(a2b_edge_mod.a2b_ord4 a2b_edge_mod.a2b_ord2 dyn_c

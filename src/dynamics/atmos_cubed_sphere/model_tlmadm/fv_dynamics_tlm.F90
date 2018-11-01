@@ -27,30 +27,30 @@ module fv_dynamics_tlm_mod
    use fv_tracer2d_tlm_mod,     only: tracer_2d_tlm, tracer_2d_1L_tlm, tracer_2d_nested_tlm
    use fv_grid_utils_tlm_mod,   only: cubed_to_latlon, c2l_ord2, g_sum
    use fv_grid_utils_tlm_mod,   only: c2l_ord2_tlm, g_sum_tlm
-   use fv_fill_mod,             only: fill2D
-   use fv_mp_mod,               only: is_master
-   use fv_mp_mod,               only: group_halo_update_type
+   use fv_fill_nlm_mod,             only: fill2D
+   use fv_mp_nlm_mod,               only: is_master
+   use fv_mp_nlm_mod,               only: group_halo_update_type
    use fv_mp_tlm_mod,           only: start_group_halo_update, complete_group_halo_update
    use fv_mp_tlm_mod,           only: start_group_halo_update_tlm
-   use fv_timing_mod,           only: timing_on, timing_off
+   use fv_timing_nlm_mod,           only: timing_on, timing_off
    use diag_manager_mod,        only: send_data
-   use fv_diagnostics_mod,      only: fv_time, prt_mxm, range_check, prt_minmax
+   use fv_diagnostics_nlm_mod,      only: fv_time, prt_mxm, range_check, prt_minmax
    use mpp_domains_mod,         only: mpp_update_domains, DGRID_NE, CGRID_NE, domain2D
    use fv_mp_tlm_mod,           only: mpp_update_domains_tlm
    use mpp_mod,                 only: mpp_pe
    use field_manager_mod,       only: MODEL_ATMOS
    use tracer_manager_mod,      only: get_tracer_index
-   use fv_sg_mod,               only: neg_adj3
+   use fv_sg_nlm_mod,               only: neg_adj3
    use fv_nesting_tlm_mod,      only: setup_nested_grid_BCs
    use fv_nesting_tlm_mod,      only: setup_nested_grid_BCs_tlm
    use boundary_tlm_mod,        only: nested_grid_BC_apply_intT
    use boundary_tlm_mod,        only: nested_grid_BC_apply_intT_tlm
-   use fv_arrays_mod,           only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_grid_bounds_type
-   use fv_nwp_nudge_mod,        only: do_adiabatic_init
+   use fv_arrays_nlm_mod,           only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_grid_bounds_type
+   use fv_nwp_nudge_nlm_mod,        only: do_adiabatic_init
 !#ifdef MAPL_MODE
-!   use fv_control_mod,          only: dyn_timer, comm_timer
+!   use fv_control_nlm_mod,          only: dyn_timer, comm_timer
 !#endif
-   use fv_arrays_nlm_mod,       only: fv_flags_pert_type, fpp
+   use fv_arrays_tlmadm_mod,       only: fv_flags_pert_type, fpp
 
 implicit none
 
@@ -71,10 +71,6 @@ implicit none
 #endif
 private
 public :: fv_dynamics, fv_dynamics_tlm
-
-!---- version number -----
-   character(len=128) :: version = '$Id: fv_dynamics_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of fv_dynamics in forward (tangent) mode:

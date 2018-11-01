@@ -25,18 +25,18 @@ module fv_mapz_tlm_mod
   use constants_mod,     only: radius, pi=>pi_8, rvgas, rdgas, grav, hlv, hlf, cp_air, cp_vapor
   use tracer_manager_mod,only: get_tracer_index
   use field_manager_mod, only: MODEL_ATMOS
-  use fv_grid_utils_mod, only: ptop_min
+  use fv_grid_utils_nlm_mod, only: ptop_min
   use fv_grid_utils_tlm_mod, only: g_sum
   use fv_grid_utils_tlm_mod, only: g_sum_tlm
-  use fv_fill_mod,       only: fillz
+  use fv_fill_nlm_mod,       only: fillz
   use mpp_domains_mod,   only: mpp_update_domains, domain2d
   use mpp_mod,           only: FATAL, mpp_error, get_unit, mpp_root_pe, mpp_pe
-  use fv_arrays_mod,     only: fv_grid_type, fv_flags_type
-  use fv_timing_mod,     only: timing_on, timing_off
-  use fv_mp_mod,         only: is_master
-  use fv_cmp_mod,        only: qs_init, fv_sat_adj
-  use fv_diagnostics_mod, only: prt_mxm
-  use fv_arrays_nlm_mod, only: fpp
+  use fv_arrays_nlm_mod,     only: fv_grid_type, fv_flags_type
+  use fv_timing_nlm_mod,     only: timing_on, timing_off
+  use fv_mp_nlm_mod,         only: is_master
+  use fv_cmp_nlm_mod,        only: qs_init, fv_sat_adj
+  use fv_diagnostics_nlm_mod, only: prt_mxm
+  use fv_arrays_tlmadm_mod, only: fpp
 
   implicit none
   real, parameter:: consv_min= 0.001   ! below which no correction applies
@@ -59,10 +59,6 @@ module fv_mapz_tlm_mod
          rst_remap, mappm, E_Flux, map1_q2
   public compute_total_energy_tlm, Lagrangian_to_Eulerian_tlm,  &
          map1_q2_tlm
-
-!---- version number -----
-  character(len=128) :: version = '$Id: fv_mapz_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 CONTAINS
 !  Differentiation of lagrangian_to_eulerian in forward (tangent) mode:

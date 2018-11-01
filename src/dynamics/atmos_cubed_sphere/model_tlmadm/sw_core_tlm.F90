@@ -19,19 +19,19 @@
 !***********************************************************************
  module sw_core_tlm_mod
 
- use fv_mp_mod,        only: ng
+ use fv_mp_nlm_mod,        only: ng
  use tp_core_tlm_mod,  only: fv_tp_2d, pert_ppm, copy_corners
  use tp_core_tlm_mod,  only: fv_tp_2d_tlm, copy_corners_tlm
- use fv_mp_mod,        only: XDir, YDir
- use fv_mp_mod,        only: fill_corners
+ use fv_mp_nlm_mod,        only: XDir, YDir
+ use fv_mp_nlm_mod,        only: fill_corners
  use fv_mp_tlm_mod,    only: fill_corners_tlm
- use fv_arrays_mod,    only: fv_grid_type, fv_grid_bounds_type, fv_flags_type, r_grid
+ use fv_arrays_nlm_mod,    only: fv_grid_type, fv_grid_bounds_type, fv_flags_type, r_grid
  use a2b_edge_tlm_mod, only: a2b_ord4
  use a2b_edge_tlm_mod, only: a2b_ord4_tlm
- use fv_arrays_nlm_mod,only: fpp
+ use fv_arrays_tlmadm_mod,only: fpp
 
 #ifdef SW_DYNAMICS
- use test_cases_mod,   only: test_case
+ use test_cases_nlm_mod,   only: test_case
 #endif
 
  implicit none
@@ -71,11 +71,6 @@
   real, parameter:: b3 = -13./60.
   real, parameter:: b4 =  0.45
   real, parameter:: b5 = -0.05
-
-
-!---- version number -----
-  character(len=128) :: version = '$Id: sw_core_tlm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-  character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
       private
       public :: c_sw, d_sw, fill_4corners, del6_vt_flux, divergence_corner, divergence_corner_nest

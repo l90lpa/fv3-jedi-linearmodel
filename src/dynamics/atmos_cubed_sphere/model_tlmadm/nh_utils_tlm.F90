@@ -27,7 +27,7 @@ module nh_utils_tlm_mod
    use tp_core_tlm_mod,   only: fv_tp_2d_tlm
    use sw_core_tlm_mod,   only: fill_4corners, del6_vt_flux
    use sw_core_tlm_mod,   only: fill_4corners_tlm, del6_vt_flux_tlm
-   use fv_arrays_mod,     only: fv_grid_bounds_type, fv_grid_type
+   use fv_arrays_nlm_mod,     only: fv_grid_bounds_type, fv_grid_type
 
    implicit none
    private

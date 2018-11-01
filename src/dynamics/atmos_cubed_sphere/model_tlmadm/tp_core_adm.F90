@@ -22,9 +22,9 @@ module tp_core_adm_mod
 !
 ! !MODULE: tp_core --- A collection of routines to support FV transport
 !
- use fv_mp_mod,         only: ng 
- use fv_grid_utils_mod, only: big_number
- use fv_arrays_mod,     only: fv_grid_type, fv_grid_bounds_type, r_grid
+ use fv_mp_nlm_mod,         only: ng 
+ use fv_grid_utils_nlm_mod, only: big_number
+ use fv_arrays_nlm_mod,     only: fv_grid_type, fv_grid_bounds_type, r_grid
 
  use tapenade_iter, only: pushcontrol, popcontrol, pushinteger, popinteger, &
                           pushrealarray, poprealarray, pushrealarray_adm, poprealarray_adm
@@ -73,10 +73,6 @@ module tp_core_adm_mod
   real, parameter:: p2 = -1./12.
 !   q(i+0.5) = p1*(q(i-1)+q(i)) + p2*(q(i-2)+q(i+1))
 ! integer:: is, ie, js, je, isd, ied, jsd, jed
-
-!---- version number -----
-   character(len=128) :: version = '$Id: tp_core_adm.F90,v 1.1 2018/03/14 17:52:37 drholdaw Exp $'
-   character(len=128) :: tagname = '$Name: drh-GEOSadas-5_19_0_newadj-dev $'
 
 !
 !EOP

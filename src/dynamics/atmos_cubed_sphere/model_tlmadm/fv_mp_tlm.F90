@@ -19,21 +19,21 @@
 !***********************************************************************
 module fv_mp_tlm_mod
 
-use fv_arrays_mod,   only: R_GRID
-use fv_arrays_nlm_mod,only: fv_timing_onoff
+use fv_arrays_nlm_mod,   only: R_GRID
+use fv_arrays_tlmadm_mod,only: fv_timing_onoff
 use mpp_domains_mod, only : domain2D
 use mpp_domains_mod, only : mpp_start_group_update, mpp_complete_group_update
 use mpp_domains_mod, only : mpp_group_update_initialized
 use mpp_domains_mod, only : mpp_create_group_update,mpp_reset_group_update_field
 use mpp_domains_mod, only : group_halo_update_type => mpp_group_update_type
 
-use fv_mp_mod, only : XDir, YDir, ng
-use fv_mp_mod, only : is, ie, js, je
-use fv_mp_mod, only : isd, ied, jsd, jed
+use fv_mp_nlm_mod, only : XDir, YDir, ng
+use fv_mp_nlm_mod, only : is, ie, js, je
+use fv_mp_nlm_mod, only : isd, ied, jsd, jed
 use mpp_domains_mod, only : mpp_update_domains, mpp_get_boundary
 use mpp_domains_mod, only : mpp_global_sum
 
-use fv_timing_mod, only: timing_on, timing_off
+use fv_timing_nlm_mod, only: timing_on, timing_off
 
 implicit none
 private
@@ -42,7 +42,7 @@ private
 
 integer :: commglobal, ierror, npes
 
-!fv_mp_mod routines
+!fv_mp_nlm_mod routines
 public complete_group_halo_update
 public start_group_halo_update, start_group_halo_update_tlm
 public fill_corners_tlm, mp_reduce_sum_tlm
@@ -51,7 +51,7 @@ public fill_corners_tlm, mp_reduce_sum_tlm
 public mpp_update_domains_tlm, mpp_get_boundary_tlm, mpp_global_sum_tlm
 
 
-! Regular fv_mp_mod routines
+! Regular fv_mp_nlm_mod routines
 ! --------------------------
 interface start_group_halo_update
   module procedure start_var_group_update_2d
