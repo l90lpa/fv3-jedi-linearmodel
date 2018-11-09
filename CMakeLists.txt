@@ -72,10 +72,9 @@ include_directories( ${FMS_INCLUDE_DIRS} )
 # Definitions
 ################################################################################
 
-# These compiler definitions are needed at a minimum
-set(COMPDEFS "${COMPDEFS};-Duse_libMPI;-Duse_netCDF;-DSPMD;-DUSE_LOG_DIAG_FIELD_INFO;-Duse_LARGEFILE;-DOLDMPP")
-
-add_definitions( ${COMPDEFS} )
+# Additional compiler definitions from user input
+set( COMPDEFS_ "${COMPDEFS}" )
+add_definitions( ${COMPDEFS_} )
 
 ################################################################################
 # Export package info
