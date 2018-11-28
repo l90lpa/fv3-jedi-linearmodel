@@ -65,7 +65,6 @@ find_package( NetCDF REQUIRED )
 include_directories( ${NETCDF_INCLUDE_DIR} )
 
 # fms
-ecbuild_use_package( PROJECT fms REQUIRED )
 include_directories( ${FMS_INCLUDE_DIRS} )
 
 ################################################################################
