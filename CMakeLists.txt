@@ -75,6 +75,8 @@ include_directories( ${FMS_INCLUDE_DIRS} )
 set( COMPDEFS_ "${COMPDEFS}" )
 add_definitions( ${COMPDEFS_} )
 
+message("Compiler definitions for fv3-jedi-lm are: ${COMPDEFS_}")
+
 ################################################################################
 # Export package info
 ################################################################################
