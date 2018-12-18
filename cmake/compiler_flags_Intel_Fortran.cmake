@@ -13,25 +13,23 @@ else( )
   set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qopenmp-stubs")
 endif( )
 
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -ftz -align all -fno-alias -traceback -r8 -stack_temps -safe_cray_ptr -assume byterecl -fp-model source -convert big_endian -fPIC -fpe0 -heap-arrays 32 -assume noold_maxminloc -align dcommons")
-
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -qopt-report0 -qno-offload" )
+set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -unroll -inline -no-heap-arrays -r8 ${EXTRA_COMPFLAGS_FV3JEDILM}" )
 
 ####################################################################
 # DEBUG FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -check bounds -warn -fpe-all=0 -fpe:0 -check assume -check format -check output_conversion -check pointers -check stack -check uninit" )
+set( CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -check bounds -traceback -warn -heap-arrays -fpe-all=0 -fpe:0 -r8 ${EXTRA_COMPFLAGS_FV3JEDILM}")
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_BIT     "-O2 -ip -ipo -unroll -inline -no-heap-arrays" )
+set( CMAKE_Fortran_FLAGS_BIT     "-O2 -ip -ipo -unroll -inline -no-heap-arrays -r8 ${EXTRA_COMPFLAGS_FV3JEDILM}" )
 
 ####################################################################
 # LINK FLAGS
