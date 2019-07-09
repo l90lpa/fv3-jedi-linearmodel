@@ -9,7 +9,7 @@
 
 cmake_minimum_required( VERSION 3.3.2 FATAL_ERROR )
 
-project( fv3jedilm Fortran )
+project( fv3jedilm C CXX Fortran )
 
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH} )
 
@@ -29,8 +29,9 @@ ecbuild_requires_macro_version( 2.7 )
 ecbuild_declare_project()
 
 ecbuild_enable_fortran( REQUIRED )
+ecbuild_add_cxx11_flags()
 
-set( FV3JEDILM_LINKER_LANGUAGE Fortran )
+set( FV3JEDILM_LINKER_LANGUAGE CXX )
 
 ################################################################################
 # Dependencies
@@ -47,10 +48,10 @@ endif()
 # MPI
 ecbuild_add_option( FEATURE MPI DEFAULT ON
                     DESCRIPTION "Support for MPI distributed parallelism"
-                    REQUIRED_PACKAGES "MPI COMPONENTS Fortran" )
-ecbuild_find_mpi( COMPONENTS Fortran REQUIRED )
+                    REQUIRED_PACKAGES "MPI COMPONENTS CXX Fortran" )
+ecbuild_find_mpi( COMPONENTS CXX Fortran REQUIRED )
 ecbuild_include_mpi()
-link_libraries(${MPI_Fortran_LIBRARIES})
+link_libraries(${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # NetCDF
 set( NETCDF_F90 ON CACHE BOOL "Compile with Fortran NetCDF" )
@@ -58,7 +59,6 @@ find_package( NetCDF REQUIRED )
 include_directories( ${NETCDF_INCLUDE_DIR} )
 
 # fms
-ecbuild_use_package( PROJECT fms REQUIRED )
 include_directories( ${FMS_INCLUDE_DIRS} )
 
 ################################################################################
