@@ -45,5 +45,5 @@ ecbuild_add_library( TARGET   fv3jedilm
                      LIBS     ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} ${FMS_LIBRARIES}
                      INCLUDES ${FMS_INCLUDES}
                      INSTALL_HEADERS LISTED
-                     LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
+                     LINKER_LANGUAGE ${FV3JEDILM_LINKER_LANGUAGE}
                     )
