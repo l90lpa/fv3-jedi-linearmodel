@@ -75,7 +75,7 @@ message("Compiler definitions for fv3-jedi-lm are: ${COMPDEFS_}")
 # Export package info
 ################################################################################
 
-list( APPEND FV3JEDILM_TPLS LAPACK MPI fms )
+list( APPEND FV3JEDILM_TPLS LAPACK MPI NetCDF fms )
 
 set( FV3JEDILM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src
                       ${CMAKE_Fortran_MODULE_DIRECTORY} )
