@@ -55,7 +55,7 @@ link_libraries(${MPI_Fortran_LIBRARIES})
 # NetCDF
 set( NETCDF_F90 ON CACHE BOOL "Compile with Fortran NetCDF" )
 find_package( NetCDF REQUIRED )
-include_directories( ${NETCDF_INCLUDE_DIR} )
+include_directories( ${NETCDF_INCLUDE_DIRS} )
 
 # fms
 ecbuild_use_package( PROJECT fms REQUIRED )
@@ -75,7 +75,7 @@ message("Compiler definitions for fv3-jedi-lm are: ${COMPDEFS_}")
 # Export package info
 ################################################################################
 
-list( APPEND FV3JEDILM_TPLS LAPACK MPI NetCDF fms )
+list( APPEND FV3JEDILM_TPLS LAPACK MPI fms )
 
 set( FV3JEDILM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src
                       ${CMAKE_Fortran_MODULE_DIRECTORY} )
