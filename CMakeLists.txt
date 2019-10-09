@@ -55,7 +55,7 @@ link_libraries(${MPI_Fortran_LIBRARIES})
 # NetCDF
 set( NETCDF_F90 ON CACHE BOOL "Compile with Fortran NetCDF" )
 find_package( NetCDF REQUIRED )
-include_directories( ${NETCDF_INCLUDE_DIR} )
+include_directories( ${NETCDF_INCLUDE_DIRS} )
 
 # fms
 ecbuild_use_package( PROJECT fms REQUIRED )
