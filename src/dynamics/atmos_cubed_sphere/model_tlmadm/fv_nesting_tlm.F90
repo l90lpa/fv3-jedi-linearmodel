@@ -852,10 +852,10 @@ CONTAINS
       sphumbc => sphum_bc%west_t1
       delpbc => delp_bc%west_t1
       delzbc => delz_bc%west_t1
-!$OMP parallel do default(none) shared(npz,jsd,jed,isd,zvir,sphumBC,liq_watBC_west,rainwatBC_west,ice_watBC_west,snowwatBC_west,g
-!raupelBC_west,qconBC,cappaBC, &
-!$OMP      rdg,cv_air,delpBC,delzBC,ptBC) &
-!$OMP      private(dp1,q_con,q_liq,q_sol,cvm,pkz)
+!off due to intel 19 complaint !$OMP parallel do default(none) shared(npz,jsd,jed,isd,zvir,sphumBC,liq_watBC_west,rainwatBC_west,ice_watBC_west,snowwatBC_west,g
+!off due to intel 19 complaint !raupelBC_west,qconBC,cappaBC, &
+!off due to intel 19 complaint !$OMP      rdg,cv_air,delpBC,delzBC,ptBC) &
+!off due to intel 19 complaint !$OMP      private(dp1,q_con,q_liq,q_sol,cvm,pkz)
       DO k=1,npz
         DO j=jsd,jed
           DO i=isd,0
