@@ -36,12 +36,16 @@ set( FV3JEDILM_LINKER_LANGUAGE Fortran )
 # Dependencies
 ################################################################################
 
-# LAPACK
-ecbuild_add_option( FEATURE LAPACK
-                    DESCRIPTION "Linear Algebra PACKage"
-                    REQUIRED_PACKAGES "LAPACK REQUIRED" )
-if (NOT HAVE_LAPACK)
-  ecbuild_error("LAPACK_LIBRARIES not defined")
+# MKL / LAPACK
+# Default: use MKL as LAPACK implementation.
+# Set -DENABLE_MKL=Off to disable use of MKL and prefer LAPACK
+ecbuild_add_option( FEATURE MKL
+                    DESCRIPTION "Use MKL as LAPACK implementation"
+                    REQUIRED_PACKAGES MKL )
+if( HAVE_MKL )
+    set( LAPACK_LIBRARIES ${MKL_LIBRARIES} )
+else()
+    find_package( LAPACK REQUIRED )
 endif()
 
 # MPI
@@ -75,7 +79,7 @@ message("Compiler definitions for fv3-jedi-lm are: ${COMPDEFS_}")
 # Export package info
 ################################################################################
 
-list( APPEND FV3JEDILM_TPLS LAPACK MPI fms )
+list( APPEND FV3JEDILM_TPLS MPI fms )
 
 set( FV3JEDILM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src
                       ${CMAKE_Fortran_MODULE_DIRECTORY} )
