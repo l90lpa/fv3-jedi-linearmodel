@@ -5,7 +5,7 @@ use fv3jedi_lm_kinds_mod
 use fv3jedi_lm_const_mod
 
 use fms_mod,         only: set_domain, nullify_domain
-use mpp_mod,         only: mpp_pe, mpp_root_pe 
+use mpp_mod,         only: mpp_pe, mpp_root_pe
 use mpp_domains_mod, only: mpp_update_domains, mpp_get_boundary, DGRID_NE, mpp_get_boundary_ad
 
 use fv_control_nlm_mod,     only: fv_init, pelist_all
@@ -20,6 +20,8 @@ use fv_pressure_mod,        only: compute_fv3_pressures, compute_fv3_pressures_t
 use tapenade_iter, only: cp_iter, cp_iter_controls, initialize_cp_iter, finalize_cp_iter
 use tapenade_iter, only: cp_mod_ini, cp_mod_mid, cp_mod_end, pushrealarray, poprealarray
 
+use fv3jedi_lm_dynutils_mod, only: init_fv_diag_type
+
 !> Top level for fv3jedi linearized dynamical core
 
 implicit none
@@ -27,7 +29,7 @@ private
 public :: fv3jedi_lm_dynamics_type
 
 type fv3jedi_lm_dynamics_type
- type(fv_atmos_type),      allocatable :: FV_Atm(:)          !<Traj FV3 structure 
+ type(fv_atmos_type),      allocatable :: FV_Atm(:)          !<Traj FV3 structure
  type(fv_atmos_pert_type), allocatable :: FV_AtmP(:)         !<Pert FV3 structure
  real(kind_real), allocatable, dimension(:,:) :: ebuffery    !<Halo holder
  real(kind_real), allocatable, dimension(:,:) :: nbufferx    !<Halo holder
@@ -133,7 +135,7 @@ subroutine create(self,conf)
 
   !Pointer to self when not nested
   if (.not. FV_Atm(1)%gridstruct%nested) FV_Atm(1)%parent_grid => FV_Atm(1)
-  
+
   !Harwire some flags
   FV_Atm(1)%flagstruct%reproduce_sum = .false.
   FV_Atm(1)%flagstruct%fill = .false.
@@ -163,37 +165,37 @@ subroutine create(self,conf)
   cp_iter_controls%cp_gb = -0.1
   cp_iter_controls%cp_nm = 1
   call initialize_cp_iter
-  
+
   if (cp_iter_controls%cp_i .ne. 0) then
-  
+
      !Dynamics
      self%cp_dyn_ind = 1
      cp_iter(self%cp_dyn_ind)%my_name(1:3) = 'dyn'
-     
+
      cp_iter(self%cp_dyn_ind)%cp_test = .false.
      tmp = 0
      if (tmp==1) cp_iter(self%cp_dyn_ind)%cp_test = .true.
-     
+
      cp_iter(self%cp_dyn_ind)%cp_rep = .false.
      tmp = 0
-     if (tmp==1) cp_iter(self%cp_dyn_ind)%cp_test = .true.     
+     if (tmp==1) cp_iter(self%cp_dyn_ind)%cp_test = .true.
 
      !Hardwire these for now
      cp_iter(self%cp_dyn_ind)%check_st_control = .false.
      cp_iter(self%cp_dyn_ind)%check_st_integer = .false.
      cp_iter(self%cp_dyn_ind)%check_st_real_r4 = .false.
      cp_iter(self%cp_dyn_ind)%check_st_real_r8 = .false.
-     
+
      cp_iter(self%cp_dyn_ind)%test_dim_st_control = 0
      cp_iter(self%cp_dyn_ind)%test_dim_st_integer = 0
      cp_iter(self%cp_dyn_ind)%test_dim_st_real_r4 = 0
      cp_iter(self%cp_dyn_ind)%test_dim_st_real_r8 = 0
-     
+
      cp_iter(self%cp_dyn_ind)%test_dim_cp_control = 0
      cp_iter(self%cp_dyn_ind)%test_dim_cp_integer = 0
      cp_iter(self%cp_dyn_ind)%test_dim_cp_real_r4 = 0
      cp_iter(self%cp_dyn_ind)%test_dim_cp_real_r8 = 0
-  
+
   endif
 
   !Convenience
@@ -209,6 +211,9 @@ subroutine create(self,conf)
 
   conf%rpe = .false.
   if (mpp_pe() == mpp_root_pe()) conf%rpe = .true.
+
+  ! Initialize the idiag structure to zero for safety
+  call init_fv_diag_type(FV_Atm(1)%idiag)
 
 endsubroutine create
 
@@ -274,12 +279,12 @@ subroutine step_nl(self,conf,traj)
  !-----------------------------------
  call traj_to_fv3(self,conf,traj)
 
- 
+
  ! MPP set domain
  ! --------------
  call set_domain(FV_Atm(1)%domain)
 
- 
+
  !Propagate FV3 one time step
  !---------------------------
  if (self%linmodtest == 0) then
@@ -316,17 +321,17 @@ subroutine step_nl(self,conf,traj)
                           FV_Atm(1)%neststruct, FV_Atm(1)%idiag, FV_Atm(1)%bd, FV_Atm(1)%parent_grid,  &
                           FV_Atm(1)%domain )
  endif
- 
- 
+
+
  ! MPP nulify
  ! ----------
  call nullify_domain()
- 
+
 
  !Copy from fv3 back to traj structure
  !------------------------------------
  call fv3_to_traj(self,conf,traj)
- 
+
 
 endsubroutine step_nl
 
@@ -362,7 +367,7 @@ subroutine step_tl(self,conf,traj,pert)
  call traj_to_fv3(self,conf,traj)
  call pert_to_fv3(self,conf,pert)
 
- 
+
  !A-grid winds are diagnostic
  !---------------------------
  FV_AtmP(1)%uap = 0.0
@@ -385,8 +390,8 @@ subroutine step_tl(self,conf,traj,pert)
        FV_AtmP(1)%vp(self%iec+1,j,k) = self%ebuffery(j,k)
     enddo
  enddo
- 
- 
+
+
  !Compute the other pressure variables needed by FV3
  !--------------------------------------------------
  call compute_fv3_pressures_tlm( self%isc, self%iec, self%jsc, self%jec, &
@@ -402,8 +407,8 @@ subroutine step_tl(self,conf,traj,pert)
  ! MPP set domain
  ! --------------
  call set_domain(FV_Atm(1)%domain)
- 
- 
+
+
  !Propagate TLM one time step
  !---------------------------
  call fv_dynamics_tlm(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,                      &
@@ -424,8 +429,8 @@ subroutine step_tl(self,conf,traj,pert)
                       FV_Atm(1)%cx, FV_AtmP(1)%cxp, FV_Atm(1)%cy,  FV_AtmP(1)%cyp, FV_Atm(1)%ze0,                       &
                       FV_Atm(1)%flagstruct%hybrid_z, FV_Atm(1)%gridstruct, FV_Atm(1)%flagstruct, FV_AtmP(1)%flagstruct, &
                       FV_Atm(1)%neststruct, FV_Atm(1)%idiag, FV_Atm(1)%bd, FV_Atm(1)%parent_grid,FV_Atm(1)%domain      )
- 
- 
+
+
  ! MPP nulify
  ! ----------
  call nullify_domain()
@@ -491,7 +496,7 @@ subroutine step_ad(self,conf,traj,pert)
  ! Forward sweep of the dynamics with saving of checkpoints for use in backward sweep
  ! ----------------------------------------------------------------------------------
  if (cp_iter_controls%cp_i <= 3) then
- 
+
     call fv_dynamics_fwd(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,                      &
                          conf%DT, FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,                               &
                          FV_Atm(1)%flagstruct%reproduce_sum, kappa,                                                       &
@@ -511,7 +516,7 @@ subroutine step_ad(self,conf,traj,pert)
                          FV_Atm(1)%flagstruct%hybrid_z, FV_Atm(1)%gridstruct, FV_Atm(1)%flagstruct,                       &
                          FV_AtmP(1)%flagstruct,                                                                           &
                          FV_Atm(1)%neststruct, FV_Atm(1)%idiag, FV_Atm(1)%bd, FV_Atm(1)%parent_grid,FV_Atm(1)%domain      )
- 
+
     if (cp_iter_controls%cp_i .ne. 0) then
        !Push end of timestep trajectory to stack
        call PUSHREALARRAY(FV_Atm(1)%u   ,(self%ied-self%isd+1)*(self%jed-self%jsd+2)*self%npz)
@@ -561,16 +566,16 @@ subroutine step_ad(self,conf,traj,pert)
        FV_Atm(1)%cx   = 2.0_kind_real*FV_Atm(1)%cx
        FV_Atm(1)%cy   = 2.0_kind_real*FV_Atm(1)%cy
     endif
- 
+
  endif
- 
- 
+
+
  ! Checkpoint mid point, reset counters etc
  ! ----------------------------------------
- if (cp_iter_controls%cp_i .ne. 0) then 
+ if (cp_iter_controls%cp_i .ne. 0) then
     call cp_mod_mid
  endif
- 
+
  if (cp_iter_controls%cp_i .ne. 0) then
     !Populate end of timestep trajectory from stack
     call POPREALARRAY(FV_Atm(1)%cy  ,(self%ied-self%isd+1)*(self%jec-self%jsc+2)*self%npz)
@@ -596,8 +601,8 @@ subroutine step_ad(self,conf,traj,pert)
     call POPREALARRAY(FV_Atm(1)%v   ,(self%ied-self%isd+2)*(self%jed-self%jsd+1)*self%npz)
     call POPREALARRAY(FV_Atm(1)%u   ,(self%ied-self%isd+1)*(self%jed-self%jsd+2)*self%npz)
  endif
- 
- 
+
+
  ! Backward adjoint sweep of the dynamics
  ! --------------------------------------
  call fv_dynamics_bwd(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,                      &
@@ -619,8 +624,8 @@ subroutine step_ad(self,conf,traj,pert)
                       FV_Atm(1)%flagstruct%hybrid_z, FV_Atm(1)%gridstruct, FV_Atm(1)%flagstruct,                       &
                       FV_AtmP(1)%flagstruct,                                                                           &
                       FV_Atm(1)%neststruct, FV_Atm(1)%idiag, FV_Atm(1)%bd, FV_Atm(1)%parent_grid,FV_Atm(1)%domain      )
- 
- 
+
+
  !Adjoint of compute the other pressure variables needed by FV3
  !-------------------------------------------------------------
  call compute_fv3_pressures_bwd( self%isc, self%iec, self%jsc, self%jec, &
@@ -631,8 +636,8 @@ subroutine step_ad(self,conf,traj,pert)
                                  FV_Atm(1)%pk, FV_AtmP(1)%pkp, &
                                  FV_Atm(1)%pkz, FV_AtmP(1)%pkzp, &
                                  FV_Atm(1)%peln, FV_AtmP(1)%pelnp )
- 
- 
+
+
  !Edge of pert always needs to be filled
  !--------------------------------------
  self%nbufferx = 0.0_kind_real
@@ -647,12 +652,12 @@ subroutine step_ad(self,conf,traj,pert)
        self%ebuffery(j,k) = FV_AtmP(1)%vp(self%iec+1,j,k)
     enddo
  enddo
- 
+
  call mpp_get_boundary_ad( FV_AtmP(1)%up, FV_AtmP(1)%vp, FV_Atm(1)%domain, &
                            wbuffery=self%wbuffery, ebuffery=self%ebuffery, sbufferx=self%sbufferx, nbufferx=self%nbufferx, &
                            gridtype=DGRID_NE, complete=.true. )
- 
- 
+
+
  ! MPP nulify
  ! ----------
  call nullify_domain()
@@ -668,7 +673,7 @@ subroutine step_ad(self,conf,traj,pert)
  !------------------------------------
  call fv3_to_pert(self,conf,pert)
 
- 
+
  ! Set diagnostics to zeros
  ! ------------------------
  call zero_pert_vars(FV_AtmP(1))
@@ -692,12 +697,12 @@ subroutine delete(self,conf)
 
  call deallocate_fv_atmos_type(self%FV_Atm(1))
  deallocate(self%FV_Atm)
- 
+
  call deallocate_fv_atmos_pert_type(self%FV_AtmP(1))
  deallocate(self%FV_AtmP)
-    
+
  if (cp_iter_controls%cp_i .ne. 0) call finalize_cp_iter
- 
+
 endsubroutine delete
 
 ! ------------------------------------------------------------------------------
@@ -787,7 +792,7 @@ subroutine traj_to_fv3(self,conf,traj)
  ! --------------
  call mpp_update_domains(self%FV_Atm(1)%phis, self%FV_Atm(1)%domain, complete=.true.)
 
- 
+
  !Compute the other pressure variables needed by FV3
  !--------------------------------------------------
  call compute_fv3_pressures( self%isc, self%iec, self%jsc, self%jec, self%isd, self%ied, self%jsd, self%jed, &

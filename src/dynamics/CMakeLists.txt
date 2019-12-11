@@ -1,5 +1,6 @@
 list( APPEND dynamics_files
 fv3jedi_lm_dynamics_mod.F90
+fv3jedi_lm_dynutils_mod.f90
 atmos_cubed_sphere/model/a2b_edge_nlm.F90
 atmos_cubed_sphere/model/boundary_nlm.F90
 atmos_cubed_sphere/model/dyn_core_nlm.F90
