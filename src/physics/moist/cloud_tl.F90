@@ -1559,7 +1559,7 @@ SUBROUTINE PDFFRAC_D(flag, qtmean, qtmeand, sigmaqt1, sigmaqt1d, &
     clfracd = 0.5*q1*rhd0*(1.0-TANH(q1*(rh-1.0))**2)
 
     ! (REGULARIZATION) * (GRADIENT) * (PERTURBATION)
-    clfracd = (0.66*( cosh(10*(RH-1.0))**-2)) * clfracd
+    clfracd = (0.66*( cosh(10*(RH-1.0))**(-2))) * clfracd
 
   ELSE IF (flag .EQ. 4) THEN
 
