@@ -2205,7 +2205,7 @@ SUBROUTINE PDFFRAC_B(flag, qtmean, qtmeanb, sigmaqt1, sigmaqt1b, &
   ELSE IF (flag .EQ. 3) THEN
 
     ! (REGULARIZATION) * (GRADIENT) * (PERTURBATION)
-    clfracb = (0.66*( cosh(10*(RH-1.0))**-2)) * clfracb
+    clfracb = (0.66*( cosh(10*(RH-1.0))**(-2))) * clfracb
 
     rh = qtmean/qstar
     q1 = 22.556

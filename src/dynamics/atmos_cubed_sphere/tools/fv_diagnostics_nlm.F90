@@ -3612,25 +3612,29 @@ contains
 
       km1 = km - 1
 
-      do 500 k=2,km
-      do 500 i=1,im
-500   a6(i,k) = delp(i,k-1) + delp(i,k)
+      do k=2,km
+        do i=1,im
+          a6(i,k) = delp(i,k-1) + delp(i,k)
+        end do
+      end do
 
-      do 1000 k=1,km1
-      do 1000 i=1,im
-      delq(i,k) = p(i,k+1) - p(i,k)
-1000  continue
+      do k=1,km1
+        do i=1,im
+          delq(i,k) = p(i,k+1) - p(i,k)
+        end do
+      end do
 
-      do 1220 k=2,km1
-      do 1220 i=1,im
-      c1 = (delp(i,k-1)+0.5*delp(i,k))/a6(i,k+1)
-      c2 = (delp(i,k+1)+0.5*delp(i,k))/a6(i,k)
-      tmp = delp(i,k)*(c1*delq(i,k) + c2*delq(i,k-1)) /    &
+      do k=2,km1
+        do i=1,im
+          c1 = (delp(i,k-1)+0.5*delp(i,k))/a6(i,k+1)
+          c2 = (delp(i,k+1)+0.5*delp(i,k))/a6(i,k)
+          tmp = delp(i,k)*(c1*delq(i,k) + c2*delq(i,k-1)) /    &
                                     (a6(i,k)+delp(i,k+1))
-      qmax = max(p(i,k-1),p(i,k),p(i,k+1)) - p(i,k)
-      qmin = p(i,k) - min(p(i,k-1),p(i,k),p(i,k+1))
-      dc(i,k) = sign(min(abs(tmp),qmax,qmin), tmp)
-1220  continue
+          qmax = max(p(i,k-1),p(i,k),p(i,k+1)) - p(i,k)
+          qmin = p(i,k) - min(p(i,k-1),p(i,k),p(i,k+1))
+          dc(i,k) = sign(min(abs(tmp),qmax,qmin), tmp)
+        end do
+      end do
 
 !****6***0*********0*********0*********0*********0*********0**********72
 ! 4th order interpolation of the provisional cell edge value

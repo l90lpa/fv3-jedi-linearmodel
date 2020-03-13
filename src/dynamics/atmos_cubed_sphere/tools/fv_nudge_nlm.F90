@@ -710,28 +710,29 @@ module fv_nwp_nudge_nlm_mod
     if ( kmax < km ) call mpp_error(FATAL,'==> KMAX must be larger than km')
 
     do j=js,je
-       do 666 i=is,ie
-       do k=1, km+1
-          pk0(k) = (ak0(k) + bk0(k)*ps_obs(i,j))**kappa
-       enddo
-      if( phis(i,j)>gz0(i,j) ) then
+      do i=is,ie
+        do k=1, km+1
+           pk0(k) = (ak0(k) + bk0(k)*ps_obs(i,j))**kappa
+        enddo
+        if( phis(i,j)>gz0(i,j) ) then
           do k=km,1,-1
-             if( phis(i,j)<gz3(i,j,k) .and. phis(i,j) >= gz3(i,j,k+1) ) then
-                 pst = pk0(k) + (pk0(k+1)-pk0(k))*(gz3(i,j,k)-phis(i,j))/(gz3(i,j,k)-gz3(i,j,k+1))
-                 go to 666
-             endif
+            if( phis(i,j)<gz3(i,j,k) .and. phis(i,j) >= gz3(i,j,k+1) ) then
+              pst = pk0(k) + (pk0(k+1)-pk0(k))*(gz3(i,j,k)-phis(i,j))/(gz3(i,j,k)-gz3(i,j,k+1))
+              go to 666
+            endif
           enddo
-      else
+        else
           pn0(km  ) = log(ak0(km) + bk0(km)*ps_obs(i,j))
           pn0(km+1) = log(ps_obs(i,j))
 ! Extrapolation into the ground using only the lowest layer potential temp
-           pt0 = tm(i,j)/(pk0(km+1)-pk0(km))*(kappa*(pn0(km+1)-pn0(km)))
-           pst = pk0(km+1) + (gz0(i,j)-phis(i,j))/(cp_air*pt0)
-      endif
+          pt0 = tm(i,j)/(pk0(km+1)-pk0(km))*(kappa*(pn0(km+1)-pn0(km)))
+          pst = pk0(km+1) + (gz0(i,j)-phis(i,j))/(cp_air*pt0)
+        endif
+      end do
 666   ps_dt(i,j) = pst**(1./kappa) - ps(i,j)
-      enddo   ! j-loop
+    enddo   ! j-loop
 
-      if( nf_ps>0 ) call del2_scalar(ps_dt, del2_cd, 1, nf_ps, bd, npx, npy, gridstruct, domain)
+    if( nf_ps>0 ) call del2_scalar(ps_dt, del2_cd, 1, nf_ps, bd, npx, npy, gridstruct, domain)
 
       do j=js,je
          do i=is,ie
