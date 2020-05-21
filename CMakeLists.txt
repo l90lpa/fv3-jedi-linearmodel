@@ -64,8 +64,12 @@ find_package( NetCDF REQUIRED )
 include_directories( ${NETCDF_INCLUDE_DIRS} )
 
 # fms
-ecbuild_use_package( PROJECT fms REQUIRED )
-include_directories( ${FMS_INCLUDE_DIRS} )
+if (NOT ${BUILD_WITH_GEOS})
+  ecbuild_use_package( PROJECT fms REQUIRED )
+  include_directories( ${FMS_INCLUDE_DIRS} )
+else()
+  find_package(geosgcm REQUIRED PATHS ${GEOS_PATH}/lib/cmake/GEOSgcm )
+endif()
 
 ################################################################################
 # Definitions
