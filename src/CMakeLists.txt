@@ -19,7 +19,7 @@ list( APPEND fv3jedilm_src_files
 
 ecbuild_add_library( TARGET   fv3jedilm
                      SOURCES  ${fv3jedilm_src_files}
-                     LIBS     ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} ${FMS_LIBRARIES}
+                     LIBS     ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
                      INCLUDES ${FMS_INCLUDES}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${FV3JEDILM_LINKER_LANGUAGE}

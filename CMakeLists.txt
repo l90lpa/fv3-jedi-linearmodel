@@ -68,7 +68,10 @@ if (NOT ${BUILD_WITH_GEOS})
   ecbuild_use_package( PROJECT fms REQUIRED )
   include_directories( ${FMS_INCLUDE_DIRS} )
 else()
-  find_package(geosgcm REQUIRED PATHS ${GEOS_PATH}/lib/cmake/GEOSgcm )
+  if (NOT DEFINED GEOSgcm_FOUND)
+    find_package(GEOSgcm REQUIRED PATHS ${GEOS_PATH}/lib/cmake/GEOSgcm )
+  endif()
+  link_libraries(fms_r8)
 endif()
 
 ################################################################################
@@ -85,7 +88,11 @@ message("Compiler definitions for fv3-jedi-lm are: ${COMPDEFS_}")
 # Export package info
 ################################################################################
 
-list( APPEND FV3JEDILM_TPLS MPI fms )
+list( APPEND FV3JEDILM_TPLS MPI )
+
+if (NOT ${BUILD_WITH_GEOS})
+  list( APPEND FV3JEDILM_TPLS fms )
+endif()
 
 set( FV3JEDILM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src
                       ${CMAKE_Fortran_MODULE_DIRECTORY} )
