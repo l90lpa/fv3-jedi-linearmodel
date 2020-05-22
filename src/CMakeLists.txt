@@ -25,6 +25,6 @@ ecbuild_add_library( TARGET   fv3jedilm
                      LINKER_LANGUAGE ${FV3JEDILM_LINKER_LANGUAGE}
                     )
 
-if(CMAKE_Fortran_COMPILER_ID MATCHES GNU AND CMAKE_Fortran_COMPILER VERSION_GREATER_EQUAL 10)
+if(CMAKE_Fortran_COMPILER_ID MATCHES GNU AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
     target_compile_options(fv3jedilm PRIVATE -fallow-argument-mismatch)
 endif()
