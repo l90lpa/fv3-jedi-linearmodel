@@ -17,10 +17,16 @@ list( APPEND fv3jedilm_src_files
     ${utils_src_files}
 )
 
+#Requirement libraries
+set(FV3JEDILM_LIB_DEP ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES})
+
+if( NOT ${BUILD_WITH_MODEL} MATCHES "GEOS" AND NOT ${BUILD_WITH_MODEL} MATCHES "UFS" )
+  list( APPEND FV3JEDILM_LIB_DEP fms )
+endif()
+
 ecbuild_add_library( TARGET   fv3jedilm
                      SOURCES  ${fv3jedilm_src_files}
-                     LIBS     ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
-                     INCLUDES ${FMS_INCLUDES}
+                     LIBS     ${FV3JEDILM_LIB_DEP}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${FV3JEDILM_LINKER_LANGUAGE}
                     )
