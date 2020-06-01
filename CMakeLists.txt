@@ -41,10 +41,11 @@ set( FV3JEDILM_LINKER_LANGUAGE Fortran )
 # MKL / LAPACK
 # Default: use MKL as LAPACK implementation.
 # Set -DENABLE_MKL=Off to disable use of MKL and prefer LAPACK
-ecbuild_add_option( FEATURE MKL
-                    DESCRIPTION "Use MKL as LAPACK implementation"
-                    REQUIRED_PACKAGES MKL )
-if( HAVE_MKL )
+option( ENABLE_MKL "Use MKL for LAPACK implementation (if available)" ON )
+if( ENABLE_MKL )
+    find_package( MKL )
+endif()
+if( MKL_FOUND )
     set( LAPACK_LIBRARIES ${MKL_LIBRARIES} )
 else()
     find_package( LAPACK REQUIRED )
