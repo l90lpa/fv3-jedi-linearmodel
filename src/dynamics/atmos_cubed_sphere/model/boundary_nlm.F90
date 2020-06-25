@@ -32,8 +32,8 @@ module boundary_nlm_mod
   use mpp_mod,            only: mpp_send, mpp_recv
   use fv_timing_nlm_mod,      only: timing_on, timing_off
   use mpp_domains_mod, only : nest_domain_type, WEST, SOUTH
-  use mpp_domains_mod, only : mpp_get_C2F_index, mpp_update_nest_fine
-  use mpp_domains_mod, only : mpp_get_F2C_index, mpp_update_nest_coarse
+  use mpp_domains_mod, only : mpp_get_C2F_index!, mpp_update_nest_fine
+!  use mpp_domains_mod, only : mpp_get_F2C_index, mpp_update_nest_coarse
   !use mpp_domains_mod, only : mpp_get_domain_shift
 
   implicit none
@@ -582,14 +582,14 @@ contains
       position = CENTER
    end if
 
-   call mpp_get_C2F_index(nest_domain, isw_f, iew_f, jsw_f, jew_f, isw_c, iew_c, jsw_c, jew_c, &
-        WEST,  position=position)
-   call mpp_get_C2F_index(nest_domain, ise_f, iee_f, jse_f, jee_f, ise_c, iee_c, jse_c, jee_c, &
-        EAST,  position=position)
-   call mpp_get_C2F_index(nest_domain, iss_f, ies_f, jss_f, jes_f, iss_c, ies_c, jss_c, jes_c, &
-        SOUTH,  position=position)
-   call mpp_get_C2F_index(nest_domain, isn_f, ien_f, jsn_f, jen_f, isn_c, ien_c, jsn_c, jen_c, &
-        NORTH,  position=position)
+   !call mpp_get_C2F_index(nest_domain, isw_f, iew_f, jsw_f, jew_f, isw_c, iew_c, jsw_c, jew_c, &
+   !     WEST,  position=position)
+   !call mpp_get_C2F_index(nest_domain, ise_f, iee_f, jse_f, jee_f, ise_c, iee_c, jse_c, jee_c, &
+   !     EAST,  position=position)
+   !call mpp_get_C2F_index(nest_domain, iss_f, ies_f, jss_f, jes_f, iss_c, ies_c, jss_c, jes_c, &
+   !     SOUTH,  position=position)
+   !call mpp_get_C2F_index(nest_domain, isn_f, ien_f, jsn_f, jen_f, isn_c, ien_c, jsn_c, jen_c, &
+   !     NORTH,  position=position)
 
    if( iew_c .GE. isw_c .AND. jew_c .GE. jsw_c ) then
       allocate(wbuffer(isw_c:iew_c, jsw_c:jew_c,npz))
@@ -621,7 +621,7 @@ contains
 
 
        call timing_on ('COMM_TOTAL')
-   call mpp_update_nest_fine(var_coarse, nest_domain, wbuffer, sbuffer, ebuffer, nbuffer,  position=position)
+   !call mpp_update_nest_fine(var_coarse, nest_domain, wbuffer, sbuffer, ebuffer, nbuffer,  position=position)
        call timing_off('COMM_TOTAL')
 
    if (process) then
@@ -772,7 +772,7 @@ contains
 
 
        call timing_on ('COMM_TOTAL')
-   call mpp_update_nest_fine(var_coarse, nest_domain, wbuffer, sbuffer, ebuffer, nbuffer,  position=position)
+   !call mpp_update_nest_fine(var_coarse, nest_domain, wbuffer, sbuffer, ebuffer, nbuffer,  position=position)
        call timing_off('COMM_TOTAL')
 
 
@@ -835,14 +835,14 @@ contains
       position = CENTER
    end if
 
-   call mpp_get_C2F_index(nest_domain, isw_f, iew_f, jsw_f, jew_f, isw_c, iew_c, jsw_c, jew_c, &
-        WEST,  position=position)
-   call mpp_get_C2F_index(nest_domain, ise_f, iee_f, jse_f, jee_f, ise_c, iee_c, jse_c, jee_c, &
-        EAST,  position=position)
-   call mpp_get_C2F_index(nest_domain, iss_f, ies_f, jss_f, jes_f, iss_c, ies_c, jss_c, jes_c, &
-        SOUTH,  position=position)
-   call mpp_get_C2F_index(nest_domain, isn_f, ien_f, jsn_f, jen_f, isn_c, ien_c, jsn_c, jen_c, &
-        NORTH,  position=position)
+   !call mpp_get_C2F_index(nest_domain, isw_f, iew_f, jsw_f, jew_f, isw_c, iew_c, jsw_c, jew_c, &
+   !     WEST,  position=position)
+   !call mpp_get_C2F_index(nest_domain, ise_f, iee_f, jse_f, jee_f, ise_c, iee_c, jse_c, jee_c, &
+   !     EAST,  position=position)
+   !call mpp_get_C2F_index(nest_domain, iss_f, ies_f, jss_f, jes_f, iss_c, ies_c, jss_c, jes_c, &
+   !     SOUTH,  position=position)
+   !call mpp_get_C2F_index(nest_domain, isn_f, ien_f, jsn_f, jen_f, isn_c, ien_c, jsn_c, jen_c, &
+   !     NORTH,  position=position)
 
    if( iew_c .GE. isw_c .AND. jew_c .GE. jsw_c ) then
       allocate(wbuffer(isw_c:iew_c, jsw_c:jew_c))
@@ -873,7 +873,7 @@ contains
    nbuffer = 0
 
        call timing_on ('COMM_TOTAL')
-   call mpp_update_nest_fine(var_coarse, nest_domain, wbuffer, sbuffer, ebuffer, nbuffer,  position=position)
+   !call mpp_update_nest_fine(var_coarse, nest_domain, wbuffer, sbuffer, ebuffer, nbuffer,  position=position)
        call timing_off('COMM_TOTAL')
 
    if (process) then
@@ -1281,7 +1281,7 @@ contains
    end if
 
        call timing_on ('COMM_TOTAL')
-   call mpp_update_nest_fine(var_coarse, nest_domain, wbuffer, sbuffer, ebuffer, nbuffer,  position=position)
+   !call mpp_update_nest_fine(var_coarse, nest_domain, wbuffer, sbuffer, ebuffer, nbuffer,  position=position)
        call timing_off('COMM_TOTAL')
 
  end subroutine nested_grid_BC_send
@@ -1318,14 +1318,14 @@ contains
 
    if (.not. allocated(nest_BC_buffers%west_t1) ) then
 
-      call mpp_get_C2F_index(nest_domain, isw_f, iew_f, jsw_f, jew_f, isw_c, iew_c, jsw_c, jew_c, &
-           WEST,  position=position)
-      call mpp_get_C2F_index(nest_domain, ise_f, iee_f, jse_f, jee_f, ise_c, iee_c, jse_c, jee_c, &
-           EAST,  position=position)
-      call mpp_get_C2F_index(nest_domain, iss_f, ies_f, jss_f, jes_f, iss_c, ies_c, jss_c, jes_c, &
-           SOUTH,  position=position)
-      call mpp_get_C2F_index(nest_domain, isn_f, ien_f, jsn_f, jen_f, isn_c, ien_c, jsn_c, jen_c, &
-           NORTH,  position=position)
+      !call mpp_get_C2F_index(nest_domain, isw_f, iew_f, jsw_f, jew_f, isw_c, iew_c, jsw_c, jew_c, &
+      !     WEST,  position=position)
+      !call mpp_get_C2F_index(nest_domain, ise_f, iee_f, jse_f, jee_f, ise_c, iee_c, jse_c, jee_c, &
+      !     EAST,  position=position)
+      !call mpp_get_C2F_index(nest_domain, iss_f, ies_f, jss_f, jes_f, iss_c, ies_c, jss_c, jes_c, &
+      !     SOUTH,  position=position)
+      !call mpp_get_C2F_index(nest_domain, isn_f, ien_f, jsn_f, jen_f, isn_c, ien_c, jsn_c, jen_c, &
+      !     NORTH,  position=position)
 
       if( iew_c .GE. isw_c .AND. jew_c .GE. jsw_c ) then
          If (.not. allocated(nest_BC_buffers%west_t1)) allocate(nest_BC_buffers%west_t1(isw_c:iew_c, jsw_c:jew_c,npz))
@@ -1387,7 +1387,7 @@ contains
    endif
 
        call timing_on ('COMM_TOTAL')
-   call mpp_update_nest_fine(var_coarse_dummy, nest_domain, nest_BC_buffers%west_t1, nest_BC_buffers%south_t1, nest_BC_buffers%east_t1, nest_BC_buffers%north_t1,  position=position)
+   !call mpp_update_nest_fine(var_coarse_dummy, nest_domain, nest_BC_buffers%west_t1, nest_BC_buffers%south_t1, nest_BC_buffers%east_t1, nest_BC_buffers%north_t1,  position=position)
        call timing_off('COMM_TOTAL')
 
  end subroutine nested_grid_BC_recv
@@ -1816,7 +1816,7 @@ contains
       position = CENTER
    end if
 
-   call mpp_get_F2C_index(nest_domain, is_c, ie_c, js_c, je_c, is_f, ie_f, js_f, je_f, position=position)
+   !call mpp_get_F2C_index(nest_domain, is_c, ie_c, js_c, je_c, is_f, ie_f, js_f, je_f, position=position)
    if (ie_f > is_f .and. je_f > js_f) then
       allocate(nest_dat (is_f:ie_f, js_f:je_f,npz))
    else
@@ -1896,7 +1896,7 @@ contains
    endif
 
       call timing_on('COMM_TOTAL')
-   call mpp_update_nest_coarse(var_nest_send, nest_domain, nest_dat, position=position)
+   !call mpp_update_nest_coarse(var_nest_send, nest_domain, nest_dat, position=position)
       call timing_off('COMM_TOTAL')
 
    s = r/2 !rounds down (since r > 0)

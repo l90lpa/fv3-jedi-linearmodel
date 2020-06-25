@@ -1717,8 +1717,8 @@ CONTAINS
       END IF
     END IF
     CALL TIMING_ON('COMM_TOTAL')
-    CALL MPP_UPDATE_NEST_COARSE(var_nest_send, nest_domain, nest_dat, &
-&                         position=position)
+!    CALL MPP_UPDATE_NEST_COARSE(var_nest_send, nest_domain, nest_dat, &
+!&                         position=position)
     CALL TIMING_OFF('COMM_TOTAL')
 !rounds down (since r > 0)
     s = r/2

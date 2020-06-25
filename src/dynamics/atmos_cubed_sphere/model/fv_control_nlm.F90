@@ -908,18 +908,18 @@ module fv_control_nlm_mod
          
          !Pelist needs to be set to ALL (which should have been done
          !in broadcast_domains) to get this to work
-         call mpp_define_nest_domains(Atm(n)%neststruct%nest_domain, Atm(n)%domain, Atm(parent_grid_num)%domain, &
-              7, parent_tile, &
-              1, npx-1, 1, npy-1,                  & !Grid cells, not points
-              ioffset, ioffset + (npx-1)/refinement - 1, &
-              joffset, joffset + (npy-1)/refinement - 1,         &
-              (/ (i,i=0,mpp_npes()-1)  /), extra_halo = 0, name="nest_domain") !What pelist to use?
-         call mpp_define_nest_domains(Atm(n)%neststruct%nest_domain, Atm(n)%domain, Atm(parent_grid_num)%domain, &
-              7, parent_tile, &
-              1, npx-1, 1, npy-1,                  & !Grid cells, not points
-              ioffset, ioffset + (npx-1)/refinement - 1, &
-              joffset, joffset + (npy-1)/refinement - 1,         &
-              (/ (i,i=0,mpp_npes()-1)  /), extra_halo = 0, name="nest_domain") !What pelist to use?
+         !call mpp_define_nest_domains(Atm(n)%neststruct%nest_domain, Atm(n)%domain, Atm(parent_grid_num)%domain, &
+         !     7, parent_tile, &
+         !     1, npx-1, 1, npy-1,                  & !Grid cells, not points
+         !     ioffset, ioffset + (npx-1)/refinement - 1, &
+         !     joffset, joffset + (npy-1)/refinement - 1,         &
+         !     (/ (i,i=0,mpp_npes()-1)  /), extra_halo = 0, name="nest_domain") !What pelist to use?
+         !call mpp_define_nest_domains(Atm(n)%neststruct%nest_domain, Atm(n)%domain, Atm(parent_grid_num)%domain, &
+         !     7, parent_tile, &
+         !     1, npx-1, 1, npy-1,                  & !Grid cells, not points
+         !     ioffset, ioffset + (npx-1)/refinement - 1, &
+         !     joffset, joffset + (npy-1)/refinement - 1,         &
+         !     (/ (i,i=0,mpp_npes()-1)  /), extra_halo = 0, name="nest_domain") !What pelist to use?
 !              (/ (i,i=0,mpp_npes()-1)  /), extra_halo = 2, name="nest_domain_for_BC") !What pelist to use?
 
          Atm(parent_grid_num)%neststruct%child_grids(n) = .true.
