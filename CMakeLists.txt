@@ -65,15 +65,18 @@ find_package( NetCDF REQUIRED )
 include_directories( ${NETCDF_INCLUDE_DIRS} )
 
 # fms
-if (NOT ${BUILD_WITH_MODEL} MATCHES GEOS AND NOT ${BUILD_WITH_MODEL} MATCHES UFS)
-  ecbuild_use_package( PROJECT fms REQUIRED )
-  include_directories( ${FMS_INCLUDE_DIRS} )
-elseif(${BUILD_WITH_MODEL} MATCHES GEOS)
+if(BUILD_WITH_MODEL MATCHES GEOS)
   if (NOT DEFINED GEOSgcm_FOUND)
     find_package(MAPL REQUIRED PATHS ${GEOS_PATH}/lib/cmake/MAPL )
     find_package(GEOSgcm REQUIRED PATHS ${GEOS_PATH}/lib/cmake/GEOSgcm )
   endif()
   link_libraries(fms_r8)
+elseif(BUILD_WITH_MODEL MATCHES UFS)
+  # TODO
+else()
+  # ecbuild version of fms
+  ecbuild_use_package( PROJECT fms REQUIRED )
+  include_directories( ${FMS_INCLUDE_DIRS} )
 endif()
 
 ################################################################################
@@ -92,7 +95,7 @@ message("Compiler definitions for fv3-jedi-lm are: ${COMPDEFS_}")
 
 list( APPEND FV3JEDILM_TPLS MPI )
 
-if (NOT ${BUILD_WITH_MODEL} MATCHES GEOS AND NOT ${BUILD_WITH_MODEL} MATCHES UFS)
+if (NOT BUILD_WITH_MODEL MATCHES GEOS AND NOT BUILD_WITH_MODEL MATCHES UFS)
   list( APPEND FV3JEDILM_TPLS fms )
 endif()
 
