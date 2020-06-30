@@ -64,19 +64,22 @@ set( NETCDF_F90 ON CACHE BOOL "Compile with Fortran NetCDF" )
 find_package( NetCDF REQUIRED )
 include_directories( ${NETCDF_INCLUDE_DIRS} )
 
-# fms
-if(BUILD_WITH_MODEL MATCHES GEOS)
-  if (NOT DEFINED GEOSgcm_FOUND)
-    find_package(MAPL REQUIRED PATHS ${GEOS_PATH}/lib/cmake/MAPL )
-    find_package(GEOSgcm REQUIRED PATHS ${GEOS_PATH}/lib/cmake/GEOSgcm )
-  endif()
+# fms from the forecast model
+if (NOT FV3_FORECAST_MODEL MATCHES GEOS AND NOT FV3_FORECAST_MODEL MATCHES UFS)
+  set(FV3_FORECAST_MODEL "FV3CORE")
+endif()
+
+if(FV3_FORECAST_MODEL MATCHES GEOS)
+  find_package(MAPL REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake/MAPL )
+  find_package(GEOSgcm REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake/GEOSgcm )
   link_libraries(fms_r8)
-elseif(BUILD_WITH_MODEL MATCHES UFS)
-  # TODO
+elseif(FV3_FORECAST_MODEL MATCHES UFS)
+  find_package(fms)
+  link_libraries(fms)
 else()
-  # ecbuild version of fms
   ecbuild_use_package( PROJECT fms REQUIRED )
   include_directories( ${FMS_INCLUDE_DIRS} )
+  list( APPEND FV3JEDILM_TPLS fms )
 endif()
 
 ################################################################################
@@ -94,10 +97,6 @@ message("Compiler definitions for fv3-jedi-lm are: ${COMPDEFS_}")
 ################################################################################
 
 list( APPEND FV3JEDILM_TPLS MPI )
-
-if (NOT BUILD_WITH_MODEL MATCHES GEOS AND NOT BUILD_WITH_MODEL MATCHES UFS)
-  list( APPEND FV3JEDILM_TPLS fms )
-endif()
 
 set( FV3JEDILM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src
                       ${CMAKE_Fortran_MODULE_DIRECTORY} )
