@@ -61,36 +61,49 @@ link_libraries(${MPI_Fortran_LIBRARIES})
 
 # NetCDF
 set( NETCDF_F90 ON CACHE BOOL "Compile with Fortran NetCDF" )
-find_package( NetCDF REQUIRED )
+find_package( NetCDF REQUIRED COMPONENTS Fortran )
 include_directories( ${NETCDF_INCLUDE_DIRS} )
+
+message("NETCDF_INCLUDE_DIRS: ${NETCDF_INCLUDE_DIRS}")
 
 # fms from the forecast model
 if (NOT FV3_FORECAST_MODEL MATCHES GEOS AND NOT FV3_FORECAST_MODEL MATCHES UFS)
   set(FV3_FORECAST_MODEL "FV3CORE")
 endif()
 
-if(FV3_FORECAST_MODEL MATCHES GEOS)
-  find_package(MAPL REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake/MAPL )
-  find_package(GEOSgcm REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake/GEOSgcm )
-  link_libraries(fms_r8)
-elseif(FV3_FORECAST_MODEL MATCHES UFS)
-  find_package(fms)
-  link_libraries(fms)
-else()
+# fv3/fms
+if (FV3_FORECAST_MODEL MATCHES FV3CORE)
   ecbuild_use_package( PROJECT fms REQUIRED )
   include_directories( ${FMS_INCLUDE_DIRS} )
   list( APPEND FV3JEDILM_TPLS fms )
 endif()
 
-################################################################################
-# Definitions
-################################################################################
+# geos
+if(FV3_FORECAST_MODEL MATCHES GEOS)
+  find_package(MAPL REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake/MAPL )
+  find_package(GEOSgcm REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake/GEOSgcm )
+  link_libraries(fms_r8)
+endif()
 
-# Additional compiler definitions from user input
-set( COMPDEFS_ "${COMPDEFS}" )
-add_definitions( ${COMPDEFS_} )
-
-message("Compiler definitions for fv3-jedi-lm are: ${COMPDEFS_}")
+# ufs
+if(FV3_FORECAST_MODEL MATCHES UFS)
+  find_package(ufs-weather-model-lib REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake )
+  link_libraries(fms)
+  link_libraries(NetCDF::NetCDF_Fortran)
+  # Install includes
+  include_directories( ${FV3_FORECAST_MODEL_ROOT}/mod )
+  # Source incudes
+  include_directories( ${FV3_FORECAST_MODEL_SRC}/FMS/include )
+  include_directories( ${FV3_FORECAST_MODEL_SRC}/FMS/mpp/include )
+  # Build includes
+  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FMS/mod )
+  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/mod )
+  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/cpl/mod )
+  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/gfsphysics/mod )
+  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/io/mod )
+  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/ipd/mod )
+  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/stochastic_physics )
+endif()
 
 ################################################################################
 # Export package info
@@ -98,8 +111,9 @@ message("Compiler definitions for fv3-jedi-lm are: ${COMPDEFS_}")
 
 list( APPEND FV3JEDILM_TPLS MPI )
 
-set( FV3JEDILM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src
-                      ${CMAKE_Fortran_MODULE_DIRECTORY} )
+set( FV3JEDILM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src
+                            ${CMAKE_CURRENT_BINARY_DIR}/src
+                            ${CMAKE_Fortran_MODULE_DIRECTORY} )
 set( FV3JEDILM_LIBRARIES fv3jedilm )
 
 get_directory_property( FV3JEDILM_DEFINITIONS COMPILE_DEFINITIONS )

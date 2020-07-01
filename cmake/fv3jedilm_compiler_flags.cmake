@@ -10,6 +10,10 @@ if( NOT CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_definitions( -DNDEBUG )
 endif( )
 
+if (FV3_PRECISION=SINGLE)
+  add_definitions( -OVERLOAD_R4 -DSINGLE_FV )
+endif()
+
 #######################################################################################
 # Fortran
 #######################################################################################
