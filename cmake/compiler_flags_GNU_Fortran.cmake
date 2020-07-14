@@ -19,9 +19,6 @@ endif()
 
 set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fcray-pointer -fconvert=big-endian -ffree-line-length-none -fno-range-check -fbacktrace")
 
-# Traceback
-set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -traceback")
-
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
