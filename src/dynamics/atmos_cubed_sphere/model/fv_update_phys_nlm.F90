@@ -235,13 +235,13 @@ module fv_update_phys_nlm_mod
 
     call get_eta_level(npz, 1.0E5, pfull, phalf, ak, bk)
 
-!$OMP parallel do default(none) &
-!$OMP             shared(is,ie,js,je,npz,flagstruct,pfull,q_dt,sphum,q,qdiag,  &
-!$OMP                    nq,w_diff,dt,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
-!$OMP                    graupel,delp,cld_amt,hydrostatic,pt,t_dt,delz,adj_vmr,&
-!$OMP                    gama_dt,cv_air,ua,u_dt,va,v_dt,isd,ied,jsd,jed,       &
-!$OMP                    conv_vmr_mmr)                                         &
-!$OMP             private(cvm, qc, qstar, ps_dt, p_fac)
+!!$OMP parallel do default(none) &
+!!$OMP             shared(is,ie,js,je,npz,flagstruct,pfull,q_dt,sphum,q,qdiag,  &
+!!$OMP                    nq,w_diff,dt,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
+!!$OMP                    graupel,delp,cld_amt,hydrostatic,pt,t_dt,delz,adj_vmr,&
+!!$OMP                    gama_dt,cv_air,ua,u_dt,va,v_dt,isd,ied,jsd,jed,       &
+!!$OMP                    conv_vmr_mmr)                                         &
+!!$OMP             private(cvm, qc, qstar, ps_dt, p_fac)
     do k=1, npz
 
        if (present(q_dt)) then
@@ -463,7 +463,7 @@ module fv_update_phys_nlm_mod
                             nwat, q,  phis, gridstruct, bd, domain )
 #else
 ! All fields will be updated except winds; wind tendencies added
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ps)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ps)
         do j=js,je
          do k=2,npz+1                                                                             
           do i=is,ie
@@ -501,8 +501,8 @@ module fv_update_phys_nlm_mod
        call prt_maxmin('delp_a_update', delp, is, ie, js,  je, ng, npz, 0.01)
   endif
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,peln,pk,ps,u_srf,v_srf, &
-!$OMP                                  ua,va,pkz,hydrostatic)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,peln,pk,ps,u_srf,v_srf, &
+!!$OMP                                  ua,va,pkz,hydrostatic)
    do j=js,je
       do k=2,npz+1                                                                             
          do i=is,ie
@@ -605,12 +605,12 @@ module fv_update_phys_nlm_mod
 
 ! Mask defined at corners
 
-!$OMP parallel do default(none) shared(is,ie,f1,npx)
+!!$OMP parallel do default(none) shared(is,ie,f1,npx)
    do i=is,ie+1
       f1(i) = (1. - sin(real(i-1)/real(npx-1)*pi))**2
    enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,f1,f2,npy,mask,damp)
+!!$OMP parallel do default(none) shared(is,ie,js,je,f1,f2,npy,mask,damp)
    do j=js,je+1
       f2(j) = (1. - sin(real(j-1)/real(npy-1)*pi))**2
       do i=is,ie+1
@@ -620,7 +620,7 @@ module fv_update_phys_nlm_mod
 
 ! mass weighted tendency from physics is filtered
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,q,qdt,delp)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,q,qdt,delp)
    do k=1,km
       do j=js,je
          do i=is,ie
@@ -632,9 +632,9 @@ module fv_update_phys_nlm_mod
    call mpp_update_domains(q, domain, complete=.true.)
                      call timing_off('COMM_TOTAL')
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,mask,dy,sina_u,q,rdxc,gridstruct, &
-!$OMP                                  sin_sg,npx,dx,npy,rdyc,sina_v,qdt,rarea,delp)    &
-!$OMP                          private(fx, fy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,mask,dy,sina_u,q,rdxc,gridstruct, &
+!!$OMP                                  sin_sg,npx,dx,npy,rdyc,sina_v,qdt,rarea,delp)    &
+!!$OMP                          private(fx, fy)
    do k=1,km
       do j=js,je
          do i=is,ie+1
@@ -714,10 +714,10 @@ module fv_update_phys_nlm_mod
     im2 = (npx-1)/2
     jm2 = (npy-1)/2
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gridstruct,u,dt5,u_dt,v,v_dt,  &
-!$OMP                                  vlon,vlat,jm2,edge_vect_w,npx,edge_vect_e,im2, &
-!$OMP                                  edge_vect_s,npy,edge_vect_n,es,ew)             &
-!$OMP                          private(ut1, ut2, ut3, vt1, vt2, vt3, ue, ve, v3)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gridstruct,u,dt5,u_dt,v,v_dt,  &
+!!$OMP                                  vlon,vlat,jm2,edge_vect_w,npx,edge_vect_e,im2, &
+!!$OMP                                  edge_vect_s,npy,edge_vect_n,es,ew)             &
+!!$OMP                          private(ut1, ut2, ut3, vt1, vt2, vt3, ue, ve, v3)
     do k=1, npz
 
      if ( gridstruct%grid_type > 3 ) then    ! Local & one tile configurations
@@ -904,8 +904,8 @@ module fv_update_phys_nlm_mod
 
 ! Transform wind tendency on A grid to local "co-variant" components:
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,z11,u_dt,z12,v_dt,z21,z22) &
-!$OMP                          private(ut)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,z11,u_dt,z12,v_dt,z21,z22) &
+!!$OMP                          private(ut)
     do k=1,npz
        do j=js,je
           do i=is,ie
@@ -922,9 +922,9 @@ module fv_update_phys_nlm_mod
 
     dt5 = 0.5 * dt
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gridstruct,u,dt5,u_dt,v,v_dt, &
-!$OMP                                  dya,npy,dxa,npx)                              &
-!$OMP                          private(gratio)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gridstruct,u,dt5,u_dt,v,v_dt, &
+!!$OMP                                  dya,npy,dxa,npx)                              &
+!!$OMP                          private(gratio)
     do k=1, npz
 
      if ( gridstruct%grid_type > 3 .or. gridstruct%nested) then    ! Local & one tile configurations

@@ -152,9 +152,9 @@ contains
        call mpp_update_domains(u, v, &
             domain, gridtype=DGRID_NE, complete=.true.)
        call timing_off('COMM_TOTAL')
-!$OMP parallel do default(none) shared(isd,jsd,ied,jed,is,ie,js,je,npx,npy,npz, &
-!$OMP       gridstruct,flagstruct,bd,u,v,uc,vc,nested,divg) &
-!$OMP       private(ua,va)
+!!$OMP parallel do default(none) shared(isd,jsd,ied,jed,is,ie,js,je,npx,npy,npz, &
+!!$OMP       gridstruct,flagstruct,bd,u,v,uc,vc,nested,divg) &
+!!$OMP       private(ua,va)
        do k=1,npz
           call d2c_setup(u(isd,jsd,k),  v(isd,jsd,k),   &
                ua, va, &
@@ -175,7 +175,7 @@ contains
 
 #ifndef SW_DYNAMICS
     if (flagstruct%hydrostatic) then
-!$OMP parallel do default(none) shared(npz,is,ie,js,je,pkz,pkz_coarse)
+!!$OMP parallel do default(none) shared(npz,is,ie,js,je,pkz,pkz_coarse)
        do k=1,npz
        do j=js,je
        do i=is,ie
@@ -361,7 +361,7 @@ contains
       ptBC    =>    pt_BC%west_t1
       pkzBC   =>   pkz_BC%west_t1
       sphumBC => sphum_BC%west_t1
-!$OMP parallel do default(none) shared(npz,jsd,jed,isd,ptBC,pkzBC,zvir,sphumBC)
+!!$OMP parallel do default(none) shared(npz,jsd,jed,isd,ptBC,pkzBC,zvir,sphumBC)
       do k=1,npz
       do j=jsd,jed
       do i=isd,0
@@ -386,7 +386,7 @@ contains
          iend = ied
       end if
 
-!$OMP parallel do default(none) shared(npz,jsd,istart,iend,ptBC,pkzBC,zvir,sphumBC)
+!!$OMP parallel do default(none) shared(npz,jsd,istart,iend,ptBC,pkzBC,zvir,sphumBC)
       do k=1,npz
       do j=jsd,0
       do i=istart,iend
@@ -402,7 +402,7 @@ contains
       ptBC    =>    pt_BC%east_t1
       pkzBC   =>   pkz_BC%east_t1
       sphumBC => sphum_BC%east_t1
-!$OMP parallel do default(none) shared(npz,jsd,jed,npx,ied,ptBC,pkzBC,zvir,sphumBC)
+!!$OMP parallel do default(none) shared(npz,jsd,jed,npx,ied,ptBC,pkzBC,zvir,sphumBC)
       do k=1,npz
       do j=jsd,jed
       do i=npx,ied
@@ -428,7 +428,7 @@ contains
          iend = ied
       end if
 
-!$OMP parallel do default(none) shared(npz,npy,jed,npx,istart,iend,ptBC,pkzBC,zvir,sphumBC)
+!!$OMP parallel do default(none) shared(npz,npy,jed,npx,istart,iend,ptBC,pkzBC,zvir,sphumBC)
       do k=1,npz
       do j=npy,jed
       do i=istart,iend
@@ -505,7 +505,7 @@ contains
    if (is == 1) then
       if (.not. allocated(dum_West)) then
          allocate(dum_West(isd:0,jsd:jed,npz))
-!$OMP parallel do default(none) shared(npz,isd,jsd,jed,dum_West)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,jed,dum_West)
          do k=1,npz
          do j=jsd,jed
          do i=isd,0
@@ -518,7 +518,7 @@ contains
    if (js == 1) then
       if (.not. allocated(dum_South)) then
          allocate(dum_South(isd:ied,jsd:0,npz))
-!$OMP parallel do default(none) shared(npz,isd,ied,jsd,dum_South)
+!!$OMP parallel do default(none) shared(npz,isd,ied,jsd,dum_South)
          do k=1,npz
          do j=jsd,0
          do i=isd,ied
@@ -531,7 +531,7 @@ contains
    if (ie == npx-1) then
       if (.not. allocated(dum_East)) then
          allocate(dum_East(npx:ied,jsd:jed,npz))
-!$OMP parallel do default(none) shared(npx,npz,ied,jsd,jed,dum_East)
+!!$OMP parallel do default(none) shared(npx,npz,ied,jsd,jed,dum_East)
          do k=1,npz
          do j=jsd,jed
          do i=npx,ied
@@ -544,7 +544,7 @@ contains
    if (je == npy-1) then
       if (.not. allocated(dum_North)) then
          allocate(dum_North(isd:ied,npy:jed,npz))
-!$OMP parallel do default(none) shared(npy,npz,isd,ied,jed,dum_North)
+!!$OMP parallel do default(none) shared(npy,npz,isd,ied,jed,dum_North)
          do k=1,npz
          do j=npy,jed
          do i=isd,ied
@@ -623,9 +623,9 @@ contains
       delpBC  =>  delp_BC%west_t1
       delzBC  =>  delz_BC%west_t1
 
-!$OMP parallel do default(none) shared(npz,jsd,jed,isd,zvir,sphumBC,liq_watBC_west,rainwatBC_west,ice_watBC_west,snowwatBC_west,graupelBC_west,qconBC,cappaBC, &
-!$OMP      rdg,cv_air,delpBC,delzBC,ptBC) &
-!$OMP      private(dp1,q_con,q_liq,q_sol,cvm,pkz)
+!!$OMP parallel do default(none) shared(npz,jsd,jed,isd,zvir,sphumBC,liq_watBC_west,rainwatBC_west,ice_watBC_west,snowwatBC_west,graupelBC_west,qconBC,cappaBC, &
+!!$OMP      rdg,cv_air,delpBC,delzBC,ptBC) &
+!!$OMP      private(dp1,q_con,q_liq,q_sol,cvm,pkz)
       do k=1,npz
       do j=jsd,jed
       do i=isd,0
@@ -684,11 +684,11 @@ contains
          iend = ied
       end if
 
-!$OMP parallel do default(none) shared(npz,jsd,istart,iend,zvir,sphumBC, &
-!$OMP      liq_watBC_south,rainwatBC_south,ice_watBC_south,&
-!$OMP      snowwatBC_south,graupelBC_south,qconBC,cappaBC, &
-!$OMP      rdg,cv_air,delpBC,delzBC,ptBC) &
-!$OMP      private(dp1,q_con,q_liq,q_sol,cvm,pkz)
+!!$OMP parallel do default(none) shared(npz,jsd,istart,iend,zvir,sphumBC, &
+!!$OMP      liq_watBC_south,rainwatBC_south,ice_watBC_south,&
+!!$OMP      snowwatBC_south,graupelBC_south,qconBC,cappaBC, &
+!!$OMP      rdg,cv_air,delpBC,delzBC,ptBC) &
+!!$OMP      private(dp1,q_con,q_liq,q_sol,cvm,pkz)
       do k=1,npz
       do j=jsd,0
       do i=istart,iend
@@ -736,10 +736,10 @@ contains
 #endif
       delpBC  =>  delp_BC%east_t1
       delzBC  =>  delz_BC%east_t1
-!$OMP parallel do default(none) shared(npz,jsd,jed,npx,ied,zvir,sphumBC, &
-!$OMP      liq_watBC_east,rainwatBC_east,ice_watBC_east,snowwatBC_east,graupelBC_east,qconBC,cappaBC, &
-!$OMP      rdg,cv_air,delpBC,delzBC,ptBC) &
-!$OMP      private(dp1,q_con,q_liq,q_sol,cvm,pkz)
+!!$OMP parallel do default(none) shared(npz,jsd,jed,npx,ied,zvir,sphumBC, &
+!!$OMP      liq_watBC_east,rainwatBC_east,ice_watBC_east,snowwatBC_east,graupelBC_east,qconBC,cappaBC, &
+!!$OMP      rdg,cv_air,delpBC,delzBC,ptBC) &
+!!$OMP      private(dp1,q_con,q_liq,q_sol,cvm,pkz)
       do k=1,npz
       do j=jsd,jed
       do i=npx,ied
@@ -797,10 +797,10 @@ contains
          iend = ied
       end if
 
-!$OMP parallel do default(none) shared(npz,npy,jed,istart,iend,zvir, &
-!$OMP      sphumBC,liq_watBC_north,rainwatBC_north,ice_watBC_north,snowwatBC_north,graupelBC_north,qconBC,cappaBC, &
-!$OMP      rdg,cv_air,delpBC,delzBC,ptBC) &
-!$OMP      private(dp1,q_con,q_liq,q_sol,cvm,pkz)
+!!$OMP parallel do default(none) shared(npz,npy,jed,istart,iend,zvir, &
+!!$OMP      sphumBC,liq_watBC_north,rainwatBC_north,ice_watBC_north,snowwatBC_north,graupelBC_north,qconBC,cappaBC, &
+!!$OMP      rdg,cv_air,delpBC,delzBC,ptBC) &
+!!$OMP      private(dp1,q_con,q_liq,q_sol,cvm,pkz)
       do k=1,npz
       do j=npy,jed
       do i=istart,iend
@@ -1237,7 +1237,7 @@ subroutine twoway_nesting(Atm, ngrids, grids_on_this_pe, zvir)
             !temperature on the coarse grid. Compute actual temperature
             !on the nested grid, then gather.
             allocate(t_nest(isd:ied,jsd:jed,1:npz))
-!$OMP parallel do default(none) shared(npz,js,je,is,ie,t_nest,pt,pkz,zvir,q,sphum)
+!!$OMP parallel do default(none) shared(npz,js,je,is,ie,t_nest,pt,pkz,zvir,q,sphum)
             do k=1,npz
                do j=js,je
                   do i=is,ie
@@ -1321,7 +1321,7 @@ subroutine twoway_nesting(Atm, ngrids, grids_on_this_pe, zvir)
 
          parent_grid%ps = parent_grid%ptop
 !This loop appears to cause problems with OMP
-!$OMP parallel do default(none) shared(npz,jsd_p,jed_p,isd_p,ied_p,parent_grid)
+!!$OMP parallel do default(none) shared(npz,jsd_p,jed_p,isd_p,ied_p,parent_grid)
          do j=jsd_p,jed_p
             do k=1,npz
                do i=isd_p,ied_p
@@ -1337,7 +1337,7 @@ subroutine twoway_nesting(Atm, ngrids, grids_on_this_pe, zvir)
       if (neststruct%child_proc) then
 
          ps = ptop
-!$OMP parallel do default(none) shared(npz,jsd,jed,isd,ied,ps,delp)
+!!$OMP parallel do default(none) shared(npz,jsd,jed,isd,ied,ps,delp)
          do j=jsd,jed
             do k=1,npz
                do i=isd,ied
@@ -1375,7 +1375,7 @@ subroutine twoway_nesting(Atm, ngrids, grids_on_this_pe, zvir)
          !idealized simulations with a background uniform theta) since near the top
          !boundary theta is exponential, which is hard to accurately interpolate with a spline
          if (parent_grid%flagstruct%remap_option /= 0) then
-!$OMP parallel do default(none) shared(npz,jsc_p,jec_p,isc_p,iec_p,parent_grid,zvir,sphum)
+!!$OMP parallel do default(none) shared(npz,jsc_p,jec_p,isc_p,iec_p,parent_grid,zvir,sphum)
             do k=1,npz
                do j=jsc_p,jec_p
                   do i=isc_p,iec_p
@@ -1395,7 +1395,7 @@ subroutine twoway_nesting(Atm, ngrids, grids_on_this_pe, zvir)
               parent_grid%flagstruct%kord_wz, &
               isc_p, iec_p, jsc_p, jec_p, isd_p, ied_p, jsd_p, jed_p, .false. ) !neststruct%nestupdate < 7)
          if (parent_grid%flagstruct%remap_option /= 0) then
-!$OMP parallel do default(none) shared(npz,jsc_p,jec_p,isc_p,iec_p,parent_grid,zvir,sphum)
+!!$OMP parallel do default(none) shared(npz,jsc_p,jec_p,isc_p,iec_p,parent_grid,zvir,sphum)
             do k=1,npz
                do j=jsc_p,jec_p
                   do i=isc_p,iec_p
@@ -1569,9 +1569,9 @@ subroutine twoway_nesting(Atm, ngrids, grids_on_this_pe, zvir)
   real, dimension(is:ie,npz+1):: pe1, pn1
   integer i,j,k,iq
 
-!$OMP parallel do default(none) shared(js,je,kmd,is,ie,ak,bk,ps0,q,npz,ptop,do_q,&
-!$OMP          t,w,ps,nq,hydrostatic,kord_tm,kord_tr,kord_wz) &
-!$OMP          private(pe0,pn0,pe1,pn1,qp,tp,qn1)
+!!$OMP parallel do default(none) shared(js,je,kmd,is,ie,ak,bk,ps0,q,npz,ptop,do_q,&
+!!$OMP          t,w,ps,nq,hydrostatic,kord_tm,kord_tr,kord_wz) &
+!!$OMP          private(pe0,pn0,pe1,pn1,qp,tp,qn1)
   do 5000 j=js,je
 
      do k=1,kmd+1
@@ -1661,8 +1661,8 @@ subroutine twoway_nesting(Atm, ngrids, grids_on_this_pe, zvir)
 !------
 ! map u
 !------
-!$OMP parallel do default(none) shared(js,je,kmd,is,ie,ak,bk,ps,ps0,npz,u,ptop,kord_mt) &
-!$OMP          private(pe0,pe1,qt,qn1)
+!!$OMP parallel do default(none) shared(js,je,kmd,is,ie,ak,bk,ps,ps0,npz,u,ptop,kord_mt) &
+!!$OMP          private(pe0,pe1,qt,qn1)
   do j=js,je+1
 !------
 ! Data
@@ -1702,8 +1702,8 @@ subroutine twoway_nesting(Atm, ngrids, grids_on_this_pe, zvir)
 !------
 ! map v
 !------
-!$OMP parallel do default(none) shared(js,je,kmd,is,ie,ak,bk,ps,ps0,npz,v,ptop) &
-!$OMP          private(pe0,pe1,qt,qn1)
+!!$OMP parallel do default(none) shared(js,je,kmd,is,ie,ak,bk,ps,ps0,npz,v,ptop) &
+!!$OMP          private(pe0,pe1,qt,qn1)
    do j=js,je
 !------
 ! Data

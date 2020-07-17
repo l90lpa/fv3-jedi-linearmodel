@@ -82,10 +82,10 @@ contains
 
    pek = ptop ** cappa
 
-!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,ptop,pek,pe,pk, &
-!$OMP                                  ps,adjust_dry_mass,dpd,delp,peln,cappa,      &
-!$OMP                                  ptop_min,hydrostatic,pkz )                   &
-!$OMP                          private(ratio, ak1, lnp)
+!!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,ptop,pek,pe,pk, &
+!!$OMP                                  ps,adjust_dry_mass,dpd,delp,peln,cappa,      &
+!!$OMP                                  ptop_min,hydrostatic,pkz )                   &
+!!$OMP                          private(ratio, ak1, lnp)
    do j=jfirst,jlast
       do i=ifirst,ilast
          pe(i,1,j) = ptop
@@ -144,7 +144,7 @@ contains
       if ( present(make_nh) ) then
           if ( make_nh ) then
              delz = 1.e25 
-!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,delz,rdg,pt,peln)
+!!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,delz,rdg,pt,peln)
              do k=1,km
                 do j=jfirst,jlast
                    do i=ifirst,ilast
@@ -166,8 +166,8 @@ contains
 #else
        sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
 #endif
-!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,pkz,cappa,rdg, &
-!$OMP                                  delp,pt,zvir,q,sphum,delz)
+!!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,pkz,cappa,rdg, &
+!!$OMP                                  delp,pt,zvir,q,sphum,delz)
        do k=1,km
           do j=jfirst,jlast
              do i=ifirst,ilast
@@ -177,8 +177,8 @@ contains
           enddo
        enddo
      else
-!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,pkz,cappa,rdg, &
-!$OMP                                  delp,pt,delz)
+!!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,pkz,cappa,rdg, &
+!!$OMP                                  delp,pt,delz)
        do k=1,km
           do j=jfirst,jlast
              do i=ifirst,ilast
@@ -221,7 +221,7 @@ contains
       real  psmo, psdry
       integer i, j, k
 
-!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,ps,ptop,psd,delp,nwat,q) 
+!!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,ps,ptop,psd,delp,nwat,q) 
       do j=jfirst,jlast
 
          do i=ifirst,ilast

@@ -168,13 +168,13 @@ contains
    m = 3
    fra = dt/real(tau)
 
-!$OMP parallel do default(none) shared(im,is,ie,js,je,nq,kbot,qa,ta,sphum,ua,va,delp,peln,   &
-!$OMP                                  hydrostatic,pe,delz,g2,w,liq_wat,rainwat,ice_wat,     &
-!$OMP                                  snowwat,cv_air,m,graupel,pkz,rk,rz,fra, t_max, t_min, &
-!$OMP                                  u_dt,rdt,v_dt,xvir,nwat)                              &
-!$OMP                          private(kk,lcp2,icp2,tcp3,dh,dq,den,qs,qsw,dqsdt,qcon,q0,     &
-!$OMP                                  t0,u0,v0,w0,h0,pm,gzh,tvm,tmp,cpm,cvm,q_liq,q_sol,    &
-!$OMP                                  tv,gz,hd,te,ratio,pt1,pt2,tv1,tv2,ri_ref, ri,mc,km1)
+!!$OMP parallel do default(none) shared(im,is,ie,js,je,nq,kbot,qa,ta,sphum,ua,va,delp,peln,   &
+!!$OMP                                  hydrostatic,pe,delz,g2,w,liq_wat,rainwat,ice_wat,     &
+!!$OMP                                  snowwat,cv_air,m,graupel,pkz,rk,rz,fra, t_max, t_min, &
+!!$OMP                                  u_dt,rdt,v_dt,xvir,nwat)                              &
+!!$OMP                          private(kk,lcp2,icp2,tcp3,dh,dq,den,qs,qsw,dqsdt,qcon,q0,     &
+!!$OMP                                  t0,u0,v0,w0,h0,pm,gzh,tvm,tmp,cpm,cvm,q_liq,q_sol,    &
+!!$OMP                                  tv,gz,hd,te,ratio,pt1,pt2,tv1,tv2,ri_ref, ri,mc,km1)
   do 1000 j=js,je  
 
     do iq=1, nq
@@ -585,13 +585,13 @@ contains
    m = 3
    fra = dt/real(tau)
 
-!$OMP parallel do default(none) shared(im,is,ie,js,je,nq,kbot,qa,ta,sphum,ua,va,delp,peln,     &
-!$OMP                                  hydrostatic,pe,delz,g2,w,liq_wat,rainwat,ice_wat,  &
-!$OMP                                  snowwat,cv_air,m,graupel,pkz,rk,rz,fra,cld_amt,    &
-!$OMP                                  u_dt,rdt,v_dt,xvir,nwat)                 &
-!$OMP                          private(kk,lcp2,icp2,tcp3,dh,dq,den,qs,qsw,dqsdt,qcon,q0, &
-!$OMP                                  t0,u0,v0,w0,h0,pm,gzh,tvm,tmp,cpm,cvm, q_liq,q_sol,&
-!$OMP                                  tv,gz,hd,te,ratio,pt1,pt2,tv1,tv2,ri_ref, ri,mc,km1)
+!!$OMP parallel do default(none) shared(im,is,ie,js,je,nq,kbot,qa,ta,sphum,ua,va,delp,peln,     &
+!!$OMP                                  hydrostatic,pe,delz,g2,w,liq_wat,rainwat,ice_wat,  &
+!!$OMP                                  snowwat,cv_air,m,graupel,pkz,rk,rz,fra,cld_amt,    &
+!!$OMP                                  u_dt,rdt,v_dt,xvir,nwat)                 &
+!!$OMP                          private(kk,lcp2,icp2,tcp3,dh,dq,den,qs,qsw,dqsdt,qcon,q0, &
+!!$OMP                                  t0,u0,v0,w0,h0,pm,gzh,tvm,tmp,cpm,cvm, q_liq,q_sol,&
+!!$OMP                                  tv,gz,hd,te,ratio,pt1,pt2,tv1,tv2,ri_ref, ri,mc,km1)
   do 1000 j=js,je  
 
     do iq=1, nq
@@ -1170,10 +1170,10 @@ real, dimension(is:ie,js:je):: pt2, qv2, ql2, qi2, qs2, qr2, qg2, dp2, p2, icpk,
      endif
      lv00 = hlv0 - d0_vap*t_ice
 
-!$OMP parallel do default(none) shared(is,ie,js,je,kbot,qv,ql,qi,qs,qr,qg,dp,pt,       &
-!$OMP                                  lv00, d0_vap,hydrostatic,peln,delz,cv_air,sat_adj) &
-!$OMP                          private(dq,dq1,qsum,dp2,p2,pt2,qv2,ql2,qi2,qs2,qg2,qr2, &
-!$OMP                                  lcpk,icpk,qsw,dwsdt,sink,q_liq,q_sol,cpm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kbot,qv,ql,qi,qs,qr,qg,dp,pt,       &
+!!$OMP                                  lv00, d0_vap,hydrostatic,peln,delz,cv_air,sat_adj) &
+!!$OMP                          private(dq,dq1,qsum,dp2,p2,pt2,qv2,ql2,qi2,qs2,qg2,qr2, &
+!!$OMP                                  lcpk,icpk,qsw,dwsdt,sink,q_liq,q_sol,cpm)
   do k=1, kbot
      do j=js, je
         do i=is, ie
@@ -1363,8 +1363,8 @@ real, dimension(is:ie,js:je):: pt2, qv2, ql2, qi2, qs2, qr2, qg2, dp2, p2, icpk,
 
  enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,kbot,dp,qg,qr) &
-!$OMP                          private(dpk, q2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kbot,dp,qg,qr) &
+!!$OMP                          private(dpk, q2)
  do j=js, je
 ! Graupel:
     do k=1,kbot
@@ -1398,7 +1398,7 @@ real, dimension(is:ie,js:je):: pt2, qv2, ql2, qi2, qs2, qr2, qg2, dp2, p2, icpk,
 !-----------------------------------
 ! Top layer: borrow from below
     k = 1
-!$OMP parallel do default(none) shared(is,ie,js,je,k,qv,dp)
+!!$OMP parallel do default(none) shared(is,ie,js,je,k,qv,dp)
    do j=js, je
        do i=is, ie
           if( qv(i,j,k) < 0. ) then
@@ -1409,8 +1409,8 @@ real, dimension(is:ie,js:je):: pt2, qv2, ql2, qi2, qs2, qr2, qg2, dp2, p2, icpk,
    enddo
 
 ! this OpenMP do-loop cannot be parallelized with recursion on k/k-1
-!$OMP parallel do default(none) shared(is,ie,js,je,kbot,qv,dp) &
-!$OMP                          private(dq)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kbot,qv,dp) &
+!!$OMP                          private(dq)
  do j=js, je
  do k=2,kbot-1
        do i=is, ie
@@ -1428,7 +1428,7 @@ real, dimension(is:ie,js:je):: pt2, qv2, ql2, qi2, qs2, qr2, qg2, dp2, p2, icpk,
   enddo
  
 ! Bottom layer; Borrow from above
-!$OMP parallel do default(none) shared(is,ie,js,je,kbot,qv,dp) private(dq)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kbot,qv,dp) private(dq)
   do j=js, je
      do i=is, ie
      if( qv(i,j,kbot) < 0. ) then
@@ -1451,7 +1451,7 @@ real, dimension(is:ie,js:je):: pt2, qv2, ql2, qi2, qs2, qr2, qg2, dp2, p2, icpk,
 ! Fix negative cloud fraction
 !-----------------------------------
 ! this OpenMP do-loop cannot be parallelized by the recursion on k/k+1
-!$OMP parallel do default(none) shared(is,ie,js,je,kbot,qa,dp)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kbot,qa,dp)
  do j=js, je
  do k=1,kbot-1
        do i=is, ie
@@ -1464,8 +1464,8 @@ real, dimension(is:ie,js:je):: pt2, qv2, ql2, qi2, qs2, qr2, qg2, dp2, p2, icpk,
  enddo
  
 ! Bottom layer; Borrow from above
-!$OMP parallel do default(none) shared(is,ie,js,je,qa,kbot,dp) &
-!$OMP                          private(dq)
+!!$OMP parallel do default(none) shared(is,ie,js,je,qa,kbot,dp) &
+!!$OMP                          private(dq)
   do j=js, je
      do i=is, ie
         if( qa(i,j,kbot) < 0. .and. qa(i,j,kbot-1)>0.) then

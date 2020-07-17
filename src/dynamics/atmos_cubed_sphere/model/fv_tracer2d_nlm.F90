@@ -106,8 +106,8 @@ subroutine tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, n
       dx     => gridstruct%dx  
       dy     => gridstruct%dy  
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
-!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
+!!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax)
   do k=1,npz
      do j=jsd,jed
         do i=is,ie+1
@@ -146,9 +146,9 @@ subroutine tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, n
 
   call mp_reduce_max(cmax,npz)
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx, &
-!$OMP                                  cy,yfx,mfx,mfy,cmax)   &
-!$OMP                          private(nsplt, frac)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx, &
+!!$OMP                                  cy,yfx,mfx,mfy,cmax)   &
+!!$OMP                          private(nsplt, frac)
   do k=1,npz
 
      nsplt = int(1. + cmax(k))
@@ -188,7 +188,7 @@ subroutine tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, n
 ! Begin k-independent tracer transport; can not be OpenMPed because the mpp_update call.
   do k=1,npz
 
-!$OMP parallel do default(none) shared(k,is,ie,js,je,isd,ied,jsd,jed,xfx,area,yfx,ra_x,ra_y)
+!!$OMP parallel do default(none) shared(k,is,ie,js,je,isd,ied,jsd,jed,xfx,area,yfx,ra_x,ra_y)
      do j=jsd,jed
         do i=is,ie
            ra_x(i,j) = area(i,j) + (xfx(i,j,k) - xfx(i+1,j,k))
@@ -203,16 +203,16 @@ subroutine tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, n
      nsplt = int(1. + cmax(k))
      do it=1,nsplt
 
-!$OMP parallel do default(none) shared(k,is,ie,js,je,rarea,mfx,mfy,dp1,dp2)
+!!$OMP parallel do default(none) shared(k,is,ie,js,je,rarea,mfx,mfy,dp1,dp2)
         do j=js,je
            do i=is,ie
               dp2(i,j) = dp1(i,j,k) + ((mfx(i,j,k)-mfx(i+1,j,k))+(mfy(i,j,k)-mfy(i,j+1,k)))*rarea(i,j)
            enddo
         enddo
 
-!$OMP parallel do default(none) shared(k,nsplt,it,is,ie,js,je,isd,ied,jsd,jed,npx,npy,cx,xfx,hord,trdm, &
-!$OMP                                  nord_tr,nq,gridstruct,bd,cy,yfx,mfx,mfy,qn2,q,ra_x,ra_y,dp1,dp2,rarea) &
-!$OMP                          private(fx,fy)
+!!$OMP parallel do default(none) shared(k,nsplt,it,is,ie,js,je,isd,ied,jsd,jed,npx,npy,cx,xfx,hord,trdm, &
+!!$OMP                                  nord_tr,nq,gridstruct,bd,cy,yfx,mfx,mfy,qn2,q,ra_x,ra_y,dp1,dp2,rarea) &
+!!$OMP                          private(fx,fy)
         do iq=1,nq
         if ( nsplt /= 1 ) then
            if ( it==1 ) then
@@ -335,8 +335,8 @@ subroutine tracer_2d(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, npy,
       dx     => gridstruct%dx  
       dy     => gridstruct%dy  
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &  
-!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax,q_split,ksplt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &  
+!!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax,q_split,ksplt)
     do k=1,npz
        do j=jsd,jed
           do i=is,ie+1
@@ -398,8 +398,8 @@ subroutine tracer_2d(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, npy,
 !--------------------------------------------------------------------------------
 
     if( nsplt /= 1 ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,mfx,cy,yfx,mfy,cmax,nsplt,ksplt) &
-!$OMP                          private( frac )
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,mfx,cy,yfx,mfy,cmax,nsplt,ksplt) &
+!!$OMP                          private( frac )
         do k=1,npz
 
 #ifdef GLOBAL_CFL
@@ -443,9 +443,9 @@ subroutine tracer_2d(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, npy,
                            call timing_off('COMM_TRACER')
                        call timing_off('COMM_TOTAL')
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq,ksplt,&
-!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
-!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq,ksplt,&
+!!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
+!!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
      do k=1,npz
 
        if ( it .le. ksplt(k) ) then
@@ -580,8 +580,8 @@ subroutine tracer_2d_nested(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, np
       dx     => gridstruct%dx  
       dy     => gridstruct%dy  
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
-!$OMP                                  sin_sg,cy,yfx,dya,dx)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
+!!$OMP                                  sin_sg,cy,yfx,dya,dx)
       do k=1,npz
          do j=jsd,jed
             do i=is,ie+1
@@ -607,8 +607,8 @@ subroutine tracer_2d_nested(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, np
   if ( q_split == 0 ) then
 ! Determine nsplt
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,cmax,cx,cy,sin_sg) &
-!$OMP                          private(cmax_t )
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,cmax,cx,cy,sin_sg) &
+!!$OMP                          private(cmax_t )
       do k=1,npz
          cmax(k) = 0.
          if ( k < 4 ) then
@@ -649,7 +649,7 @@ subroutine tracer_2d_nested(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, np
    frac  = 1. / real(nsplt)
 
       if( nsplt /= 1 ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,frac,xfx,mfx,cy,yfx,mfy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,frac,xfx,mfx,cy,yfx,mfy)
           do k=1,npz
              do j=jsd,jed
                 do i=is,ie+1
@@ -699,9 +699,9 @@ subroutine tracer_2d_nested(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, np
       endif
 
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq, &
-!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
-!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq, &
+!!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
+!!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
       do k=1,npz
 
          do j=js,je
@@ -767,7 +767,7 @@ subroutine tracer_2d_nested(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, np
    if ( id_divg > 0 ) then
         rdt = 1./(frac*dt)
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,dp1,xfx,yfx,rarea,rdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,dp1,xfx,yfx,rarea,rdt)
         do k=1,npz
         do j=js,je
            do i=is,ie

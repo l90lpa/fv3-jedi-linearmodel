@@ -95,11 +95,11 @@ CONTAINS
     yfx_tl = 0.0
     fx_tl = 0.0
     fy_tl = 0.0
-!$OMP parallel do default(none) shared(js1,je1,is1,ie2,km,je2,ie1,ut,top_ratio,vt, &
-!$OMP                                  bot_ratio,dp0,js,je,ng,is,ie,gz,grid_type,  &
-!$OMP                                  bd,npx,npy,sw_corner,se_corner,ne_corner,   &
-!$OMP                                  nw_corner,area) &
-!$OMP                          private(gz2, xfx, yfx, fx, fy, int_ratio)
+!!$OMP parallel do default(none) shared(js1,je1,is1,ie2,km,je2,ie1,ut,top_ratio,vt, &
+!!$OMP                                  bot_ratio,dp0,js,je,ng,is,ie,gz,grid_type,  &
+!!$OMP                                  bd,npx,npy,sw_corner,se_corner,ne_corner,   &
+!!$OMP                                  nw_corner,area) &
+!!$OMP                          private(gz2, xfx, yfx, fx, fy, int_ratio)
     DO k=1,km+1
       IF (k .EQ. 1) THEN
         DO j=js1,je1
@@ -214,7 +214,7 @@ CONTAINS
       END DO
     END DO
 ! Enforce monotonicity of height to prevent blowup
-!$OMP parallel do default(none) shared(is1,ie1,js1,je1,ws,zs,gz,rdt,km)
+!!$OMP parallel do default(none) shared(is1,ie1,js1,je1,ws,zs,gz,rdt,km)
     DO j=js1,je1
       DO i=is1,ie1
         ws_tl(i, j) = -(rdt*gz_tl(i, j, km+1))
@@ -267,11 +267,11 @@ CONTAINS
     je1 = je + 1
     ie2 = ie + 2
     je2 = je + 2
-!$OMP parallel do default(none) shared(js1,je1,is1,ie2,km,je2,ie1,ut,top_ratio,vt, &
-!$OMP                                  bot_ratio,dp0,js,je,ng,is,ie,gz,grid_type,  &
-!$OMP                                  bd,npx,npy,sw_corner,se_corner,ne_corner,   &
-!$OMP                                  nw_corner,area) &
-!$OMP                          private(gz2, xfx, yfx, fx, fy, int_ratio)
+!!$OMP parallel do default(none) shared(js1,je1,is1,ie2,km,je2,ie1,ut,top_ratio,vt, &
+!!$OMP                                  bot_ratio,dp0,js,je,ng,is,ie,gz,grid_type,  &
+!!$OMP                                  bd,npx,npy,sw_corner,se_corner,ne_corner,   &
+!!$OMP                                  nw_corner,area) &
+!!$OMP                          private(gz2, xfx, yfx, fx, fy, int_ratio)
     DO k=1,km+1
       IF (k .EQ. 1) THEN
         DO j=js1,je1
@@ -359,7 +359,7 @@ CONTAINS
       END DO
     END DO
 ! Enforce monotonicity of height to prevent blowup
-!$OMP parallel do default(none) shared(is1,ie1,js1,je1,ws,zs,gz,rdt,km)
+!!$OMP parallel do default(none) shared(is1,ie1,js1,je1,ws,zs,gz,rdt,km)
     DO j=js1,je1
       DO i=is1,ie1
         ws(i, j) = (zs(i, j)-gz(i, j, km+1))*rdt
@@ -442,8 +442,8 @@ CONTAINS
     crx_adv_tl = 0.0
     xfx_adv_tl = 0.0
     cry_adv_tl = 0.0
-!$OMP parallel do default(none) shared(jsd,jed,crx,xfx,crx_adv,xfx_adv,is,ie,isd,ied, &
-!$OMP                                  km,dp0,uniform_grid,js,je,cry,yfx,cry_adv,yfx_adv)
+!!$OMP parallel do default(none) shared(jsd,jed,crx,xfx,crx_adv,xfx_adv,is,ie,isd,ied, &
+!!$OMP                                  km,dp0,uniform_grid,js,je,cry,yfx,cry_adv,yfx_adv)
     DO j=jsd,jed
       CALL EDGE_PROFILE_TLM(crx, crx_tl, xfx, xfx_tl, crx_adv, &
 &                     crx_adv_tl, xfx_adv, xfx_adv_tl, is, ie + 1, jsd, &
@@ -467,10 +467,10 @@ CONTAINS
     fx_tl = 0.0
     fy_tl = 0.0
     fx2_tl = 0.0
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,km,area,xfx_adv,yfx_adv, &
-!$OMP                                  damp,zh,crx_adv,cry_adv,npx,npy,hord,gridstruct,bd,  &
-!$OMP                                  ndif,rarea) &
-!$OMP                          private(z2, fx2, fy2, ra_x, ra_y, fx, fy,wk2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,km,area,xfx_adv,yfx_adv, &
+!!$OMP                                  damp,zh,crx_adv,cry_adv,npx,npy,hord,gridstruct,bd,  &
+!!$OMP                                  ndif,rarea) &
+!!$OMP                          private(z2, fx2, fy2, ra_x, ra_y, fx, fy,wk2)
     DO k=1,km+1
       DO j=jsd,jed
         DO i=is,ie
@@ -569,7 +569,7 @@ CONTAINS
     END DO
 !          zh(i,j,k) = rarea(i,j)*(fx(i,j)-fx(i+1,j)+fy(i,j)-fy(i,j+1))   &
 !                    + zh(i,j,k)*(3.-rarea(i,j)*(ra_x(i,j) + ra_y(i,j)))
-!$OMP parallel do default(none) shared(is,ie,js,je,km,ws,zs,zh,rdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,ws,zs,zh,rdt)
     DO j=js,je
       DO i=is,ie
         ws_tl(i, j) = -(rdt*zh_tl(i, j, km+1))
@@ -629,8 +629,8 @@ CONTAINS
     ied = ie + ng
     jsd = js - ng
     jed = je + ng
-!$OMP parallel do default(none) shared(jsd,jed,crx,xfx,crx_adv,xfx_adv,is,ie,isd,ied, &
-!$OMP                                  km,dp0,uniform_grid,js,je,cry,yfx,cry_adv,yfx_adv)
+!!$OMP parallel do default(none) shared(jsd,jed,crx,xfx,crx_adv,xfx_adv,is,ie,isd,ied, &
+!!$OMP                                  km,dp0,uniform_grid,js,je,cry,yfx,cry_adv,yfx_adv)
     DO j=jsd,jed
       CALL EDGE_PROFILE(crx, xfx, crx_adv, xfx_adv, is, ie + 1, jsd, jed&
 &                 , j, km, dp0, uniform_grid, 0)
@@ -640,10 +640,10 @@ CONTAINS
 &                                                    1, j, km, dp0, &
 &                                                    uniform_grid, 0)
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,km,area,xfx_adv,yfx_adv, &
-!$OMP                                  damp,zh,crx_adv,cry_adv,npx,npy,hord,gridstruct,bd,  &
-!$OMP                                  ndif,rarea) &
-!$OMP                          private(z2, fx2, fy2, ra_x, ra_y, fx, fy,wk2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,km,area,xfx_adv,yfx_adv, &
+!!$OMP                                  damp,zh,crx_adv,cry_adv,npx,npy,hord,gridstruct,bd,  &
+!!$OMP                                  ndif,rarea) &
+!!$OMP                          private(z2, fx2, fy2, ra_x, ra_y, fx, fy,wk2)
     DO k=1,km+1
       DO j=jsd,jed
         DO i=is,ie
@@ -701,7 +701,7 @@ CONTAINS
     END DO
 !          zh(i,j,k) = rarea(i,j)*(fx(i,j)-fx(i+1,j)+fy(i,j)-fy(i,j+1))   &
 !                    + zh(i,j,k)*(3.-rarea(i,j)*(ra_x(i,j) + ra_y(i,j)))
-!$OMP parallel do default(none) shared(is,ie,js,je,km,ws,zs,zh,rdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,ws,zs,zh,rdt)
     DO j=js,je
       DO i=is,ie
         ws(i, j) = (zs(i, j)-zh(i, j, km+1))*rdt
@@ -766,9 +766,9 @@ CONTAINS
     w2_tl = 0.0
     pm2_tl = 0.0
     pem_tl = 0.0
-!$OMP parallel do default(none) shared(js,je,is1,ie1,km,delp,pef,ptop,gz,rgrav,w3,pt, &
-!$OMP                                  a_imp,dt,gama,akap,ws,p_fac,scale_m,ms,hs,q_con,cappa) &
-!$OMP                          private(cp2,gm2, dm, dz2, w2, pm2, pe2, pem, peg)
+!!$OMP parallel do default(none) shared(js,je,is1,ie1,km,delp,pef,ptop,gz,rgrav,w3,pt, &
+!!$OMP                                  a_imp,dt,gama,akap,ws,p_fac,scale_m,ms,hs,q_con,cappa) &
+!!$OMP                          private(cp2,gm2, dm, dz2, w2, pm2, pe2, pem, peg)
     DO j=js-1,je+1
       DO k=1,km
         DO i=is1,ie1
@@ -872,9 +872,9 @@ CONTAINS
     rgrav = 1./grav
     is1 = is - 1
     ie1 = ie + 1
-!$OMP parallel do default(none) shared(js,je,is1,ie1,km,delp,pef,ptop,gz,rgrav,w3,pt, &
-!$OMP                                  a_imp,dt,gama,akap,ws,p_fac,scale_m,ms,hs,q_con,cappa) &
-!$OMP                          private(cp2,gm2, dm, dz2, w2, pm2, pe2, pem, peg)
+!!$OMP parallel do default(none) shared(js,je,is1,ie1,km,delp,pef,ptop,gz,rgrav,w3,pt, &
+!!$OMP                                  a_imp,dt,gama,akap,ws,p_fac,scale_m,ms,hs,q_con,cappa) &
+!!$OMP                          private(cp2,gm2, dm, dz2, w2, pm2, pe2, pem, peg)
     DO j=js-1,je+1
       DO k=1,km
         DO i=is1,ie1
@@ -974,10 +974,10 @@ CONTAINS
     rgrav = 1./grav
     peln1 = LOG(ptop)
     ptk = EXP(akap*peln1)
-!$OMP parallel do default(none) shared(is,ie,js,je,km,delp,ptop,peln1,pk3,ptk,akap,rgrav,zh,pt, &
-!$OMP                                  w,a_imp,dt,gama,ws,p_fac,scale_m,ms,delz,last_call,  &
-!$OMP                                  peln,pk,fp_out,ppe,use_logp,zs,pe,cappa,q_con )          &
-!$OMP                          private(cp2, gm2, dm, dz2, pm2, pem, peg, pelng, pe2, peln2, w2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,delp,ptop,peln1,pk3,ptk,akap,rgrav,zh,pt, &
+!!$OMP                                  w,a_imp,dt,gama,ws,p_fac,scale_m,ms,delz,last_call,  &
+!!$OMP                                  peln,pk,fp_out,ppe,use_logp,zs,pe,cappa,q_con )          &
+!!$OMP                          private(cp2, gm2, dm, dz2, pm2, pem, peg, pelng, pe2, peln2, w2)
     DO j=js,je
       DO k=1,km
         DO i=is,ie

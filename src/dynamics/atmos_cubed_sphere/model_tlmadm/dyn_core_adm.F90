@@ -424,11 +424,11 @@ CONTAINS
       rgrav = 1.0/grav
 ! rg/Cv=0.4
       k1k = akap/(1.-akap)
-!$OMP parallel do default(none) shared(npz,dp_ref,ak,bk)
+!!$OMP parallel do default(none) shared(npz,dp_ref,ak,bk)
       DO k=1,npz
         dp_ref(k) = ak(k+1) - ak(k) + (bk(k+1)-bk(k))*1.e5
       END DO
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,zs,phis,rgrav)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,zs,phis,rgrav)
       DO j=jsd,jed
         DO i=isd,ied
           zs(i, j) = phis(i, j)*rgrav
@@ -508,7 +508,7 @@ CONTAINS
         CALL START_GROUP_HALO_UPDATE(i_pack(7), w, domain)
         IF (it .EQ. 1) THEN
           IF (gridstruct%nested) THEN
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,gz,zs,delz)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,gz,zs,delz)
             DO j=jsd,jed
               DO i=isd,ied
                 CALL PUSHREALARRAY(gz(i, j, npz+1))
@@ -523,7 +523,7 @@ CONTAINS
             END DO
             CALL PUSHCONTROL(1,0)
           ELSE
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zs,delz)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zs,delz)
             DO j=js,je
               DO i=is,ie
                 CALL PUSHREALARRAY(gz(i, j, npz+1))
@@ -561,7 +561,7 @@ CONTAINS
         IF (flagstruct%use_old_omega) THEN
           pem = 0.0
 !allocate ( pem(is-1:ie+1,npz+1,js-1:je+1) )
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pem,delp,ptop)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pem,delp,ptop)
           DO j=js-1,je+1
             DO i=is-1,ie+1
               pem(i, 1, j) = ptop
@@ -581,9 +581,9 @@ CONTAINS
         CALL PUSHCONTROL(2,2)
         last_step = .false.
       END IF
-!$OMP parallel do default(none) shared(npz,isd,jsd,delpc,delp,ptc,pt,u,v,w,uc,vc,ua,va, &
-!$OMP                                  omga,ut,vt,divgd,flagstruct,dt2,hydrostatic,bd,  &
-!$OMP                                  gridstruct)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,delpc,delp,ptc,pt,u,v,w,uc,vc,ua,va, &
+!!$OMP                                  omga,ut,vt,divgd,flagstruct,dt2,hydrostatic,bd,  &
+!!$OMP                                  gridstruct)
       DO k=1,npz
         CALL C_SW_FWD(delpc(isd:ied, jsd:jed, k), delp(isd:ied, jsd:jed&
 &               , k), ptc(isd:ied, jsd:jed, k), pt(isd:ied, jsd:jed, k)&
@@ -631,7 +631,7 @@ CONTAINS
         CALL PUSHCONTROL(2,0)
       ELSE
         IF (it .EQ. 1) THEN
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
           DO k=1,npz+1
             DO j=jsd,jed
               DO i=isd,ied
@@ -642,7 +642,7 @@ CONTAINS
           END DO
           CALL PUSHCONTROL(1,0)
         ELSE
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
           DO k=1,npz+1
             DO j=jsd,jed
               DO i=isd,ied
@@ -739,13 +739,13 @@ CONTAINS
       ELSE
         CALL PUSHCONTROL(1,1)
       END IF
-!$OMP parallel do default(none) shared(npz,flagstruct,nord_v,pfull,damp_vt,hydrostatic,last_step, &
-!$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,delp,gridstruct,npx,npy,  &
-!$OMP                                  ng,zh,vt,ptc,pt,u,v,w,uc,vc,ua,va,divgd,mfx,mfy,cx,cy,     &
-!$OMP                                  crx,cry,xfx,yfx,q_con,zvir,sphum,nq,q,dt,bd,rdt,iep1,jep1, &
-!$OMP                                  heat_source)                                               &
-!$OMP                          private(nord_k, nord_w, nord_t, damp_w, damp_t, d2_divg,   &
-!$OMP                          d_con_k,kgb, hord_m, hord_v, hord_t, hord_p, wk, heat_s, z_rat)
+!!$OMP parallel do default(none) shared(npz,flagstruct,nord_v,pfull,damp_vt,hydrostatic,last_step, &
+!!$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,delp,gridstruct,npx,npy,  &
+!!$OMP                                  ng,zh,vt,ptc,pt,u,v,w,uc,vc,ua,va,divgd,mfx,mfy,cx,cy,     &
+!!$OMP                                  crx,cry,xfx,yfx,q_con,zvir,sphum,nq,q,dt,bd,rdt,iep1,jep1, &
+!!$OMP                                  heat_source)                                               &
+!!$OMP                          private(nord_k, nord_w, nord_t, damp_w, damp_t, d2_divg,   &
+!!$OMP                          d_con_k,kgb, hord_m, hord_v, hord_t, hord_p, wk, heat_s, z_rat)
       DO k=1,npz
         hord_m = flagstruct%hord_mt
         hord_t = flagstruct%hord_tm
@@ -1118,7 +1118,7 @@ CONTAINS
       IF (flagstruct%d_ext .GT. 0.) THEN
         CALL PUSHREALARRAY(d2_divg)
         d2_divg = flagstruct%d_ext*gridstruct%da_min_c
-!$OMP parallel do default(none) shared(is,iep1,js,jep1,npz,wk,ptc,divg2,vt,d2_divg)
+!!$OMP parallel do default(none) shared(is,iep1,js,jep1,npz,wk,ptc,divg2,vt,d2_divg)
         DO j=js,jep1
           DO i=is,iep1
             CALL PUSHREALARRAY(wk(i, j))
@@ -1233,7 +1233,7 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL(1,1)
         END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zh,grav)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zh,grav)
         DO k=1,npz+1
           DO j=js-2,je+2
             DO i=is-2,ie+2
@@ -1245,7 +1245,7 @@ CONTAINS
         CALL PUSHCONTROL(1,1)
       END IF
       IF (remap_step .AND. hydrostatic) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,pkc)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,pkc)
         DO k=1,npz+1
           DO j=js,je
             DO i=is,ie
@@ -1292,7 +1292,7 @@ CONTAINS
 !-------------------------------------------------------------------------------------------------------
       IF (flagstruct%breed_vortex_inline) THEN
         IF (.NOT.hydrostatic) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pkz,cappa,rdg,delp,delz,pt,k1k)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pkz,cappa,rdg,delp,delz,pt,k1k)
           DO k=1,npz
             DO j=js,je
               DO i=is,ie
@@ -1318,7 +1318,7 @@ CONTAINS
         CALL PUSHREALARRAY(u, (bd%ied-bd%isd+1)*(bd%jed-bd%jsd+2)*npz)
         CALL MPP_GET_BOUNDARY(u, v, domain, ebuffery=ebuffer, nbufferx=&
 &                       nbuffer, gridtype=dgrid_ne)
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,u,nbuffer,v,ebuffer)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,u,nbuffer,v,ebuffer)
         DO k=1,npz
           DO i=is,ie
             u(i, je+1, k) = nbuffer(i-is+1, k)
@@ -1344,7 +1344,7 @@ CONTAINS
 &         nest_timestep + 1
       IF (hydrostatic .AND. last_step) THEN
         IF (flagstruct%use_old_omega) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,pe,pem,rdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,pe,pem,rdt)
           DO k=1,npz
             DO j=js,je
               DO i=is,ie
@@ -1360,7 +1360,7 @@ CONTAINS
 &                   npz, ng)
           CALL PUSHCONTROL(1,0)
         ELSE
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga) private(om2d)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga) private(om2d)
           DO j=js,je
             DO k=1,npz
               DO i=is,ie
@@ -1382,7 +1382,7 @@ CONTAINS
           CALL PUSHCONTROL(1,1)
         END IF
         IF (idiag%id_ws .GT. 0 .AND. hydrostatic) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ws,delz,delp,omga)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ws,delz,delp,omga)
           DO j=js,je
             DO i=is,ie
               CALL PUSHREALARRAY(ws(i, j))
@@ -1464,8 +1464,8 @@ CONTAINS
 !
 ! del(Cp*T) = - del(KE)
 !
-!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pt,heat_source,delp,pkz,bdt) &
-!$OMP                          private(dtmp)
+!!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pt,heat_source,delp,pkz,bdt) &
+!!$OMP                          private(dtmp)
         DO j=js,je
 ! n_con is usually less than 3;
           DO k=1,n_con
@@ -1545,9 +1545,9 @@ CONTAINS
         CALL PUSHINTEGER(js)
         CALL PUSHCONTROL(2,1)
       ELSE
-!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pkz,cappa,rdg,delp,delz,pt, &
-!$OMP                                  heat_source,k1k,cv_air,bdt) &
-!$OMP                          private(dtmp, delt)
+!!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pkz,cappa,rdg,delp,delz,pt, &
+!!$OMP                                  heat_source,k1k,cv_air,bdt) &
+!!$OMP                          private(dtmp, delt)
         DO k=1,n_con
           IF (bdt*flagstruct%delt_max .GE. 0.) THEN
             delt = bdt*flagstruct%delt_max
@@ -3126,11 +3126,11 @@ CONTAINS
       rgrav = 1.0/grav
 ! rg/Cv=0.4
       k1k = akap/(1.-akap)
-!$OMP parallel do default(none) shared(npz,dp_ref,ak,bk)
+!!$OMP parallel do default(none) shared(npz,dp_ref,ak,bk)
       DO k=1,npz
         dp_ref(k) = ak(k+1) - ak(k) + (bk(k+1)-bk(k))*1.e5
       END DO
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,zs,phis,rgrav)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,zs,phis,rgrav)
       DO j=jsd,jed
         DO i=isd,ied
           zs(i, j) = phis(i, j)*rgrav
@@ -3197,7 +3197,7 @@ CONTAINS
         CALL TIMING_OFF('COMM_TOTAL')
         IF (it .EQ. 1) THEN
           IF (gridstruct%nested) THEN
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,gz,zs,delz)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,gz,zs,delz)
             DO j=jsd,jed
               DO i=isd,ied
                 gz(i, j, npz+1) = zs(i, j)
@@ -3209,7 +3209,7 @@ CONTAINS
               END DO
             END DO
           ELSE
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zs,delz)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zs,delz)
             DO j=js,je
               DO i=is,ie
                 gz(i, j, npz+1) = zs(i, j)
@@ -3238,7 +3238,7 @@ CONTAINS
         IF (flagstruct%use_old_omega) THEN
           pem = 0.0
 !allocate ( pem(is-1:ie+1,npz+1,js-1:je+1) )
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pem,delp,ptop)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pem,delp,ptop)
           DO j=js-1,je+1
             DO i=is-1,ie+1
               pem(i, 1, j) = ptop
@@ -3260,9 +3260,9 @@ CONTAINS
 &                                                     domain)
       CALL TIMING_OFF('COMM_TOTAL')
       CALL TIMING_ON('c_sw')
-!$OMP parallel do default(none) shared(npz,isd,jsd,delpc,delp,ptc,pt,u,v,w,uc,vc,ua,va, &
-!$OMP                                  omga,ut,vt,divgd,flagstruct,dt2,hydrostatic,bd,  &
-!$OMP                                  gridstruct)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,delpc,delp,ptc,pt,u,v,w,uc,vc,ua,va, &
+!!$OMP                                  omga,ut,vt,divgd,flagstruct,dt2,hydrostatic,bd,  &
+!!$OMP                                  gridstruct)
       DO k=1,npz
         CALL C_SW(delpc(isd:ied, jsd:jed, k), delp(isd:ied, jsd:jed, k)&
 &           , ptc(isd:ied, jsd:jed, k), pt(isd:ied, jsd:jed, k), u(isd:&
@@ -3302,7 +3302,7 @@ CONTAINS
           CALL TIMING_ON('COMM_TOTAL')
           CALL COMPLETE_GROUP_HALO_UPDATE(i_pack(5), domain)
           CALL TIMING_OFF('COMM_TOTAL')
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
           DO k=1,npz+1
             DO j=jsd,jed
               DO i=isd,ied
@@ -3312,7 +3312,7 @@ CONTAINS
             END DO
           END DO
         ELSE
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
           DO k=1,npz+1
             DO j=jsd,jed
               DO i=isd,ied
@@ -3402,13 +3402,13 @@ CONTAINS
         END DO
       END IF
       CALL TIMING_ON('d_sw')
-!$OMP parallel do default(none) shared(npz,flagstruct,nord_v,pfull,damp_vt,hydrostatic,last_step, &
-!$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,delp,gridstruct,npx,npy,  &
-!$OMP                                  ng,zh,vt,ptc,pt,u,v,w,uc,vc,ua,va,divgd,mfx,mfy,cx,cy,     &
-!$OMP                                  crx,cry,xfx,yfx,q_con,zvir,sphum,nq,q,dt,bd,rdt,iep1,jep1, &
-!$OMP                                  heat_source)                                               &
-!$OMP                          private(nord_k, nord_w, nord_t, damp_w, damp_t, d2_divg,   &
-!$OMP                          d_con_k,kgb, hord_m, hord_v, hord_t, hord_p, wk, heat_s, z_rat)
+!!$OMP parallel do default(none) shared(npz,flagstruct,nord_v,pfull,damp_vt,hydrostatic,last_step, &
+!!$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,delp,gridstruct,npx,npy,  &
+!!$OMP                                  ng,zh,vt,ptc,pt,u,v,w,uc,vc,ua,va,divgd,mfx,mfy,cx,cy,     &
+!!$OMP                                  crx,cry,xfx,yfx,q_con,zvir,sphum,nq,q,dt,bd,rdt,iep1,jep1, &
+!!$OMP                                  heat_source)                                               &
+!!$OMP                          private(nord_k, nord_w, nord_t, damp_w, damp_t, d2_divg,   &
+!!$OMP                          d_con_k,kgb, hord_m, hord_v, hord_t, hord_p, wk, heat_s, z_rat)
       DO k=1,npz
         hord_m = flagstruct%hord_mt
         hord_t = flagstruct%hord_tm
@@ -3678,7 +3678,7 @@ CONTAINS
       CALL TIMING_OFF('COMM_TOTAL')
       IF (flagstruct%d_ext .GT. 0.) THEN
         d2_divg = flagstruct%d_ext*gridstruct%da_min_c
-!$OMP parallel do default(none) shared(is,iep1,js,jep1,npz,wk,ptc,divg2,vt,d2_divg)
+!!$OMP parallel do default(none) shared(is,iep1,js,jep1,npz,wk,ptc,divg2,vt,d2_divg)
         DO j=js,jep1
           DO i=is,iep1
             wk(i, j) = ptc(i, j, 1)
@@ -3785,7 +3785,7 @@ CONTAINS
         CALL TIMING_ON('COMM_TOTAL')
         CALL COMPLETE_GROUP_HALO_UPDATE(i_pack(4), domain)
         CALL TIMING_OFF('COMM_TOTAL')
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zh,grav)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zh,grav)
         DO k=1,npz+1
           DO j=js-2,je+2
             DO i=is-2,ie+2
@@ -3800,7 +3800,7 @@ CONTAINS
         END IF
       END IF
       IF (remap_step .AND. hydrostatic) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,pkc)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,pkc)
         DO k=1,npz+1
           DO j=js,je
             DO i=is,ie
@@ -3840,7 +3840,7 @@ CONTAINS
 !-------------------------------------------------------------------------------------------------------
       IF (flagstruct%breed_vortex_inline) THEN
         IF (.NOT.hydrostatic) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pkz,cappa,rdg,delp,delz,pt,k1k)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pkz,cappa,rdg,delp,delz,pt,k1k)
           DO k=1,npz
             DO j=js,je
               DO i=is,ie
@@ -3862,7 +3862,7 @@ CONTAINS
 ! Prevent accumulation of rounding errors at overlapped domain edges:
         CALL MPP_GET_BOUNDARY(u, v, domain, ebuffery=ebuffer, nbufferx=&
 &                       nbuffer, gridtype=dgrid_ne)
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,u,nbuffer,v,ebuffer)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,u,nbuffer,v,ebuffer)
         DO k=1,npz
           DO i=is,ie
             u(i, je+1, k) = nbuffer(i-is+1, k)
@@ -3880,7 +3880,7 @@ CONTAINS
 &         nest_timestep + 1
       IF (hydrostatic .AND. last_step) THEN
         IF (flagstruct%use_old_omega) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,pe,pem,rdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,pe,pem,rdt)
           DO k=1,npz
             DO j=js,je
               DO i=is,ie
@@ -3894,7 +3894,7 @@ CONTAINS
           CALL ADV_PE(ua, va, pem, omga, gridstruct, bd, npx, npy, npz, &
 &               ng)
         ELSE
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga) private(om2d)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga) private(om2d)
           DO j=js,je
             DO k=1,npz
               DO i=is,ie
@@ -3914,7 +3914,7 @@ CONTAINS
           END DO
         END IF
         IF (idiag%id_ws .GT. 0 .AND. hydrostatic) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ws,delz,delp,omga)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ws,delz,delp,omga)
           DO j=js,je
             DO i=is,ie
               ws(i, j) = delz(i, j, npz)/delp(i, j, npz)*omga(i, j, npz)
@@ -3970,8 +3970,8 @@ CONTAINS
 !
 ! del(Cp*T) = - del(KE)
 !
-!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pt,heat_source,delp,pkz,bdt) &
-!$OMP                          private(dtmp)
+!!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pt,heat_source,delp,pkz,bdt) &
+!!$OMP                          private(dtmp)
         DO j=js,je
 ! n_con is usually less than 3;
           DO k=1,n_con
@@ -4006,9 +4006,9 @@ CONTAINS
           END DO
         END DO
       ELSE
-!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pkz,cappa,rdg,delp,delz,pt, &
-!$OMP                                  heat_source,k1k,cv_air,bdt) &
-!$OMP                          private(dtmp, delt)
+!!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pkz,cappa,rdg,delp,delz,pt, &
+!!$OMP                                  heat_source,k1k,cv_air,bdt) &
+!!$OMP                          private(dtmp, delt)
         DO k=1,n_con
           IF (bdt*flagstruct%delt_max .GE. 0.) THEN
             delt = bdt*flagstruct%delt_max
@@ -4077,8 +4077,8 @@ CONTAINS
     pei = 0.0
     pej = 0.0
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3,akap) &
-!$OMP                          private(pei)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3,akap) &
+!!$OMP                          private(pei)
     DO j=js,je
       CALL PUSHREALARRAY(pei(is-2))
       pei(is-2) = ptop
@@ -4109,8 +4109,8 @@ CONTAINS
         pk3(ie+2, j, k+1) = EXP(akap*LOG(pei(ie+2)))
       END DO
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3,akap) &
-!$OMP                          private(pej)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3,akap) &
+!!$OMP                          private(pej)
     DO i=is-2,ie+2
       CALL PUSHREALARRAY(pej(js-2))
       pej(js-2) = ptop
@@ -4278,8 +4278,8 @@ CONTAINS
     INTEGER :: i, j, k
     INTRINSIC LOG
     INTRINSIC EXP
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3,akap) &
-!$OMP                          private(pei)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3,akap) &
+!!$OMP                          private(pei)
     DO j=js,je
       pei(is-2) = ptop
       pei(is-1) = ptop
@@ -4298,8 +4298,8 @@ CONTAINS
         pk3(ie+2, j, k+1) = EXP(akap*LOG(pei(ie+2)))
       END DO
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3,akap) &
-!$OMP                          private(pej)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3,akap) &
+!!$OMP                          private(pej)
     DO i=is-2,ie+2
       pej(js-2) = ptop
       pej(js-1) = ptop
@@ -4353,8 +4353,8 @@ CONTAINS
 
     pet = 0.0
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3) &
-!$OMP                          private(pet)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3) &
+!!$OMP                          private(pet)
     DO j=js,je
       DO i=is-2,is-1
         CALL PUSHREALARRAY(pet)
@@ -4377,8 +4377,8 @@ CONTAINS
         END DO
       END DO
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3) &
-!$OMP                          private(pet)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3) &
+!!$OMP                          private(pet)
     DO i=is-2,ie+2
       DO j=js-2,js-1
         CALL PUSHREALARRAY(pet)
@@ -4500,8 +4500,8 @@ CONTAINS
     REAL :: pet
     INTEGER :: i, j, k
     INTRINSIC LOG
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3) &
-!$OMP                          private(pet)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3) &
+!!$OMP                          private(pet)
     DO j=js,je
       DO i=is-2,is-1
         pet = ptop
@@ -4518,8 +4518,8 @@ CONTAINS
         END DO
       END DO
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3) &
-!$OMP                          private(pet)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3) &
+!!$OMP                          private(pet)
     DO i=is-2,ie+2
       DO j=js-2,js-1
         pet = ptop
@@ -4566,7 +4566,7 @@ CONTAINS
     REAL, DIMENSION(is-1:ie+1, npz+1, js-1:je+1), INTENT(INOUT) :: pe
 ! Local:
     INTEGER :: i, j, k
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
     DO j=js,je
       CALL PUSHREALARRAY(pe(is-1, 1, j))
       pe(is-1, 1, j) = ptop
@@ -4579,7 +4579,7 @@ CONTAINS
         pe(ie+1, k+1, j) = pe(ie+1, k, j) + delp(ie+1, j, k)
       END DO
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
     DO i=is-1,ie+1
       CALL PUSHREALARRAY(pe(i, 1, js-1))
       pe(i, 1, js-1) = ptop
@@ -4665,7 +4665,7 @@ CONTAINS
     REAL, DIMENSION(is-1:ie+1, npz+1, js-1:je+1), INTENT(INOUT) :: pe
 ! Local:
     INTEGER :: i, j, k
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
     DO j=js,je
       pe(is-1, 1, j) = ptop
       pe(ie+1, 1, j) = ptop
@@ -4674,7 +4674,7 @@ CONTAINS
         pe(ie+1, k+1, j) = pe(ie+1, k, j) + delp(ie+1, j, k)
       END DO
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
     DO i=is-1,ie+1
       pe(i, 1, js-1) = ptop
       pe(i, 1, je+1) = ptop
@@ -4744,8 +4744,8 @@ CONTAINS
     ie = bd%ie
     js = bd%js
     je = bd%je
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ua,va,gridstruct,pem,npx,npy,ng,om) &
-!$OMP                          private(n, pdx, pdy, pin, pb, up, vp, grad, v3)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ua,va,gridstruct,pem,npx,npy,ng,om) &
+!!$OMP                          private(n, pdx, pdy, pin, pb, up, vp, grad, v3)
     DO k=1,npz
       IF (k .EQ. npz) THEN
         DO j=js,je
@@ -5023,8 +5023,8 @@ CONTAINS
     ie = bd%ie
     js = bd%js
     je = bd%je
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ua,va,gridstruct,pem,npx,npy,ng,om) &
-!$OMP                          private(n, pdx, pdy, pin, pb, up, vp, grad, v3)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ua,va,gridstruct,pem,npx,npy,ng,om) &
+!!$OMP                          private(n, pdx, pdy, pin, pb, up, vp, grad, v3)
     DO k=1,npz
       IF (k .EQ. npz) THEN
         DO j=js,je
@@ -5143,8 +5143,8 @@ CONTAINS
     ie = bd%ie
     js = bd%js
     je = bd%je
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pkc,delpc,uc,dt2,rdxc,gz,vc,rdyc) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pkc,delpc,uc,dt2,rdxc,gz,vc,rdyc) &
+!!$OMP                          private(wk)
     DO k=1,npz
       IF (hydrostatic) THEN
         DO j=js-1,je+1
@@ -5346,8 +5346,8 @@ CONTAINS
     ie = bd%ie
     js = bd%js
     je = bd%je
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pkc,delpc,uc,dt2,rdxc,gz,vc,rdyc) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pkc,delpc,uc,dt2,rdxc,gz,vc,rdyc) &
+!!$OMP                          private(wk)
     DO k=1,npz
       IF (hydrostatic) THEN
         DO j=js-1,je+1
@@ -5454,7 +5454,7 @@ CONTAINS
       top_value = ptk
     END IF
 !Remember that not all compilers set pp to zero by default
-!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
     DO j=js,je+1
       DO i=is,ie+1
         CALL PUSHREALARRAY(pp(i, j, 1))
@@ -5463,8 +5463,8 @@ CONTAINS
         pk(i, j, 1) = top_value
       END DO
     END DO
-!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
-!$OMP                          private(wk1)
+!!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
+!!$OMP                          private(wk1)
     DO k=1,npz+1
       IF (k .NE. 1) THEN
         CALL A2B_ORD4_FWD(pp(isd:ied, jsd:jed, k), wk1, gridstruct, &
@@ -5478,9 +5478,9 @@ CONTAINS
       CALL A2B_ORD4_FWD(gz(isd:ied, jsd:jed, k), wk1, gridstruct, npx&
 &                    , npy, is, ie, js, je, ng, .true.)
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,delp,gridstruct,npx,npy,ng,isd,jsd, &
-!$OMP                                  pk,dt,gz,u,pp,v) &
-!$OMP                          private(wk1, wk, du1, dv1)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,delp,gridstruct,npx,npy,ng,isd,jsd, &
+!!$OMP                                  pk,dt,gz,u,pp,v) &
+!!$OMP                          private(wk1, wk, du1, dv1)
     DO k=1,npz
       CALL A2B_ORD4_FWD(delp(isd:ied, jsd:jed, k), wk1, gridstruct, &
 &                    npx, npy, is, ie, js, je, ng)
@@ -5800,15 +5800,15 @@ CONTAINS
       top_value = ptk
     END IF
 !Remember that not all compilers set pp to zero by default
-!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
     DO j=js,je+1
       DO i=is,ie+1
         pp(i, j, 1) = 0.
         pk(i, j, 1) = top_value
       END DO
     END DO
-!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
-!$OMP                          private(wk1)
+!!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
+!!$OMP                          private(wk1)
     DO k=1,npz+1
       IF (k .NE. 1) THEN
         CALL A2B_ORD4(pp(isd:ied, jsd:jed, k), wk1, gridstruct, npx, &
@@ -5819,9 +5819,9 @@ CONTAINS
       CALL A2B_ORD4(gz(isd:ied, jsd:jed, k), wk1, gridstruct, npx, &
 &                npy, is, ie, js, je, ng, .true.)
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,delp,gridstruct,npx,npy,ng,isd,jsd, &
-!$OMP                                  pk,dt,gz,u,pp,v) &
-!$OMP                          private(wk1, wk, du1, dv1)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,delp,gridstruct,npx,npy,ng,isd,jsd, &
+!!$OMP                                  pk,dt,gz,u,pp,v) &
+!!$OMP                          private(wk1, wk, du1, dv1)
     DO k=1,npz
       CALL A2B_ORD4(delp(isd:ied, jsd:jed, k), wk1, gridstruct, npx, &
 &                npy, is, ie, js, je, ng)
@@ -5934,7 +5934,7 @@ CONTAINS
       top_value = ptk
     END IF
     alpha = 1. - beta
-!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
     DO j=js,je+1
       DO i=is,ie+1
         CALL PUSHREALARRAY(pp(i, j, 1))
@@ -5943,8 +5943,8 @@ CONTAINS
         pk(i, j, 1) = top_value
       END DO
     END DO
-!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
-!$OMP                          private(wk1)
+!!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
+!!$OMP                          private(wk1)
     DO k=1,npz+1
       IF (k .NE. 1) THEN
         CALL A2B_ORD4_FWD(pp(isd:ied, jsd:jed, k), wk1, gridstruct, &
@@ -5958,9 +5958,9 @@ CONTAINS
       CALL A2B_ORD4_FWD(gz(isd:ied, jsd:jed, k), wk1, gridstruct, npx&
 &                    , npy, is, ie, js, je, ng, .true.)
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,jsd,npz,delp,gridstruct,npx,npy,ng, &
-!$OMP                                  pk,u,beta,du,dt,gz,alpha,pp,v,dv) &
-!$OMP                          private(wk1, wk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,jsd,npz,delp,gridstruct,npx,npy,ng, &
+!!$OMP                                  pk,u,beta,du,dt,gz,alpha,pp,v,dv) &
+!!$OMP                          private(wk1, wk)
     DO k=1,npz
       CALL A2B_ORD4_FWD(delp(isd:ied, jsd:jed, k), wk1, gridstruct, &
 &                    npx, npy, is, ie, js, je, ng)
@@ -6294,15 +6294,15 @@ CONTAINS
       top_value = ptk
     END IF
     alpha = 1. - beta
-!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
     DO j=js,je+1
       DO i=is,ie+1
         pp(i, j, 1) = 0.
         pk(i, j, 1) = top_value
       END DO
     END DO
-!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
-!$OMP                          private(wk1)
+!!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
+!!$OMP                          private(wk1)
     DO k=1,npz+1
       IF (k .NE. 1) THEN
         CALL A2B_ORD4(pp(isd:ied, jsd:jed, k), wk1, gridstruct, npx, &
@@ -6313,9 +6313,9 @@ CONTAINS
       CALL A2B_ORD4(gz(isd:ied, jsd:jed, k), wk1, gridstruct, npx, &
 &                npy, is, ie, js, je, ng, .true.)
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,jsd,npz,delp,gridstruct,npx,npy,ng, &
-!$OMP                                  pk,u,beta,du,dt,gz,alpha,pp,v,dv) &
-!$OMP                          private(wk1, wk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,jsd,npz,delp,gridstruct,npx,npy,ng, &
+!!$OMP                                  pk,u,beta,du,dt,gz,alpha,pp,v,dv) &
+!!$OMP                          private(wk1, wk)
     DO k=1,npz
       CALL A2B_ORD4(delp(isd:ied, jsd:jed, k), wk1, gridstruct, npx, &
 &                npy, is, ie, js, je, ng)
@@ -6431,15 +6431,15 @@ CONTAINS
 ! pk is full pressure if non-hydrostatic
       top_value = ptop
     END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
     DO j=js,je+1
       DO i=is,ie+1
         CALL PUSHREALARRAY(pk(i, j, 1))
         pk(i, j, 1) = top_value
       END DO
     END DO
-!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
     DO k=2,npz+1
       IF (a2b_ord .EQ. 4) THEN
         CALL A2B_ORD4_FWD(pk(isd:ied, jsd:jed, k), wk, gridstruct, &
@@ -6451,8 +6451,8 @@ CONTAINS
         CALL PUSHCONTROL(1,0)
       END IF
     END DO
-!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
     DO k=1,npz+1
       IF (a2b_ord .EQ. 4) THEN
         CALL A2B_ORD4_FWD(gz(isd:ied, jsd:jed, k), wk, gridstruct, &
@@ -6465,13 +6465,13 @@ CONTAINS
       END IF
     END DO
     IF (d_ext .GT. 0.) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,wk2,divg2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,wk2,divg2)
       DO j=js,je+1
         DO i=is,ie
           wk2(i, j) = divg2(i, j) - divg2(i+1, j)
         END DO
       END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,wk1,divg2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,wk1,divg2)
       DO j=js,je
         DO i=is,ie+1
           wk1(i, j) = divg2(i, j) - divg2(i, j+1)
@@ -6480,7 +6480,7 @@ CONTAINS
       CALL PUSHCONTROL(1,1)
     ELSE
       CALL PUSHCONTROL(1,0)
-!$OMP parallel do default(none) shared(is,ie,js,je,wk1,wk2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,wk1,wk2)
       DO j=js,je+1
         DO i=is,ie
           wk2(i, j) = 0.
@@ -6490,9 +6490,9 @@ CONTAINS
         END DO
       END DO
     END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,delp,hydrostatic,a2b_ord,gridstruct, &
-!$OMP                                  npx,npy,isd,jsd,ng,u,v,wk2,dt,gz,wk1) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,delp,hydrostatic,a2b_ord,gridstruct, &
+!!$OMP                                  npx,npy,isd,jsd,ng,u,v,wk2,dt,gz,wk1) &
+!!$OMP                          private(wk)
     DO k=1,npz
       IF (hydrostatic) THEN
         DO j=js,je+1
@@ -6793,14 +6793,14 @@ CONTAINS
 ! pk is full pressure if non-hydrostatic
       top_value = ptop
     END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
     DO j=js,je+1
       DO i=is,ie+1
         pk(i, j, 1) = top_value
       END DO
     END DO
-!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
     DO k=2,npz+1
       IF (a2b_ord .EQ. 4) THEN
         CALL A2B_ORD4(pk(isd:ied, jsd:jed, k), wk, gridstruct, npx, &
@@ -6810,8 +6810,8 @@ CONTAINS
 &               , is, ie, js, je, ng, .true.)
       END IF
     END DO
-!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
     DO k=1,npz+1
       IF (a2b_ord .EQ. 4) THEN
         CALL A2B_ORD4(gz(isd:ied, jsd:jed, k), wk, gridstruct, npx, &
@@ -6822,20 +6822,20 @@ CONTAINS
       END IF
     END DO
     IF (d_ext .GT. 0.) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,wk2,divg2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,wk2,divg2)
       DO j=js,je+1
         DO i=is,ie
           wk2(i, j) = divg2(i, j) - divg2(i+1, j)
         END DO
       END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,wk1,divg2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,wk1,divg2)
       DO j=js,je
         DO i=is,ie+1
           wk1(i, j) = divg2(i, j) - divg2(i, j+1)
         END DO
       END DO
     ELSE
-!$OMP parallel do default(none) shared(is,ie,js,je,wk1,wk2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,wk1,wk2)
       DO j=js,je+1
         DO i=is,ie
           wk2(i, j) = 0.
@@ -6845,9 +6845,9 @@ CONTAINS
         END DO
       END DO
     END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,delp,hydrostatic,a2b_ord,gridstruct, &
-!$OMP                                  npx,npy,isd,jsd,ng,u,v,wk2,dt,gz,wk1) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,delp,hydrostatic,a2b_ord,gridstruct, &
+!!$OMP                                  npx,npy,isd,jsd,ng,u,v,wk2,dt,gz,wk1) &
+!!$OMP                          private(wk)
     DO k=1,npz
       IF (hydrostatic) THEN
         DO j=js,je+1
@@ -6945,15 +6945,15 @@ CONTAINS
     alpha = 1. - beta
 ! pk is pe**kappa if hydrostatic
     top_value = ptk
-!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
     DO j=js,je+1
       DO i=is,ie+1
         CALL PUSHREALARRAY(pk(i, j, 1))
         pk(i, j, 1) = top_value
       END DO
     END DO
-!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
     DO k=2,npz+1
       IF (a2b_ord .EQ. 4) THEN
         CALL A2B_ORD4_FWD(pk(isd:ied, jsd:jed, k), wk, gridstruct, &
@@ -6965,8 +6965,8 @@ CONTAINS
         CALL PUSHCONTROL(1,0)
       END IF
     END DO
-!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
     DO k=1,npz+1
       IF (a2b_ord .EQ. 4) THEN
         CALL A2B_ORD4_FWD(gz(isd:ied, jsd:jed, k), wk, gridstruct, &
@@ -6978,9 +6978,9 @@ CONTAINS
         CALL PUSHCONTROL(1,0)
       END IF
     END DO
-!$OMP parallel do default(none) shared(npz,is,ie,js,je,pk,u,beta,gz,divg2,alpha, &
-!$OMP                                  gridstruct,v,dt,du,dv) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,is,ie,js,je,pk,u,beta,gz,divg2,alpha, &
+!!$OMP                                  gridstruct,v,dt,du,dv) &
+!!$OMP                          private(wk)
     DO k=1,npz
       DO j=js,je+1
         DO i=is,ie+1
@@ -7242,14 +7242,14 @@ CONTAINS
     alpha = 1. - beta
 ! pk is pe**kappa if hydrostatic
     top_value = ptk
-!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
     DO j=js,je+1
       DO i=is,ie+1
         pk(i, j, 1) = top_value
       END DO
     END DO
-!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
     DO k=2,npz+1
       IF (a2b_ord .EQ. 4) THEN
         CALL A2B_ORD4(pk(isd:ied, jsd:jed, k), wk, gridstruct, npx, &
@@ -7259,8 +7259,8 @@ CONTAINS
 &               , is, ie, js, je, ng, .true.)
       END IF
     END DO
-!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
     DO k=1,npz+1
       IF (a2b_ord .EQ. 4) THEN
         CALL A2B_ORD4(gz(isd:ied, jsd:jed, k), wk, gridstruct, npx, &
@@ -7270,9 +7270,9 @@ CONTAINS
 &               , is, ie, js, je, ng, .true.)
       END IF
     END DO
-!$OMP parallel do default(none) shared(npz,is,ie,js,je,pk,u,beta,gz,divg2,alpha, &
-!$OMP                                  gridstruct,v,dt,du,dv) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,is,ie,js,je,pk,u,beta,gz,divg2,alpha, &
+!!$OMP                                  gridstruct,v,dt,du,dv) &
+!!$OMP                          private(wk)
     DO k=1,npz
       DO j=js,je+1
         DO i=is,ie+1
@@ -7373,9 +7373,9 @@ CONTAINS
       jfirst = js
       jlast = je
     END IF
-!$OMP parallel do default(none) shared(jfirst,jlast,km,ifirst,ilast,delp,ak,bk,pt, &
-!$OMP                                  hydrostatic,w,fv_debug) &
-!$OMP                          private(ip, dpmin, dp)
+!!$OMP parallel do default(none) shared(jfirst,jlast,km,ifirst,ilast,delp,ak,bk,pt, &
+!!$OMP                                  hydrostatic,w,fv_debug) &
+!!$OMP                          private(ip, dpmin, dp)
     DO j=jfirst,jlast
       ip = 0
       DO k=1,km-1
@@ -7622,9 +7622,9 @@ CONTAINS
       jfirst = js
       jlast = je
     END IF
-!$OMP parallel do default(none) shared(jfirst,jlast,km,ifirst,ilast,delp,ak,bk,pt, &
-!$OMP                                  hydrostatic,w,fv_debug) &
-!$OMP                          private(ip, dpmin, dp)
+!!$OMP parallel do default(none) shared(jfirst,jlast,km,ifirst,ilast,delp,ak,bk,pt, &
+!!$OMP                                  hydrostatic,w,fv_debug) &
+!!$OMP                          private(ip, dpmin, dp)
     DO j=jfirst,jlast
       ip = 0
       DO k=1,km-1
@@ -7783,9 +7783,9 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL(1,0)
     END IF
-!$OMP parallel do default(none) shared(jfirst,jlast,ifirst,ilast,pk,km,gz,hs,ptop,ptk, &
-!$OMP                                  js,je,is,ie,peln,peln1,pe,delp,akap,pt,CG,pkz,q_con) &
-!$OMP                          private(peg, pkg, p1d, g1d, logp)
+!!$OMP parallel do default(none) shared(jfirst,jlast,ifirst,ilast,pk,km,gz,hs,ptop,ptk, &
+!!$OMP                                  js,je,is,ie,peln,peln1,pe,delp,akap,pt,CG,pkz,q_con) &
+!!$OMP                          private(peg, pkg, p1d, g1d, logp)
     DO j=jfirst,jlast
       DO i=ifirst,ilast
         CALL PUSHREALARRAY(p1d(i))
@@ -8163,9 +8163,9 @@ CONTAINS
       IF (js .EQ. 1) jfirst = jsd
       IF (je .EQ. npy - 1) jlast = jed
     END IF
-!$OMP parallel do default(none) shared(jfirst,jlast,ifirst,ilast,pk,km,gz,hs,ptop,ptk, &
-!$OMP                                  js,je,is,ie,peln,peln1,pe,delp,akap,pt,CG,pkz,q_con) &
-!$OMP                          private(peg, pkg, p1d, g1d, logp)
+!!$OMP parallel do default(none) shared(jfirst,jlast,ifirst,ilast,pk,km,gz,hs,ptop,ptk, &
+!!$OMP                                  js,je,is,ie,peln,peln1,pe,delp,akap,pt,CG,pkz,q_con) &
+!!$OMP                          private(peg, pkg, p1d, g1d, logp)
     DO j=jfirst,jlast
       DO i=ifirst,ilast
         p1d(i) = ptop
@@ -8342,10 +8342,10 @@ CONTAINS
     CALL MPP_UPDATE_DOMAINS(q, domain, complete=.true.)
     DO n=1,ntimes
       nt = ntimes - n
-!$OMP parallel do default(none) shared(km,q,is,ie,js,je,npx,npy, &
-!$OMP                                  nt,isd,jsd,gridstruct,bd, &
-!$OMP                                  cd) &
-!$OMP                          private(fx, fy)
+!!$OMP parallel do default(none) shared(km,q,is,ie,js,je,npx,npy, &
+!!$OMP                                  nt,isd,jsd,gridstruct,bd, &
+!!$OMP                                  cd) &
+!!$OMP                          private(fx, fy)
       DO k=1,km
         IF (gridstruct%sw_corner) THEN
           q(1, 1, k) = (q(1, 1, k)+q(0, 1, k)+q(1, 0, k))*r3
@@ -8707,10 +8707,10 @@ CONTAINS
     CALL TIMING_OFF('COMM_TOTAL')
     DO n=1,ntimes
       nt = ntimes - n
-!$OMP parallel do default(none) shared(km,q,is,ie,js,je,npx,npy, &
-!$OMP                                  nt,isd,jsd,gridstruct,bd, &
-!$OMP                                  cd) &
-!$OMP                          private(fx, fy)
+!!$OMP parallel do default(none) shared(km,q,is,ie,js,je,npx,npy, &
+!!$OMP                                  nt,isd,jsd,gridstruct,bd, &
+!!$OMP                                  cd) &
+!!$OMP                          private(fx, fy)
       DO k=1,km
         IF (gridstruct%sw_corner) THEN
           q(1, 1, k) = (q(1, 1, k)+q(0, 1, k)+q(1, 0, k))*r3
@@ -8767,7 +8767,7 @@ CONTAINS
     REAL, INTENT(INOUT) :: array(i1:i2, j1:j2, km)
     REAL, INTENT(IN) :: var
     INTEGER :: i, j, k
-!$OMP parallel do default(none) shared(i1,i2,j1,j2,km,array,var)
+!!$OMP parallel do default(none) shared(i1,i2,j1,j2,km,array,var)
     DO k=1,km
       DO j=j1,j2
         DO i=i1,i2
@@ -8833,7 +8833,7 @@ CONTAINS
       END DO
  100  rff_initialized = .true.
     END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pfull,rf_cutoff,w,rf,u,v,hydrostatic)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pfull,rf_cutoff,w,rf,u,v,hydrostatic)
     DO k=1,kmax
       IF (pfull(k) .LT. rf_cutoff) THEN
         DO j=js,je+1

@@ -414,8 +414,8 @@ CONTAINS
       theta_d = GET_TRACER_INDEX(model_atmos, 'theta_d')
     END IF
     akap = kappa
-!$OMP parallel do default(none) shared(npz,ak,bk,flagstruct,pfull) &
-!$OMP                          private(ph1, ph2)
+!!$OMP parallel do default(none) shared(npz,ak,bk,flagstruct,pfull) &
+!!$OMP                          private(ph1, ph2)
     DO k=1,npz
       ph1 = ak(k) + bk(k)*flagstruct%p_ref
       ph2 = ak(k+1) + bk(k+1)*flagstruct%p_ref
@@ -423,8 +423,8 @@ CONTAINS
     END DO
     IF (hydrostatic) THEN
       dp1_tl = 0.0
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,nwat,q,q_con,sphum,liq_wat, &
-!$OMP      rainwat,ice_wat,snowwat,graupel) private(cvm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,nwat,q,q_con,sphum,liq_wat, &
+!!$OMP      rainwat,ice_wat,snowwat,graupel) private(cvm)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -435,10 +435,10 @@ CONTAINS
       END DO
     ELSE
       dp1_tl = 0.0
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,q,q_con,sphum,liq_wat, &
-!$OMP                                  rainwat,ice_wat,snowwat,graupel,pkz,flagstruct, &
-!$OMP                                  cappa,kappa,rdg,delp,pt,delz,nwat)              &
-!$OMP                          private(cvm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,q,q_con,sphum,liq_wat, &
+!!$OMP                                  rainwat,ice_wat,snowwat,graupel,pkz,flagstruct, &
+!!$OMP                                  cappa,kappa,rdg,delp,pt,delz,nwat)              &
+!!$OMP                          private(cvm)
       DO k=1,npz
         IF (flagstruct%moist_phys) THEN
           DO j=js,je
@@ -562,7 +562,7 @@ CONTAINS
     END IF
 ! Convert pt to virtual potential temperature on the first timestep
     IF (flagstruct%adiabatic) THEN
-!$OMP parallel do default(none) shared(theta_d,is,ie,js,je,npz,pt,pkz,q)
+!!$OMP parallel do default(none) shared(theta_d,is,ie,js,je,npz,pt,pkz,q)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -581,7 +581,7 @@ CONTAINS
         END IF
       END DO
     ELSE
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,dp1,pkz,q_con)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,dp1,pkz,q_con)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -597,7 +597,7 @@ CONTAINS
     mdt = bdt/REAL(k_split)
     IF (idiag%id_mdt .GT. 0 .AND. (.NOT.do_adiabatic_init)) THEN
 !allocate ( dtdt_m(is:ie,js:je,npz) )
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -650,7 +650,7 @@ CONTAINS
       CALL START_GROUP_HALO_UPDATE_TLM(i_pack(8), u, u_tl, v, v_tl, &
 &                                domain, gridtype=dgrid_ne)
       CALL TIMING_OFF('COMM_TOTAL')
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,dp1,delp)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,dp1,delp)
       DO k=1,npz
         DO j=jsd,jed
           DO i=isd,ied
@@ -816,7 +816,7 @@ CONTAINS
         CALL TIMING_OFF('Remapping')
         IF (last_step) THEN
           IF (.NOT.hydrostatic) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,delp,delz,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,delp,delz,w)
             DO k=1,npz
               DO j=js,je
                 DO i=is,ie
@@ -847,7 +847,7 @@ CONTAINS
     CALL TIMING_OFF('FV_DYN_LOOP')
     IF (idiag%id_mdt .GT. 0 .AND. (.NOT.do_adiabatic_init)) THEN
 ! Output temperature tendency due to inline moist physics:
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m,bdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m,bdt)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -908,7 +908,7 @@ CONTAINS
     END IF
     IF ((flagstruct%consv_am .OR. idiag%id_amdt .GT. 0) .AND. (.NOT.&
 &       do_adiabatic_init)) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,te_2d,teq,dt2,ps2,ps,idiag)
+!!$OMP parallel do default(none) shared(is,ie,js,je,te_2d,teq,dt2,ps2,ps,idiag)
       DO j=js,je
         DO i=is,ie
 ! Note: the mountain torque computation contains also numerical error
@@ -939,14 +939,14 @@ CONTAINS
       END IF
 !  consv_am
       IF (flagstruct%consv_am) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,m_fac,u0,gridstruct)
+!!$OMP parallel do default(none) shared(is,ie,js,je,m_fac,u0,gridstruct)
         DO j=js,je
           DO i=is,ie
             m_fac(i, j) = u0*COS(gridstruct%agrid(i, j, 2))
           END DO
         END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pt,m_fac,ua,cp_air, &
-!$OMP                                  u,u0,gridstruct,v )
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pt,m_fac,ua,cp_air, &
+!!$OMP                                  u,u0,gridstruct,v )
         DO k=1,npz
           DO j=js,je+1
             DO i=is,ie
@@ -1267,16 +1267,16 @@ CONTAINS
       theta_d = GET_TRACER_INDEX(model_atmos, 'theta_d')
     END IF
     akap = kappa
-!$OMP parallel do default(none) shared(npz,ak,bk,flagstruct,pfull) &
-!$OMP                          private(ph1, ph2)
+!!$OMP parallel do default(none) shared(npz,ak,bk,flagstruct,pfull) &
+!!$OMP                          private(ph1, ph2)
     DO k=1,npz
       ph1 = ak(k) + bk(k)*flagstruct%p_ref
       ph2 = ak(k+1) + bk(k+1)*flagstruct%p_ref
       pfull(k) = (ph2-ph1)/LOG(ph2/ph1)
     END DO
     IF (hydrostatic) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,nwat,q,q_con,sphum,liq_wat, &
-!$OMP      rainwat,ice_wat,snowwat,graupel) private(cvm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,nwat,q,q_con,sphum,liq_wat, &
+!!$OMP      rainwat,ice_wat,snowwat,graupel) private(cvm)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -1285,10 +1285,10 @@ CONTAINS
         END DO
       END DO
     ELSE
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,q,q_con,sphum,liq_wat, &
-!$OMP                                  rainwat,ice_wat,snowwat,graupel,pkz,flagstruct, &
-!$OMP                                  cappa,kappa,rdg,delp,pt,delz,nwat)              &
-!$OMP                          private(cvm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,q,q_con,sphum,liq_wat, &
+!!$OMP                                  rainwat,ice_wat,snowwat,graupel,pkz,flagstruct, &
+!!$OMP                                  cappa,kappa,rdg,delp,pt,delz,nwat)              &
+!!$OMP                          private(cvm)
       DO k=1,npz
         IF (flagstruct%moist_phys) THEN
           DO j=js,je
@@ -1378,7 +1378,7 @@ CONTAINS
     END IF
 ! Convert pt to virtual potential temperature on the first timestep
     IF (flagstruct%adiabatic) THEN
-!$OMP parallel do default(none) shared(theta_d,is,ie,js,je,npz,pt,pkz,q)
+!!$OMP parallel do default(none) shared(theta_d,is,ie,js,je,npz,pt,pkz,q)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -1394,7 +1394,7 @@ CONTAINS
         END IF
       END DO
     ELSE
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,dp1,pkz,q_con)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,dp1,pkz,q_con)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -1407,7 +1407,7 @@ CONTAINS
     mdt = bdt/REAL(k_split)
     IF (idiag%id_mdt .GT. 0 .AND. (.NOT.do_adiabatic_init)) THEN
 !allocate ( dtdt_m(is:ie,js:je,npz) )
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -1437,7 +1437,7 @@ CONTAINS
       CALL START_GROUP_HALO_UPDATE(i_pack(8), u, v, domain, gridtype=&
 &                            dgrid_ne)
       CALL TIMING_OFF('COMM_TOTAL')
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,dp1,delp)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,dp1,delp)
       DO k=1,npz
         DO j=jsd,jed
           DO i=isd,ied
@@ -1583,7 +1583,7 @@ CONTAINS
         CALL TIMING_OFF('Remapping')
         IF (last_step) THEN
           IF (.NOT.hydrostatic) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,delp,delz,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,delp,delz,w)
             DO k=1,npz
               DO j=js,je
                 DO i=is,ie
@@ -1608,7 +1608,7 @@ CONTAINS
     CALL TIMING_OFF('FV_DYN_LOOP')
     IF (idiag%id_mdt .GT. 0 .AND. (.NOT.do_adiabatic_init)) THEN
 ! Output temperature tendency due to inline moist physics:
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m,bdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m,bdt)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -1668,7 +1668,7 @@ CONTAINS
     END IF
     IF ((flagstruct%consv_am .OR. idiag%id_amdt .GT. 0) .AND. (.NOT.&
 &       do_adiabatic_init)) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,te_2d,teq,dt2,ps2,ps,idiag)
+!!$OMP parallel do default(none) shared(is,ie,js,je,te_2d,teq,dt2,ps2,ps,idiag)
       DO j=js,je
         DO i=is,ie
 ! Note: the mountain torque computation contains also numerical error
@@ -1693,14 +1693,14 @@ CONTAINS
       END IF
 !  consv_am
       IF (flagstruct%consv_am) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,m_fac,u0,gridstruct)
+!!$OMP parallel do default(none) shared(is,ie,js,je,m_fac,u0,gridstruct)
         DO j=js,je
           DO i=is,ie
             m_fac(i, j) = u0*COS(gridstruct%agrid(i, j, 2))
           END DO
         END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pt,m_fac,ua,cp_air, &
-!$OMP                                  u,u0,gridstruct,v )
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pt,m_fac,ua,cp_air, &
+!!$OMP                                  u,u0,gridstruct,v )
         DO k=1,npz
           DO j=js,je+1
             DO i=is,ie
@@ -1832,8 +1832,8 @@ CONTAINS
 &               , npz, gridstruct%grid_type, bd, gridstruct%nested)
 !allocate( u2f(isd:ied,jsd:jed,kmax) )
     u2f = 0.0
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,hydrostatic,ua,va,agrid, &
-!$OMP                                  u2f,rf,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,hydrostatic,ua,va,agrid, &
+!!$OMP                                  u2f,rf,w)
     DO k=1,kmax
       IF (pm(k) .LT. rf_cutoff) THEN
         u2f(:, :, k) = 1./(1.+rf(k))
@@ -1844,8 +1844,8 @@ CONTAINS
     CALL TIMING_ON('COMM_TOTAL')
     CALL MPP_UPDATE_DOMAINS(u2f, domain)
     CALL TIMING_OFF('COMM_TOTAL')
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,w,rf,u,v, &
-!$OMP                                  conserve,hydrostatic,pt,ua,va,u2f,cp,rg,ptop,rcv)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,w,rf,u,v, &
+!!$OMP                                  conserve,hydrostatic,pt,ua,va,u2f,cp,rg,ptop,rcv)
     DO k=1,kmax
       IF (pm(k) .LT. rf_cutoff) THEN
 ! Add heat so as to conserve TE
@@ -1976,8 +1976,8 @@ CONTAINS
 &           bd, gridstruct%nested)
 !allocate( u2f(isd:ied,jsd:jed,kmax) )
     u2f = 0.0
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,hydrostatic,ua,va,agrid, &
-!$OMP                                  u2f,rf,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,hydrostatic,ua,va,agrid, &
+!!$OMP                                  u2f,rf,w)
     DO k=1,kmax
       IF (pm(k) .LT. rf_cutoff) THEN
         u2f(:, :, k) = 1./(1.+rf(k))
@@ -1988,8 +1988,8 @@ CONTAINS
     CALL TIMING_ON('COMM_TOTAL')
     CALL MPP_UPDATE_DOMAINS(u2f, domain)
     CALL TIMING_OFF('COMM_TOTAL')
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,w,rf,u,v, &
-!$OMP                                  conserve,hydrostatic,pt,ua,va,u2f,cp,rg,ptop,rcv)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,w,rf,u,v, &
+!!$OMP                                  conserve,hydrostatic,pt,ua,va,u2f,cp,rg,ptop,rcv)
     DO k=1,kmax
       IF (pm(k) .LT. rf_cutoff) THEN
 ! Add heat so as to conserve TE
@@ -2120,7 +2120,7 @@ CONTAINS
     CALL C2L_ORD2_TLM(u, u_tl, v, v_tl, ua, ua_tl, va, va_tl, gridstruct&
 &               , npz, gridstruct%grid_type, bd, gridstruct%nested)
     u2f_tl = 0.0
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,u2f,hydrostatic,ua,va,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,u2f,hydrostatic,ua,va,w)
     DO k=1,kmax
       IF (hydrostatic) THEN
         DO j=js,je
@@ -2144,8 +2144,8 @@ CONTAINS
     CALL TIMING_ON('COMM_TOTAL')
     CALL MPP_UPDATE_DOMAINS_TLM(u2f, u2f_tl, domain)
     CALL TIMING_OFF('COMM_TOTAL')
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,conserve,hydrostatic,pt,u2f,cp,rg, &
-!$OMP                                  ptop,pm,rf,delz,rcv,u,v,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,conserve,hydrostatic,pt,u2f,cp,rg, &
+!!$OMP                                  ptop,pm,rf,delz,rcv,u,v,w)
     DO k=1,kmax
       IF (conserve) THEN
         IF (hydrostatic) THEN
@@ -2309,7 +2309,7 @@ CONTAINS
 !allocate( u2f(isd:ied,jsd:jed,kmax) )
     CALL C2L_ORD2(u, v, ua, va, gridstruct, npz, gridstruct%grid_type, &
 &           bd, gridstruct%nested)
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,u2f,hydrostatic,ua,va,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,u2f,hydrostatic,ua,va,w)
     DO k=1,kmax
       IF (hydrostatic) THEN
         DO j=js,je
@@ -2329,8 +2329,8 @@ CONTAINS
     CALL TIMING_ON('COMM_TOTAL')
     CALL MPP_UPDATE_DOMAINS(u2f, domain)
     CALL TIMING_OFF('COMM_TOTAL')
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,conserve,hydrostatic,pt,u2f,cp,rg, &
-!$OMP                                  ptop,pm,rf,delz,rcv,u,v,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,conserve,hydrostatic,pt,u2f,cp,rg, &
+!!$OMP                                  ptop,pm,rf,delz,rcv,u,v,w)
     DO k=1,kmax
       IF (conserve) THEN
         IF (hydrostatic) THEN
@@ -2420,8 +2420,8 @@ CONTAINS
     CALL C2L_ORD2_TLM(u, u_tl, v, v_tl, ua, ua_tl, va, va_tl, gridstruct&
 &               , npz, gridstruct%grid_type, bd, gridstruct%nested)
     dm_tl = 0.0
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gridstruct,aam,m_fac,ps,ptop,delp,agrav,ua) &
-!$OMP                          private(r1, r2, dm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gridstruct,aam,m_fac,ps,ptop,delp,agrav,ua) &
+!!$OMP                          private(r1, r2, dm)
     DO j=js,je
       DO i=is,ie
         r1(i) = radius*COS(gridstruct%agrid(i, j, 2))
@@ -2475,8 +2475,8 @@ CONTAINS
     INTRINSIC COS
     CALL C2L_ORD2(u, v, ua, va, gridstruct, npz, gridstruct%grid_type, &
 &           bd, gridstruct%nested)
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gridstruct,aam,m_fac,ps,ptop,delp,agrav,ua) &
-!$OMP                          private(r1, r2, dm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gridstruct,aam,m_fac,ps,ptop,delp,agrav,ua) &
+!!$OMP                          private(r1, r2, dm)
     DO j=js,je
       DO i=is,ie
         r1(i) = radius*COS(gridstruct%agrid(i, j, 2))

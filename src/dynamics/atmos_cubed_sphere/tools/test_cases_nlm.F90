@@ -1630,7 +1630,7 @@
     ! Initialize surface Pressure
          ps(:,:) = 1.e5
     ! Initialize detla-P
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,delp,ak,ps,bk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,delp,ak,ps,bk)
          do z=1,npz
             do j=js,je
                do i=is,ie
@@ -1639,7 +1639,7 @@
             enddo
          enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,ptop,peln,pk,delp)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,ptop,peln,pk,delp)
      do j=js,je
         do i=is, ie
            pe(i,1,j) = ptop
@@ -1656,7 +1656,7 @@
         enddo
     enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pkz,pk,peln)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pkz,pk,peln)
     do k=1,npz
        do j=js,je
        do i=is,ie
@@ -1677,8 +1677,8 @@
          sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
          pcen(1) = PI/9.
          pcen(2) = 2.0*PI/9. 
-!$OMP parallel do default(none) shared(sphum,is,ie,js,je,npz,pe,q,agrid,pcen,delp,peln) &
-!$OMP                          private(ptmp) 
+!!$OMP parallel do default(none) shared(sphum,is,ie,js,je,npz,pe,q,agrid,pcen,delp,peln) &
+!!$OMP                          private(ptmp) 
          do k=1,npz
          do j=js,je
          do i=is,ie
@@ -1710,8 +1710,8 @@
              r0 = radius/10.0
          endif
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,eta_v,grid,Ubar,pcen,r0,ee2,v,ee1,es,u,u1,ew) &
-!$OMP                          private(utmp,r,vv1,vv3,p1,p2,vv2,uu1,uu2,uu3,pa)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,eta_v,grid,Ubar,pcen,r0,ee2,v,ee1,es,u,u1,ew) &
+!!$OMP                          private(utmp,r,vv1,vv3,p1,p2,vv2,uu1,uu2,uu3,pa)
          do z=1,npz
             do j=js,je
                do i=is,ie+1
@@ -1773,9 +1773,9 @@
          T_0 = 288.0
          delta_T = 480000.0
          lapse_rate = 0.005
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,eta,ak,bk,T_0,lapse_rate,eta_t, &
-!$OMP                                  delta_T,ptop,delp,Ubar,eta_v,agrid,grid,pcen,pt,r0) &
-!$OMP                          private(T_mean,press,pt1,pt2,pt3,pt4,pt5,pt6,pt7,pt8,pt9,p1,r)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,eta,ak,bk,T_0,lapse_rate,eta_t, &
+!!$OMP                                  delta_T,ptop,delp,Ubar,eta_v,agrid,grid,pcen,pt,r0) &
+!!$OMP                          private(T_mean,press,pt1,pt2,pt3,pt4,pt5,pt6,pt7,pt8,pt9,p1,r)
          do z=1,npz
             eta(z) = 0.5*( (ak(z)+ak(z+1))/1.e5 + bk(z)+bk(z+1) )
         !   if (is_master()) print*, z, eta
@@ -1859,8 +1859,8 @@
          if (is_master()) print*,' '
       ! Surface Geopotential
          phis(:,:)=1.e25
-!$OMP parallel do default(none) shared(is2,ie2,js2,je2,Ubar,eta_s,eta_0,agrid,grid,phis) &
-!$OMP                         private(pt1,pt2,pt3,pt4,pt5,pt6,pt7,pt8,pt9,p1)
+!!$OMP parallel do default(none) shared(is2,ie2,js2,je2,Ubar,eta_s,eta_0,agrid,grid,phis) &
+!!$OMP                         private(pt1,pt2,pt3,pt4,pt5,pt6,pt7,pt8,pt9,p1)
          do j=js2,je2
             do i=is2,ie2
                pt1 = Ubar* (COS( (eta_s-eta_0)*PI/2.0 ))**(3.0/2.0) * ( &
@@ -1921,7 +1921,7 @@
          enddo
 
          if ( .not.hydrostatic ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,delz,peln,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,delz,peln,w)
             do k=1,npz
             do j=js,je
             do i=is,ie
@@ -1934,7 +1934,7 @@
             !Assume pt is virtual temperature at this point; then convert to regular temperature
          if (.not. adiabatic) then
             zvir = rvgas/rdgas - 1.
-!$OMP parallel do default(none) shared(sphum,is,ie,js,je,npz,pt,zvir,q)
+!!$OMP parallel do default(none) shared(sphum,is,ie,js,je,npz,pt,zvir,q)
             do k=1,npz
             do j=js,je
             do i=is,ie
@@ -3802,8 +3802,8 @@
   real:: qtmp, ftmp
   integer:: i,j,k,iq
 
-!$OMP parallel do default(none) shared(i0,i1,j0,j1,nx,lon,ny,lat,qt) &
-!$OMP                          private(qtmp)
+!!$OMP parallel do default(none) shared(i0,i1,j0,j1,nx,lon,ny,lat,qt) &
+!!$OMP                          private(qtmp)
   do j=j0,j1
      do i=i0,i1
         qtmp = sin(nx*lon(i,j))*sin(ny*lat(i,j))
@@ -3818,8 +3818,8 @@
   if ( present(rn) ) then   ! Add random noises to the set pattern
   do iq=1,nq
      call random_seed()
-!$OMP parallel do default(none) shared(i0,i1,j0,j1,km,q,qt,rn,iq) &
-!$OMP                          private(ftmp)
+!!$OMP parallel do default(none) shared(i0,i1,j0,j1,km,q,qt,rn,iq) &
+!!$OMP                          private(ftmp)
      do k=1,km
         do j=j0,j1
            do i=i0,i1
@@ -3831,8 +3831,8 @@
   enddo
   else
   do iq=1,nq
-!$OMP parallel do default(none) shared(i0,i1,j0,j1,km,q,qt,iq) &
-!$OMP                          private(ftmp)
+!!$OMP parallel do default(none) shared(i0,i1,j0,j1,km,q,qt,iq) &
+!!$OMP                          private(ftmp)
      do k=1,km
         do j=j0,j1
            do i=i0,i1

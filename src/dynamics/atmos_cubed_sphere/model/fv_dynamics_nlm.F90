@@ -287,8 +287,8 @@ contains
 #else
       akap  = kappa
 
-!$OMP parallel do default(none) shared(npz,ak,bk,flagstruct,pfull) &
-!$OMP                          private(ph1, ph2)
+!!$OMP parallel do default(none) shared(npz,ak,bk,flagstruct,pfull) &
+!!$OMP                          private(ph1, ph2)
       do k=1,npz
          ph1 = ak(k  ) + bk(k  )*flagstruct%p_ref
          ph2 = ak(k+1) + bk(k+1)*flagstruct%p_ref
@@ -296,8 +296,8 @@ contains
       enddo
 
     if ( hydrostatic ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,nwat,q,q_con,sphum,liq_wat, &
-!$OMP      rainwat,ice_wat,snowwat,graupel) private(cvm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,nwat,q,q_con,sphum,liq_wat, &
+!!$OMP      rainwat,ice_wat,snowwat,graupel) private(cvm)
       do k=1,npz
          do j=js,je
 #ifdef USE_COND
@@ -310,10 +310,10 @@ contains
          enddo
       enddo
     else
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,q,q_con,sphum,liq_wat, &
-!$OMP                                  rainwat,ice_wat,snowwat,graupel,pkz,flagstruct, & 
-!$OMP                                  cappa,kappa,rdg,delp,pt,delz,nwat)              &
-!$OMP                          private(cvm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,zvir,q,q_con,sphum,liq_wat, &
+!!$OMP                                  rainwat,ice_wat,snowwat,graupel,pkz,flagstruct, & 
+!!$OMP                                  cappa,kappa,rdg,delp,pt,delz,nwat)              &
+!!$OMP                          private(cvm)
        do k=1,npz
           if ( flagstruct%moist_phys ) then
           do j=js,je
@@ -396,7 +396,7 @@ contains
 #ifndef SW_DYNAMICS
 ! Convert pt to virtual potential temperature on the first timestep
   if ( flagstruct%adiabatic ) then
-!$OMP parallel do default(none) shared(theta_d,is,ie,js,je,npz,pt,pkz,q)
+!!$OMP parallel do default(none) shared(theta_d,is,ie,js,je,npz,pt,pkz,q)
        do k=1,npz
           do j=js,je
              do i=is,ie
@@ -412,7 +412,7 @@ contains
           endif
        enddo
   else
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,dp1,pkz,q_con)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pt,dp1,pkz,q_con)
   do k=1,npz
      do j=js,je
         do i=is,ie
@@ -432,7 +432,7 @@ contains
 
   if ( idiag%id_mdt > 0 .and. (.not. do_adiabatic_init) ) then
        allocate ( dtdt_m(is:ie,js:je,npz) )
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m)
        do k=1,npz
           do j=js,je
              do i=is,ie
@@ -467,7 +467,7 @@ contains
       call start_group_halo_update(i_pack(8), u, v, domain, gridtype=DGRID_NE)
 #endif
                                            call timing_off('COMM_TOTAL')
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,dp1,delp)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,dp1,delp)
       do k=1,npz
          do j=jsd,jed
             do i=isd,ied
@@ -517,7 +517,7 @@ contains
       end if
 
 #ifdef SW_DYNAMICS
-!$OMP parallel do default(none) shared(is,ie,js,je,delp,agrav)
+!!$OMP parallel do default(none) shared(is,ie,js,je,delp,agrav)
       do j=js,je
          do i=is,ie
             ps(i,j) = delp(i,j,1) * agrav
@@ -613,7 +613,7 @@ contains
 
          if( last_step )  then
             if( .not. hydrostatic ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,delp,delz,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,delp,delz,w)
                do k=1,npz
                   do j=js,je
                      do i=is,ie
@@ -634,7 +634,7 @@ contains
                                                   call timing_off('FV_DYN_LOOP')
   if ( idiag%id_mdt > 0 .and. (.not.do_adiabatic_init) ) then
 ! Output temperature tendency due to inline moist physics:
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m,bdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,dtdt_m,bdt)
        do k=1,npz
           do j=js,je
              do i=is,ie
@@ -694,7 +694,7 @@ contains
   endif
 
   if( (flagstruct%consv_am.or.idiag%id_amdt>0) .and. (.not.do_adiabatic_init)  ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,te_2d,teq,dt2,ps2,ps,idiag) 
+!!$OMP parallel do default(none) shared(is,ie,js,je,te_2d,teq,dt2,ps2,ps,idiag) 
       do j=js,je
          do i=is,ie
 ! Note: the mountain torque computation contains also numerical error
@@ -712,14 +712,14 @@ contains
       endif
 
     if( flagstruct%consv_am ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,m_fac,u0,gridstruct)
+!!$OMP parallel do default(none) shared(is,ie,js,je,m_fac,u0,gridstruct)
       do j=js,je
          do i=is,ie
             m_fac(i,j) = u0*cos(gridstruct%agrid(i,j,2))
          enddo
       enddo
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pt,m_fac,ua,cp_air, &
-!$OMP                                  u,u0,gridstruct,v )
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pt,m_fac,ua,cp_air, &
+!!$OMP                                  u,u0,gridstruct,v )
       do k=1,npz
       do j=js,je+1
          do i=is,ie
@@ -813,7 +813,7 @@ contains
 #ifdef HIWPP
           allocate ( u00(is:ie,  js:je+1,npz) )
           allocate ( v00(is:ie+1,js:je  ,npz) )
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,u00,u,v00,v)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,u00,u,v00,v)
           do k=1,npz
              do j=js,je+1
                 do i=is,ie
@@ -855,8 +855,8 @@ contains
 
     allocate( u2f(isd:ied,jsd:jed,kmax) )
 
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,hydrostatic,ua,va,agrid, &
-!$OMP                                  u2f,rf,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,hydrostatic,ua,va,agrid, &
+!!$OMP                                  u2f,rf,w)
     do k=1,kmax
        if ( pm(k) < rf_cutoff ) then
           u2f(:,:,k) = 1. / (1.+rf(k))
@@ -868,11 +868,11 @@ contains
     call mpp_update_domains(u2f, domain)
                                         call timing_off('COMM_TOTAL')
 
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,w,rf,u,v, &
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pm,rf_cutoff,w,rf,u,v, &
 #ifdef HIWPP
-!$OMP                                  u00,v00, &
+!!$OMP                                  u00,v00, &
 #endif
-!$OMP                                  conserve,hydrostatic,pt,ua,va,u2f,cp,rg,ptop,rcv)
+!!$OMP                                  conserve,hydrostatic,pt,ua,va,u2f,cp,rg,ptop,rcv)
      do k=1,kmax
         if ( pm(k) < rf_cutoff ) then
 #ifdef HIWPP
@@ -999,7 +999,7 @@ contains
 
     call c2l_ord2(u, v, ua, va, gridstruct, npz, gridstruct%grid_type, bd, gridstruct%nested)
 
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,u2f,hydrostatic,ua,va,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,u2f,hydrostatic,ua,va,w)
     do k=1,kmax
         if ( hydrostatic ) then
            do j=js,je
@@ -1020,8 +1020,8 @@ contains
     call mpp_update_domains(u2f, domain)
                                         call timing_off('COMM_TOTAL')
 
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,conserve,hydrostatic,pt,u2f,cp,rg, &
-!$OMP                                  ptop,pm,rf,delz,rcv,u,v,w)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,conserve,hydrostatic,pt,u2f,cp,rg, &
+!!$OMP                                  ptop,pm,rf,delz,rcv,u,v,w)
      do k=1,kmax
 
         if ( conserve ) then
@@ -1097,8 +1097,8 @@ contains
 
     call c2l_ord2(u, v, ua, va, gridstruct, npz, gridstruct%grid_type, bd, gridstruct%nested)
     
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gridstruct,aam,m_fac,ps,ptop,delp,agrav,ua) &
-!$OMP                          private(r1, r2, dm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gridstruct,aam,m_fac,ps,ptop,delp,agrav,ua) &
+!!$OMP                          private(r1, r2, dm)
   do j=js,je
      do i=is,ie
         r1(i) = radius*cos(gridstruct%agrid(i,j,2))

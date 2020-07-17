@@ -191,9 +191,9 @@ CONTAINS
       CALL MPP_UPDATE_DOMAINS(u, v, domain, gridtype=dgrid_ne)
       CALL TIMING_OFF('COMM_TOTAL')
     END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,km,npx,npy,grid_type,nested,c2,c1, &
-!$OMP                                  u,v,gridstruct,ua,va,a1,a2)         &
-!$OMP                          private(utmp, vtmp, wu, wv)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,npx,npy,grid_type,nested,c2,c1, &
+!!$OMP                                  u,v,gridstruct,ua,va,a1,a2)         &
+!!$OMP                          private(utmp, vtmp, wu, wv)
     DO k=1,km
       IF (grid_type .LT. 4) THEN
 !nested
@@ -401,8 +401,8 @@ CONTAINS
       wv_tl = 0.0
       u1_tl = 0.0
     END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,km,grid_type,u,dx,v,dy,ua,va,a11,a12,a21,a22) &
-!$OMP                          private(u1, v1, wu, wv)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,grid_type,u,dx,v,dy,ua,va,a11,a12,a21,a22) &
+!!$OMP                          private(u1, v1, wu, wv)
     DO k=1,km
       IF (grid_type .LT. 4) THEN
         DO j=js,je+1
@@ -488,8 +488,8 @@ CONTAINS
       js = bd%js
       je = bd%je
     END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,km,grid_type,u,dx,v,dy,ua,va,a11,a12,a21,a22) &
-!$OMP                          private(u1, v1, wu, wv)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,grid_type,u,dx,v,dy,ua,va,a11,a12,a21,a22) &
+!!$OMP                          private(u1, v1, wu, wv)
     DO k=1,km
       IF (grid_type .LT. 4) THEN
         DO j=js,je+1
