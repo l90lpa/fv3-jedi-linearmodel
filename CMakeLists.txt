@@ -64,29 +64,31 @@ set( NETCDF_F90 ON CACHE BOOL "Compile with Fortran NetCDF" )
 find_package( NetCDF REQUIRED COMPONENTS Fortran )
 include_directories( ${NETCDF_INCLUDE_DIRS} )
 
-message("NETCDF_INCLUDE_DIRS: ${NETCDF_INCLUDE_DIRS}")
-
-# fms from the forecast model
-if (NOT FV3_FORECAST_MODEL MATCHES GEOS AND NOT FV3_FORECAST_MODEL MATCHES UFS)
+# Set default model
+if (NOT FV3_FORECAST_MODEL MATCHES "GEOS" AND NOT FV3_FORECAST_MODEL MATCHES "UFS")
   set(FV3_FORECAST_MODEL "FV3CORE")
 endif()
 
-# fv3/fms
-if (FV3_FORECAST_MODEL MATCHES FV3CORE)
+# fms
+if (FV3_FORECAST_MODEL MATCHES "FV3CORE")
   ecbuild_use_package( PROJECT fms REQUIRED )
   include_directories( ${FMS_INCLUDE_DIRS} )
   list( APPEND FV3JEDILM_TPLS fms )
 endif()
 
 # geos
-if(FV3_FORECAST_MODEL MATCHES GEOS)
+if(FV3_FORECAST_MODEL MATCHES "GEOS")
   find_package(MAPL REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake/MAPL )
   find_package(GEOSgcm REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake/GEOSgcm )
-  link_libraries(fms_r8)
+  if (FV3_PRECISION MATCHES DOUBLE OR NOT FV3_PRECISION)
+    link_libraries(fms_r8)
+  else()
+    link_libraries(fms_r4)
+  endif()
 endif()
 
 # ufs
-if(FV3_FORECAST_MODEL MATCHES UFS)
+if(FV3_FORECAST_MODEL MATCHES "UFS")
   find_package(ufs-weather-model-lib REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake )
   link_libraries(fms)
   link_libraries(NetCDF::NetCDF_Fortran)
