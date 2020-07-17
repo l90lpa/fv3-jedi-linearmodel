@@ -89,6 +89,7 @@ interface mpp_global_sum_adm
 end interface
 
 interface mpp_update_domains_adm
+#ifdef OVERLOAD_R4
     module procedure mpp_update_domain2d_2d_adm_r4
     module procedure mpp_update_domain2d_3d_adm_r4
     module procedure mpp_update_domain2d_4d_adm_r4
@@ -97,6 +98,7 @@ interface mpp_update_domains_adm
     module procedure mpp_update_domain2d_3dv_adm_r4
     module procedure mpp_update_domain2d_4dv_adm_r4
     module procedure mpp_update_domain2d_5dv_adm_r4
+#endif
     module procedure mpp_update_domain2d_2d_adm_r8
     module procedure mpp_update_domain2d_3d_adm_r8
     module procedure mpp_update_domain2d_4d_adm_r8
@@ -2385,7 +2387,7 @@ end subroutine start_vector_group_update_3d_adm
 
 ! mpp_update_domains_adm
 ! ----------------------
-
+#ifdef OVERLOAD_R4
 subroutine mpp_update_domain2d_2d_adm_r4(array, arrayp, domain, flags, complete, position, &
                                              whalo, ehalo, shalo, nhalo, name, tile_count)
 
@@ -2548,7 +2550,7 @@ subroutine mpp_update_domain2d_5dv_adm_r4( u_cmpt, u_cmptp, v_cmpt, v_cmptp, dom
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
 end subroutine mpp_update_domain2d_5dv_adm_r4
-
+#endif
 subroutine mpp_update_domain2d_2d_adm_r8(array, arrayp, domain, flags, complete, position, &
                                              whalo, ehalo, shalo, nhalo, name, tile_count)
 
