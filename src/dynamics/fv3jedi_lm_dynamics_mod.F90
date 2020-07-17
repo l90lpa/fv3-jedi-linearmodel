@@ -28,13 +28,20 @@ implicit none
 private
 public :: fv3jedi_lm_dynamics_type
 
+! Precision of dyncore
+#ifdef SINGLE_FV
+  integer, parameter :: fvprec = 4
+#else
+  integer, parameter :: fvprec = 8
+#endif
+
 type fv3jedi_lm_dynamics_type
  type(fv_atmos_type),      allocatable :: FV_Atm(:)          !<Traj FV3 structure
  type(fv_atmos_pert_type), allocatable :: FV_AtmP(:)         !<Pert FV3 structure
- real(kind_real), allocatable, dimension(:,:) :: ebuffery    !<Halo holder
- real(kind_real), allocatable, dimension(:,:) :: nbufferx    !<Halo holder
- real(kind_real), allocatable, dimension(:,:) :: wbuffery    !<Halo holder
- real(kind_real), allocatable, dimension(:,:) :: sbufferx    !<Halo holder
+ real(fvprec), allocatable, dimension(:,:) :: ebuffery    !<Halo holder
+ real(fvprec), allocatable, dimension(:,:) :: nbufferx    !<Halo holder
+ real(fvprec), allocatable, dimension(:,:) :: wbuffery    !<Halo holder
+ real(fvprec), allocatable, dimension(:,:) :: sbufferx    !<Halo holder
  integer         :: isc,iec,jsc,jec     !<Grid, compute region
  integer         :: isd,ied,jsd,jed     !<Grid, with halo
  integer         :: npz                 !<Number of vertical levels
@@ -73,7 +80,7 @@ subroutine create(self,conf)
 
  type(fv_atmos_type), pointer :: FV_Atm(:)
 
-  call fv_init(self%FV_Atm, conf%dt, grids_on_this_pe, p_split)
+  call fv_init(self%FV_Atm, real(conf%dt, fvprec), grids_on_this_pe, p_split)
 
   FV_Atm => self%FV_Atm
 
@@ -289,9 +296,9 @@ subroutine step_nl(self,conf,traj)
  !---------------------------
  if (self%linmodtest == 0) then
     call fv_dynamics( FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,  &
-                      conf%DT, FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,           &
-                      FV_Atm(1)%flagstruct%reproduce_sum, kappa,                                   &
-                      cp, zvir, FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,          &
+                      real(conf%dt, fvprec), FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,           &
+                      FV_Atm(1)%flagstruct%reproduce_sum, real(kappa, fvprec),                                   &
+                      real(cp, fvprec), real(zvir, fvprec), FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,          &
                       FV_Atm(1)%flagstruct%n_split, FV_Atm(1)%flagstruct%q_split,                  &
                       FV_Atm(1)%u, FV_Atm(1)%v, FV_Atm(1)%w, FV_Atm(1)%delz,                       &
                       FV_Atm(1)%flagstruct%hydrostatic, FV_Atm(1)%pt, FV_Atm(1)%delp, FV_Atm(1)%q, &
@@ -305,9 +312,9 @@ subroutine step_nl(self,conf,traj)
                       FV_Atm(1)%domain )
  else
     call fv_dynamics_nlm( FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,  &
-                          conf%DT, FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,           &
-                          FV_Atm(1)%flagstruct%reproduce_sum, kappa,                                   &
-                          cp, zvir, FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,          &
+                          real(conf%dt, fvprec), FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,           &
+                          FV_Atm(1)%flagstruct%reproduce_sum, real(kappa, fvprec),                                   &
+                          real(cp, fvprec), real(zvir, fvprec), FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,          &
                           FV_Atm(1)%flagstruct%n_split, FV_Atm(1)%flagstruct%q_split,                  &
                           FV_Atm(1)%u, FV_Atm(1)%v, FV_Atm(1)%w, FV_Atm(1)%delz,                       &
                           FV_Atm(1)%flagstruct%hydrostatic, FV_Atm(1)%pt, FV_Atm(1)%delp, FV_Atm(1)%q, &
@@ -396,7 +403,7 @@ subroutine step_tl(self,conf,traj,pert)
  !--------------------------------------------------
  call compute_fv3_pressures_tlm( self%isc, self%iec, self%jsc, self%jec, &
                                  self%isd, self%ied, self%jsd, self%jed, &
-                                 self%npz, kappa, FV_Atm(1)%ptop, &
+                                 self%npz, real(kappa, fvprec), FV_Atm(1)%ptop, &
                                  FV_Atm(1)%delp, FV_AtmP(1)%delpp, &
                                  FV_Atm(1)%pe, FV_AtmP(1)%pep, &
                                  FV_Atm(1)%pk, FV_AtmP(1)%pkp, &
@@ -412,9 +419,9 @@ subroutine step_tl(self,conf,traj,pert)
  !Propagate TLM one time step
  !---------------------------
  call fv_dynamics_tlm(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,                      &
-                      conf%DT, FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,                               &
-                      FV_Atm(1)%flagstruct%reproduce_sum, kappa,                                                       &
-                      cp, zvir, FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,                              &
+                      real(conf%DT, fvprec), FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,                               &
+                      FV_Atm(1)%flagstruct%reproduce_sum, real(kappa, fvprec),                                                       &
+                      real(cp, fvprec), real(zvir, fvprec), FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,                              &
                       FV_Atm(1)%flagstruct%n_split, FV_Atm(1)%flagstruct%q_split,                                      &
                       FV_Atm(1)%u, FV_AtmP(1)%up, FV_Atm(1)%v, FV_AtmP(1)%vp, FV_Atm(1)%w, FV_AtmP(1)%wp,                 &
                       FV_Atm(1)%delz, FV_AtmP(1)%delzp, FV_Atm(1)%flagstruct%hydrostatic,                               &
@@ -498,9 +505,9 @@ subroutine step_ad(self,conf,traj,pert)
  if (cp_iter_controls%cp_i <= 3) then
 
     call fv_dynamics_fwd(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,                      &
-                         conf%DT, FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,                               &
-                         FV_Atm(1)%flagstruct%reproduce_sum, kappa,                                                       &
-                         cp, zvir, FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,                              &
+                         real(conf%DT, fvprec), FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,                               &
+                         FV_Atm(1)%flagstruct%reproduce_sum, real(kappa, fvprec),                                                       &
+                         real(cp, fvprec), real(zvir, fvprec), FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,                              &
                          FV_Atm(1)%flagstruct%n_split, FV_Atm(1)%flagstruct%q_split,                                      &
                          FV_Atm(1)%u, FV_Atm(1)%v, FV_Atm(1)%w,                                                           &
                          FV_Atm(1)%delz, FV_Atm(1)%flagstruct%hydrostatic,                                                &
@@ -606,9 +613,9 @@ subroutine step_ad(self,conf,traj,pert)
  ! Backward adjoint sweep of the dynamics
  ! --------------------------------------
  call fv_dynamics_bwd(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,                      &
-                      conf%DT, FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,                               &
-                      FV_Atm(1)%flagstruct%reproduce_sum, kappa,                                                       &
-                      cp, zvir, FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,                              &
+                      real(conf%DT, fvprec), FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,                               &
+                      FV_Atm(1)%flagstruct%reproduce_sum, real(kappa, fvprec),                                                       &
+                      real(cp, fvprec), real(zvir, fvprec), FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,                              &
                       FV_Atm(1)%flagstruct%n_split, FV_Atm(1)%flagstruct%q_split,                                      &
                       FV_Atm(1)%u, FV_AtmP(1)%up, FV_Atm(1)%v, FV_AtmP(1)%vp, FV_Atm(1)%w, FV_AtmP(1)%wp,                 &
                       FV_Atm(1)%delz, FV_AtmP(1)%delzp, FV_Atm(1)%flagstruct%hydrostatic,                               &
@@ -630,7 +637,7 @@ subroutine step_ad(self,conf,traj,pert)
  !-------------------------------------------------------------
  call compute_fv3_pressures_bwd( self%isc, self%iec, self%jsc, self%jec, &
                                  self%isd, self%ied, self%jsd, self%jed, &
-                                 self%npz, kappa, FV_Atm(1)%ptop, &
+                                 self%npz, real(kappa, fvprec), FV_Atm(1)%ptop, &
                                  FV_Atm(1)%delp, FV_AtmP(1)%delpp, &
                                  FV_Atm(1)%pe, FV_AtmP(1)%pep, &
                                  FV_Atm(1)%pk, FV_AtmP(1)%pkp, &
@@ -796,7 +803,7 @@ subroutine traj_to_fv3(self,conf,traj)
  !Compute the other pressure variables needed by FV3
  !--------------------------------------------------
  call compute_fv3_pressures( self%isc, self%iec, self%jsc, self%jec, self%isd, self%ied, self%jsd, self%jed, &
-                             self%npz, kappa, self%FV_Atm(1)%ptop, &
+                             self%npz, real(kappa, fvprec), self%FV_Atm(1)%ptop, &
                              self%FV_Atm(1)%delp, self%FV_Atm(1)%pe, self%FV_Atm(1)%pk, self%FV_Atm(1)%pkz, self%FV_Atm(1)%peln )
 
 endsubroutine traj_to_fv3

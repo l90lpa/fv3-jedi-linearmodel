@@ -56,7 +56,7 @@ interface start_group_halo_update_adm
   module procedure start_var_group_update_4d_adm
   module procedure start_vector_group_update_2d_adm
   module procedure start_vector_group_update_3d_adm
-end interface 
+end interface
 
 interface fill_corners_adm
     module procedure fill_corners_2d_r4_adm
@@ -89,14 +89,22 @@ interface mpp_global_sum_adm
 end interface
 
 interface mpp_update_domains_adm
-    module procedure mpp_update_domain2d_2d_adm
-    module procedure mpp_update_domain2d_3d_adm
-    module procedure mpp_update_domain2d_4d_adm
-    module procedure mpp_update_domain2d_5d_adm
-    module procedure mpp_update_domain2d_2dv_adm
-    module procedure mpp_update_domain2d_3dv_adm
-    module procedure mpp_update_domain2d_4dv_adm
-    module procedure mpp_update_domain2d_5dv_adm
+    module procedure mpp_update_domain2d_2d_adm_r4
+    module procedure mpp_update_domain2d_3d_adm_r4
+    module procedure mpp_update_domain2d_4d_adm_r4
+    module procedure mpp_update_domain2d_5d_adm_r4
+    module procedure mpp_update_domain2d_2dv_adm_r4
+    module procedure mpp_update_domain2d_3dv_adm_r4
+    module procedure mpp_update_domain2d_4dv_adm_r4
+    module procedure mpp_update_domain2d_5dv_adm_r4
+    module procedure mpp_update_domain2d_2d_adm_r8
+    module procedure mpp_update_domain2d_3d_adm_r8
+    module procedure mpp_update_domain2d_4d_adm_r8
+    module procedure mpp_update_domain2d_5d_adm_r8
+    module procedure mpp_update_domain2d_2dv_adm_r8
+    module procedure mpp_update_domain2d_3dv_adm_r8
+    module procedure mpp_update_domain2d_4dv_adm_r8
+    module procedure mpp_update_domain2d_5dv_adm_r8
 end interface
 
 interface mpp_get_boundary_adm
@@ -107,7 +115,7 @@ interface mpp_get_boundary_adm
 end interface
 
 contains
- 
+
 
 ! start_group_halo_update
 ! -----------------------
@@ -130,18 +138,18 @@ subroutine start_var_group_update_2d(group, &
   logical,      optional,       intent(in)    :: complete
   real                                        :: d_type
   logical                                     :: is_complete
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !                    This data will be used in do_group_pass.
 !  (inout)   array - The array which is having its halos points exchanged.
 !  (in)      domain - contains domain information.
 !  (in)      flags  - An optional integer indicating which directions the
-!                       data should be sent.  
+!                       data should be sent.
 !  (in)      position - An optional argument indicating the position.  This is
 !                       may be CORNER, but is CENTER by default.
 !  (in)      complete - An optional argument indicating whether the halo updates
-!                       should be initiated immediately or wait for second 
-!                       pass_..._start call.  Omitting complete is the same as 
+!                       should be initiated immediately or wait for second
+!                       pass_..._start call.  Omitting complete is the same as
 !                       setting complete to .true.
 
   if (fv_timing_onoff) call timing_on('  FWD_COMM_TOTAL')
@@ -161,7 +169,7 @@ subroutine start_var_group_update_2d(group, &
 
   is_complete = .TRUE.
   if(present(complete)) is_complete = complete
-  if(is_complete) then 
+  if(is_complete) then
      call mpp_start_group_update(group, domain, d_type)
   endif
 
@@ -191,18 +199,18 @@ subroutine start_var_group_update_3d(group, &
   real                                        :: d_type
   logical                                     :: is_complete
 
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !                    This data will be used in do_group_pass.
 !  (inout)   array - The array which is having its halos points exchanged.
 !  (in)      domain - contains domain information.
 !  (in)      flags  - An optional integer indicating which directions the
-!                       data should be sent.  
+!                       data should be sent.
 !  (in)      position - An optional argument indicating the position.  This is
 !                       may be CORNER, but is CENTER by default.
 !  (in)      complete - An optional argument indicating whether the halo updates
-!                       should be initiated immediately or wait for second 
-!                       pass_..._start call.  Omitting complete is the same as 
+!                       should be initiated immediately or wait for second
+!                       pass_..._start call.  Omitting complete is the same as
 !                       setting complete to .true.
 
   if (fv_timing_onoff) call timing_on('  FWD_COMM_TOTAL')
@@ -250,18 +258,18 @@ subroutine start_var_group_update_4d(group, &
   real                                        :: d_type
   logical                                     :: is_complete
 
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !                    This data will be used in do_group_pass.
 !  (inout)   array - The array which is having its halos points exchanged.
 !  (in)      domain - contains domain information.
 !  (in)      flags  - An optional integer indicating which directions the
-!                       data should be sent.  
+!                       data should be sent.
 !  (in)      position - An optional argument indicating the position.  This is
 !                       may be CORNER, but is CENTER by default.
 !  (in)      complete - An optional argument indicating whether the halo updates
-!                       should be initiated immediately or wait for second 
-!                       pass_..._start call.  Omitting complete is the same as 
+!                       should be initiated immediately or wait for second
+!                       pass_..._start call.  Omitting complete is the same as
 !                       setting complete to .true.
 
   integer :: dirflag
@@ -313,22 +321,22 @@ subroutine start_vector_group_update_2d(group, &
   real                                        :: d_type
   logical                                     :: is_complete
 
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !                    This data will be used in do_group_pass.
 !  (inout)   u_cmpt - The nominal zonal (u) component of the vector pair which
 !                     is having its halos points exchanged.
 !  (inout)   v_cmpt - The nominal meridional (v) component of the vector pair
-!                     which is having its halos points exchanged. 
+!                     which is having its halos points exchanged.
 !  (in)      domain - Contains domain decomposition information.
 !  (in)      flags - An optional integer indicating which directions the
-!                        data should be sent. 
+!                        data should be sent.
 !  (in)      gridtype - An optional flag, which may be one of A_GRID, BGRID_NE,
 !                      CGRID_NE or DGRID_NE, indicating where the two components of the
-!                      vector are discretized. 
+!                      vector are discretized.
 !  (in)      complete - An optional argument indicating whether the halo updates
-!                       should be initiated immediately or wait for second 
-!                       pass_..._start call.  Omitting complete is the same as 
+!                       should be initiated immediately or wait for second
+!                       pass_..._start call.  Omitting complete is the same as
 !                       setting complete to .true.
 
   if (fv_timing_onoff) call timing_on('  FWD_COMM_TOTAL')
@@ -378,22 +386,22 @@ subroutine start_vector_group_update_3d(group, &
   real                                        :: d_type
   logical                                     :: is_complete
 
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !                    This data will be used in do_group_pass.
 !  (inout)   u_cmpt - The nominal zonal (u) component of the vector pair which
 !                     is having its halos points exchanged.
 !  (inout)   v_cmpt - The nominal meridional (v) component of the vector pair
-!                     which is having its halos points exchanged. 
+!                     which is having its halos points exchanged.
 !  (in)      domain - Contains domain decomposition information.
 !  (in)      flags - An optional integer indicating which directions the
-!                        data should be sent. 
+!                        data should be sent.
 !  (in)      gridtype - An optional flag, which may be one of A_GRID, BGRID_NE,
 !                      CGRID_NE or DGRID_NE, indicating where the two components of the
-!                      vector are discretized. 
+!                      vector are discretized.
 !  (in)      complete - An optional argument indicating whether the halo updates
-!                       should be initiated immediately or wait for second 
-!                       pass_..._start call.  Omitting complete is the same as 
+!                       should be initiated immediately or wait for second
+!                       pass_..._start call.  Omitting complete is the same as
 !                       setting complete to .true.
 
   if (fv_timing_onoff) call timing_on('  FWD_COMM_TOTAL')
@@ -440,8 +448,8 @@ subroutine complete_group_halo_update(group,&
   type(domain2d),               intent(inout) :: domain
   real                                        :: d_type
 
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !  (in)      domain - Contains domain decomposition information.
 
   if (fv_timing_onoff) call timing_on('  TLM_COMM_TOTAL')
@@ -479,18 +487,18 @@ end subroutine complete_group_halo_update
   logical,      optional,       intent(in)    :: complete
   real                                 :: d_type
   logical                                     :: is_complete
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !                    This data will be used in do_group_pass.
 !  (inout)   array - The array which is having its halos points exchanged.
 !  (in)      domain - contains domain information.
 !  (in)      flags  - An optional integer indicating which directions the
-!                       data should be sent.  
+!                       data should be sent.
 !  (in)      position - An optional argument indicating the position.  This is
 !                       may be CORNER, but is CENTER by default.
 !  (in)      complete - An optional argument indicating whether the halo updates
-!                       should be initiated immediately or wait for second 
-!                       pass_..._start call.  Omitting complete is the same as 
+!                       should be initiated immediately or wait for second
+!                       pass_..._start call.  Omitting complete is the same as
 !                       setting complete to .true.
 
   if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
@@ -519,22 +527,22 @@ subroutine start_var_group_update_3d_adm(group, &
   integer,           optional,  intent(in)    :: flags
   integer,           optional,  intent(in)    :: position
   integer,      optional,       intent(in)    :: whalo, ehalo, shalo, nhalo
-  logical,      optional,       intent(in)    :: complete 
+  logical,      optional,       intent(in)    :: complete
   real                                        :: d_type
-  logical                                     :: is_complete 
+  logical                                     :: is_complete
 
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !                    This data will be used in do_group_pass.
 !  (inout)   array - The array which is having its halos points exchanged.
 !  (in)      domain - contains domain information.
 !  (in)      flags  - An optional integer indicating which directions the
-!                       data should be sent.  
+!                       data should be sent.
 !  (in)      position - An optional argument indicating the position.  This is
 !                       may be CORNER, but is CENTER by default.
 !  (in)      complete - An optional argument indicating whether the halo updates
-!                       should be initiated immediately or wait for second 
-!                       pass_..._start call.  Omitting complete is the same as 
+!                       should be initiated immediately or wait for second
+!                       pass_..._start call.  Omitting complete is the same as
 !                       setting complete to .true.
 
   if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
@@ -567,18 +575,18 @@ subroutine start_var_group_update_4d_adm(group, &
   real                                        :: d_type
   logical                                     :: is_complete
 
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !                    This data will be used in do_group_pass.
 !  (inout)   array - The array which is having its halos points exchanged.
 !  (in)      domain - contains domain information.
 !  (in)      flags  - An optional integer indicating which directions the
-!                       data should be sent.  
+!                       data should be sent.
 !  (in)      position - An optional argument indicating the position.  This is
 !                       may be CORNER, but is CENTER by default.
 !  (in)      complete - An optional argument indicating whether the halo updates
-!                       should be initiated immediately or wait for second 
-!                       pass_..._start call.  Omitting complete is the same as 
+!                       should be initiated immediately or wait for second
+!                       pass_..._start call.  Omitting complete is the same as
 !                       setting complete to .true.
 
   integer :: dirflag
@@ -615,22 +623,22 @@ subroutine start_vector_group_update_2d_adm(group, &
   real                                 :: d_type
   logical                                     :: is_complete
 
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !                    This data will be used in do_group_pass.
 !  (inout)   u_cmpt - The nominal zonal (u) component of the vector pair which
 !                     is having its halos points exchanged.
 !  (inout)   v_cmpt - The nominal meridional (v) component of the vector pair
-!                     which is having its halos points exchanged. 
+!                     which is having its halos points exchanged.
 !  (in)      domain - Contains domain decomposition information.
 !  (in)      flags - An optional integer indicating which directions the
-!                        data should be sent. 
+!                        data should be sent.
 !  (in)      gridtype - An optional flag, which may be one of A_GRID, BGRID_NE,
 !                      CGRID_NE or DGRID_NE, indicating where the two components of the
-!                      vector are discretized. 
+!                      vector are discretized.
 !  (in)      complete - An optional argument indicating whether the halo updates
-!                       should be initiated immediately or wait for second 
-!                       pass_..._start call.  Omitting complete is the same as 
+!                       should be initiated immediately or wait for second
+!                       pass_..._start call.  Omitting complete is the same as
 !                       setting complete to .true.
 
   if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
@@ -664,22 +672,22 @@ subroutine start_vector_group_update_3d_adm(group, &
   real                                 :: d_type
   logical                                     :: is_complete
 
-! Arguments: 
-!  (inout)   group - The data type that store information for group update. 
+! Arguments:
+!  (inout)   group - The data type that store information for group update.
 !                    This data will be used in do_group_pass.
 !  (inout)   u_cmpt - The nominal zonal (u) component of the vector pair which
 !                     is having its halos points exchanged.
 !  (inout)   v_cmpt - The nominal meridional (v) component of the vector pair
-!                     which is having its halos points exchanged. 
+!                     which is having its halos points exchanged.
 !  (in)      domain - Contains domain decomposition information.
 !  (in)      flags - An optional integer indicating which directions the
-!                        data should be sent. 
+!                        data should be sent.
 !  (in)      gridtype - An optional flag, which may be one of A_GRID, BGRID_NE,
 !                      CGRID_NE or DGRID_NE, indicating where the two components of the
-!                      vector are discretized. 
+!                      vector are discretized.
 !  (in)      complete - An optional argument indicating whether the halo updates
-!                       should be initiated immediately or wait for second 
-!                       pass_..._start call.  Omitting complete is the same as 
+!                       should be initiated immediately or wait for second
+!                       pass_..._start call.  Omitting complete is the same as
 !                       setting complete to .true.
 
   if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
@@ -706,7 +714,7 @@ end subroutine start_vector_group_update_3d_adm
     REAL(kind=4), DIMENSION(isd:, jsd:), INTENT(INOUT) :: q
     REAL(kind=4), DIMENSION(isd:, jsd:), INTENT(INOUT) :: q_ad
     INTEGER, INTENT(IN) :: npx, npy
-! X-Dir or Y-Dir 
+! X-Dir or Y-Dir
     INTEGER, INTENT(IN) :: fill
     LOGICAL, OPTIONAL, INTENT(IN) :: agrid, bgrid
     INTEGER :: i, j
@@ -762,11 +770,11 @@ end subroutine start_vector_group_update_3d_adm
     INTEGER :: branch
     IF (PRESENT(bgrid)) THEN
       IF (bgrid) THEN
-        SELECT CASE  (fill) 
-        CASE (xdir) 
+        SELECT CASE  (fill)
+        CASE (xdir)
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -820,10 +828,10 @@ end subroutine start_vector_group_update_3d_adm
               END IF
             END DO
           END DO
-        CASE (ydir) 
+        CASE (ydir)
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -880,7 +888,7 @@ end subroutine start_vector_group_update_3d_adm
         CASE DEFAULT
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -938,11 +946,11 @@ end subroutine start_vector_group_update_3d_adm
       END IF
     ELSE IF (PRESENT(agrid)) THEN
       IF (agrid) THEN
-        SELECT CASE  (fill) 
-        CASE (xdir) 
+        SELECT CASE  (fill)
+        CASE (xdir)
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -997,10 +1005,10 @@ end subroutine start_vector_group_update_3d_adm
               END IF
             END DO
           END DO
-        CASE (ydir) 
+        CASE (ydir)
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -1058,7 +1066,7 @@ end subroutine start_vector_group_update_3d_adm
         CASE DEFAULT
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -1124,7 +1132,7 @@ end subroutine start_vector_group_update_3d_adm
     REAL(kind=8), DIMENSION(isd:, jsd:), INTENT(INOUT) :: q
     REAL(kind=8), DIMENSION(isd:, jsd:), INTENT(INOUT) :: q_ad
     INTEGER, INTENT(IN) :: npx, npy
-! X-Dir or Y-Dir 
+! X-Dir or Y-Dir
     INTEGER, INTENT(IN) :: fill
     LOGICAL, OPTIONAL, INTENT(IN) :: agrid, bgrid
     INTEGER :: i, j
@@ -1180,11 +1188,11 @@ end subroutine start_vector_group_update_3d_adm
     INTEGER :: branch
     IF (PRESENT(bgrid)) THEN
       IF (bgrid) THEN
-        SELECT CASE  (fill) 
-        CASE (xdir) 
+        SELECT CASE  (fill)
+        CASE (xdir)
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -1238,10 +1246,10 @@ end subroutine start_vector_group_update_3d_adm
               END IF
             END DO
           END DO
-        CASE (ydir) 
+        CASE (ydir)
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -1298,7 +1306,7 @@ end subroutine start_vector_group_update_3d_adm
         CASE DEFAULT
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -1356,11 +1364,11 @@ end subroutine start_vector_group_update_3d_adm
       END IF
     ELSE IF (PRESENT(agrid)) THEN
       IF (agrid) THEN
-        SELECT CASE  (fill) 
-        CASE (xdir) 
+        SELECT CASE  (fill)
+        CASE (xdir)
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -1415,10 +1423,10 @@ end subroutine start_vector_group_update_3d_adm
               END IF
             END DO
           END DO
-        CASE (ydir) 
+        CASE (ydir)
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -1476,7 +1484,7 @@ end subroutine start_vector_group_update_3d_adm
         CASE DEFAULT
           DO j=1,ng
             DO i=1,ng
-!SW Corner 
+!SW Corner
               IF (is .EQ. 1 .AND. js .EQ. 1) THEN
                 CALL PUSHCONTROL1B(0)
               ELSE
@@ -1873,7 +1881,7 @@ end subroutine start_vector_group_update_3d_adm
     INTEGER :: branch
     DO j=1,ng
       DO i=1,ng
-!SW Corner 
+!SW Corner
         IF (is .EQ. 1 .AND. js .EQ. 1) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
@@ -1901,7 +1909,7 @@ end subroutine start_vector_group_update_3d_adm
     END DO
     DO j=1,ng
       DO i=1,ng
-!SW Corner 
+!SW Corner
         IF (is .EQ. 1 .AND. js .EQ. 1) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
@@ -1990,7 +1998,7 @@ end subroutine start_vector_group_update_3d_adm
     INTEGER :: branch
     DO j=1,ng
       DO i=1,ng
-!SW Corner 
+!SW Corner
         IF (is .EQ. 1 .AND. js .EQ. 1) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
@@ -2018,7 +2026,7 @@ end subroutine start_vector_group_update_3d_adm
     END DO
     DO j=1,ng
       DO i=1,ng
-!SW Corner 
+!SW Corner
         IF (is .EQ. 1 .AND. js .EQ. 1) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
@@ -2110,11 +2118,11 @@ end subroutine start_vector_group_update_3d_adm
     INTEGER :: branch
     DO j=1,ng
       DO i=1,ng
-!   if ((is  ==  1) .and. (js  ==  1)) x(1-i    ,1-j  ) =        y(j+1  ,1-i    )  !SW Corner 
+!   if ((is  ==  1) .and. (js  ==  1)) x(1-i    ,1-j  ) =        y(j+1  ,1-i    )  !SW Corner
 !   if ((is  ==  1) .and. (je+1==npy)) x(1-i    ,npy+j) = mySign*y(j+1  ,npy-1+i)  !NW Corner
 !   if ((ie+1==npx) .and. (js  ==  1)) x(npx-1+i,1-j  ) = mySign*y(npx-j,1-i    )  !SE Corner
 !   if ((ie+1==npx) .and. (je+1==npy)) x(npx-1+i,npy+j) =        y(npx-j,npy-1+i)  !NE Corner
-!SW Corner 
+!SW Corner
         IF (is .EQ. 1 .AND. js .EQ. 1) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
@@ -2142,11 +2150,11 @@ end subroutine start_vector_group_update_3d_adm
     END DO
     DO j=1,ng
       DO i=1,ng
-!  if ((is  ==  1) .and. (js  ==  1)) y(1-i    ,1-j    ) =        x(1-j    ,i+1  )  !SW Corner 
+!  if ((is  ==  1) .and. (js  ==  1)) y(1-i    ,1-j    ) =        x(1-j    ,i+1  )  !SW Corner
 !  if ((is  ==  1) .and. (je+1==npy)) y(1-i    ,npy-1+j) = mySign*x(1-j    ,npy-i)  !NW Corner
 !  if ((ie+1==npx) .and. (js  ==  1)) y(npx+i  ,1-j    ) = mySign*x(npx-1+j,i+1  )  !SE Corner
 !  if ((ie+1==npx) .and. (je+1==npy)) y(npx+i  ,npy-1+j) =        x(npx-1+j,npy-i)  !NE Corner
-!SW Corner 
+!SW Corner
         IF (is .EQ. 1 .AND. js .EQ. 1) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
@@ -2237,11 +2245,11 @@ end subroutine start_vector_group_update_3d_adm
     INTEGER :: branch
     DO j=1,ng
       DO i=1,ng
-!   if ((is  ==  1) .and. (js  ==  1)) x(1-i    ,1-j  ) =        y(j+1  ,1-i    )  !SW Corner 
+!   if ((is  ==  1) .and. (js  ==  1)) x(1-i    ,1-j  ) =        y(j+1  ,1-i    )  !SW Corner
 !   if ((is  ==  1) .and. (je+1==npy)) x(1-i    ,npy+j) = mySign*y(j+1  ,npy-1+i)  !NW Corner
 !   if ((ie+1==npx) .and. (js  ==  1)) x(npx-1+i,1-j  ) = mySign*y(npx-j,1-i    )  !SE Corner
 !   if ((ie+1==npx) .and. (je+1==npy)) x(npx-1+i,npy+j) =        y(npx-j,npy-1+i)  !NE Corner
-!SW Corner 
+!SW Corner
         IF (is .EQ. 1 .AND. js .EQ. 1) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
@@ -2269,11 +2277,11 @@ end subroutine start_vector_group_update_3d_adm
     END DO
     DO j=1,ng
       DO i=1,ng
-!  if ((is  ==  1) .and. (js  ==  1)) y(1-i    ,1-j    ) =        x(1-j    ,i+1  )  !SW Corner 
+!  if ((is  ==  1) .and. (js  ==  1)) y(1-i    ,1-j    ) =        x(1-j    ,i+1  )  !SW Corner
 !  if ((is  ==  1) .and. (je+1==npy)) y(1-i    ,npy-1+j) = mySign*x(1-j    ,npy-i)  !NW Corner
 !  if ((ie+1==npx) .and. (js  ==  1)) y(npx+i  ,1-j    ) = mySign*x(npx-1+j,i+1  )  !SE Corner
 !  if ((ie+1==npx) .and. (je+1==npy)) y(npx+i  ,npy-1+j) =        x(npx-1+j,npy-i)  !NE Corner
-!SW Corner 
+!SW Corner
         IF (is .EQ. 1 .AND. js .EQ. 1) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
@@ -2378,10 +2386,10 @@ end subroutine start_vector_group_update_3d_adm
 ! mpp_update_domains_adm
 ! ----------------------
 
-subroutine mpp_update_domain2d_2d_adm(array, arrayp, domain, flags, complete, position, &
+subroutine mpp_update_domain2d_2d_adm_r4(array, arrayp, domain, flags, complete, position, &
                                              whalo, ehalo, shalo, nhalo, name, tile_count)
 
-  real, dimension(:,:), intent(inout) :: array, arrayp
+  real(4), dimension(:,:), intent(inout) :: array, arrayp
   type(domain2d), intent(inout) :: domain
   integer,          intent(in), optional :: flags
   logical,          intent(in), optional :: complete
@@ -2396,12 +2404,12 @@ subroutine mpp_update_domain2d_2d_adm(array, arrayp, domain, flags, complete, po
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
-end subroutine mpp_update_domain2d_2d_adm
+end subroutine mpp_update_domain2d_2d_adm_r4
 
-subroutine mpp_update_domain2d_3d_adm(array, arrayp, domain, flags, complete, position, &
+subroutine mpp_update_domain2d_3d_adm_r4(array, arrayp, domain, flags, complete, position, &
                                              whalo, ehalo, shalo, nhalo, name, tile_count)
 
-  real, dimension(:,:,:), intent(inout) :: array, arrayp 
+  real(4), dimension(:,:,:), intent(inout) :: array, arrayp
   type(domain2d), intent(inout) :: domain
   integer,          intent(in), optional :: flags
   logical,          intent(in), optional :: complete
@@ -2416,12 +2424,12 @@ subroutine mpp_update_domain2d_3d_adm(array, arrayp, domain, flags, complete, po
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
-end subroutine mpp_update_domain2d_3d_adm
+end subroutine mpp_update_domain2d_3d_adm_r4
 
-subroutine mpp_update_domain2d_4d_adm(array, arrayp, domain, flags, complete, position, &
+subroutine mpp_update_domain2d_4d_adm_r4(array, arrayp, domain, flags, complete, position, &
                                              whalo, ehalo, shalo, nhalo, name, tile_count)
 
-  real, dimension(:,:,:,:), intent(inout) :: array, arrayp
+  real(4), dimension(:,:,:,:), intent(inout) :: array, arrayp
   type(domain2d), intent(inout) :: domain
   integer,          intent(in), optional :: flags
   logical,          intent(in), optional :: complete
@@ -2435,12 +2443,12 @@ subroutine mpp_update_domain2d_4d_adm(array, arrayp, domain, flags, complete, po
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
-end subroutine mpp_update_domain2d_4d_adm
+end subroutine mpp_update_domain2d_4d_adm_r4
 
-subroutine mpp_update_domain2d_5d_adm(array, arrayp, domain, flags, complete, position, &
+subroutine mpp_update_domain2d_5d_adm_r4(array, arrayp, domain, flags, complete, position, &
                                              whalo, ehalo, shalo, nhalo, name, tile_count)
 
-  real, dimension(:,:,:,:,:), intent(inout) :: array, arrayp
+  real(4), dimension(:,:,:,:,:), intent(inout) :: array, arrayp
   type(domain2d), intent(inout) :: domain
   integer,          intent(in), optional :: flags
   logical,          intent(in), optional :: complete
@@ -2455,13 +2463,13 @@ subroutine mpp_update_domain2d_5d_adm(array, arrayp, domain, flags, complete, po
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
-end subroutine mpp_update_domain2d_5d_adm
+end subroutine mpp_update_domain2d_5d_adm_r4
 
-subroutine mpp_update_domain2d_2dv_adm( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
+subroutine mpp_update_domain2d_2dv_adm_r4( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
                                                         whalo, ehalo, shalo, nhalo, name, tile_count )
 
-  real, dimension(:,:), intent(inout) :: u_cmpt, v_cmpt
-  real, dimension(:,:), intent(inout) :: u_cmptp, v_cmptp
+  real(4), dimension(:,:), intent(inout) :: u_cmpt, v_cmpt
+  real(4), dimension(:,:), intent(inout) :: u_cmptp, v_cmptp
   type(domain2d), intent(inout) :: domain
   integer,          intent(in), optional :: flags, gridtype
   logical,          intent(in), optional :: complete
@@ -2476,13 +2484,13 @@ subroutine mpp_update_domain2d_2dv_adm( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
-end subroutine mpp_update_domain2d_2dv_adm
+end subroutine mpp_update_domain2d_2dv_adm_r4
 
-subroutine mpp_update_domain2d_3dv_adm( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
+subroutine mpp_update_domain2d_3dv_adm_r4( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
                                                         whalo, ehalo, shalo, nhalo, name, tile_count )
 
-  real, dimension(:,:,:), intent(inout) :: u_cmpt, v_cmpt
-  real, dimension(:,:,:), intent(inout) :: u_cmptp, v_cmptp
+  real(4), dimension(:,:,:), intent(inout) :: u_cmpt, v_cmpt
+  real(4), dimension(:,:,:), intent(inout) :: u_cmptp, v_cmptp
   type(domain2d), intent(inout) :: domain
   integer,          intent(in), optional :: flags, gridtype
   logical,          intent(in), optional :: complete
@@ -2497,13 +2505,13 @@ subroutine mpp_update_domain2d_3dv_adm( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
-end subroutine mpp_update_domain2d_3dv_adm
+end subroutine mpp_update_domain2d_3dv_adm_r4
 
-subroutine mpp_update_domain2d_4dv_adm( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
+subroutine mpp_update_domain2d_4dv_adm_r4( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
                                                         whalo, ehalo, shalo, nhalo, name, tile_count )
 
-  real, dimension(:,:,:,:), intent(inout) :: u_cmpt, v_cmpt
-  real, dimension(:,:,:,:), intent(inout) :: u_cmptp, v_cmptp
+  real(4), dimension(:,:,:,:), intent(inout) :: u_cmpt, v_cmpt
+  real(4), dimension(:,:,:,:), intent(inout) :: u_cmptp, v_cmptp
   type(domain2d), intent(inout) :: domain
   integer,          intent(in), optional :: flags, gridtype
   logical,          intent(in), optional :: complete
@@ -2518,13 +2526,13 @@ subroutine mpp_update_domain2d_4dv_adm( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
-end subroutine mpp_update_domain2d_4dv_adm
+end subroutine mpp_update_domain2d_4dv_adm_r4
 
-subroutine mpp_update_domain2d_5dv_adm( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
+subroutine mpp_update_domain2d_5dv_adm_r4( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
                                                         whalo, ehalo, shalo, nhalo, name, tile_count )
 
-  real, dimension(:,:,:,:,:), intent(inout) :: u_cmpt, v_cmpt
-  real, dimension(:,:,:,:,:), intent(inout) :: u_cmptp, v_cmptp
+  real(4), dimension(:,:,:,:,:), intent(inout) :: u_cmpt, v_cmpt
+  real(4), dimension(:,:,:,:,:), intent(inout) :: u_cmptp, v_cmptp
   type(domain2d), intent(inout) :: domain
   integer,          intent(in), optional :: flags, gridtype
   logical,          intent(in), optional :: complete
@@ -2539,8 +2547,170 @@ subroutine mpp_update_domain2d_5dv_adm( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
-end subroutine mpp_update_domain2d_5dv_adm
+end subroutine mpp_update_domain2d_5dv_adm_r4
 
+subroutine mpp_update_domain2d_2d_adm_r8(array, arrayp, domain, flags, complete, position, &
+                                             whalo, ehalo, shalo, nhalo, name, tile_count)
+
+  real(8), dimension(:,:), intent(inout) :: array, arrayp
+  type(domain2d), intent(inout) :: domain
+  integer,          intent(in), optional :: flags
+  logical,          intent(in), optional :: complete
+  integer,          intent(in), optional :: position
+  integer,          intent(in), optional :: whalo, ehalo, shalo, nhalo
+  character(len=*), intent(in), optional :: name
+  integer,          intent(in), optional :: tile_count
+
+  if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
+
+   call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+  if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
+
+end subroutine mpp_update_domain2d_2d_adm_r8
+
+subroutine mpp_update_domain2d_3d_adm_r8(array, arrayp, domain, flags, complete, position, &
+                                             whalo, ehalo, shalo, nhalo, name, tile_count)
+
+  real(8), dimension(:,:,:), intent(inout) :: array, arrayp
+  type(domain2d), intent(inout) :: domain
+  integer,          intent(in), optional :: flags
+  logical,          intent(in), optional :: complete
+  integer,          intent(in), optional :: position
+  integer,          intent(in), optional :: whalo, ehalo, shalo, nhalo
+  character(len=*), intent(in), optional :: name
+  integer,          intent(in), optional :: tile_count
+
+  if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
+
+   call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+  if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
+
+end subroutine mpp_update_domain2d_3d_adm_r8
+
+subroutine mpp_update_domain2d_4d_adm_r8(array, arrayp, domain, flags, complete, position, &
+                                             whalo, ehalo, shalo, nhalo, name, tile_count)
+
+  real(8), dimension(:,:,:,:), intent(inout) :: array, arrayp
+  type(domain2d), intent(inout) :: domain
+  integer,          intent(in), optional :: flags
+  logical,          intent(in), optional :: complete
+  integer,          intent(in), optional :: position
+  integer,          intent(in), optional :: whalo, ehalo, shalo, nhalo
+  character(len=*), intent(in), optional :: name
+  integer,          intent(in), optional :: tile_count
+
+  if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
+   call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+  if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
+
+end subroutine mpp_update_domain2d_4d_adm_r8
+
+subroutine mpp_update_domain2d_5d_adm_r8(array, arrayp, domain, flags, complete, position, &
+                                             whalo, ehalo, shalo, nhalo, name, tile_count)
+
+  real(8), dimension(:,:,:,:,:), intent(inout) :: array, arrayp
+  type(domain2d), intent(inout) :: domain
+  integer,          intent(in), optional :: flags
+  logical,          intent(in), optional :: complete
+  integer,          intent(in), optional :: position
+  integer,          intent(in), optional :: whalo, ehalo, shalo, nhalo
+  character(len=*), intent(in), optional :: name
+  integer,          intent(in), optional :: tile_count
+
+  if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
+
+   call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+  if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
+
+end subroutine mpp_update_domain2d_5d_adm_r8
+
+subroutine mpp_update_domain2d_2dv_adm_r8( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
+                                                        whalo, ehalo, shalo, nhalo, name, tile_count )
+
+  real(8), dimension(:,:), intent(inout) :: u_cmpt, v_cmpt
+  real(8), dimension(:,:), intent(inout) :: u_cmptp, v_cmptp
+  type(domain2d), intent(inout) :: domain
+  integer,          intent(in), optional :: flags, gridtype
+  logical,          intent(in), optional :: complete
+  integer,          intent(in), optional :: whalo, ehalo, shalo, nhalo
+  character(len=*), intent(in), optional :: name
+  integer,          intent(in), optional :: tile_count
+
+  if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
+
+   call mpp_update_domains_ad(u_cmptp, v_cmptp, domain, flags=flags, gridtype=gridtype, &
+                                              whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+  if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
+
+end subroutine mpp_update_domain2d_2dv_adm_r8
+
+subroutine mpp_update_domain2d_3dv_adm_r8( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
+                                                        whalo, ehalo, shalo, nhalo, name, tile_count )
+
+  real(8), dimension(:,:,:), intent(inout) :: u_cmpt, v_cmpt
+  real(8), dimension(:,:,:), intent(inout) :: u_cmptp, v_cmptp
+  type(domain2d), intent(inout) :: domain
+  integer,          intent(in), optional :: flags, gridtype
+  logical,          intent(in), optional :: complete
+  integer,          intent(in), optional :: whalo, ehalo, shalo, nhalo
+  character(len=*), intent(in), optional :: name
+  integer,          intent(in), optional :: tile_count
+
+  if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
+
+   call mpp_update_domains_ad(u_cmptp, v_cmptp, domain, flags=flags, gridtype=gridtype, &
+                                              whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+  if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
+
+end subroutine mpp_update_domain2d_3dv_adm_r8
+
+subroutine mpp_update_domain2d_4dv_adm_r8( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
+                                                        whalo, ehalo, shalo, nhalo, name, tile_count )
+
+  real(8), dimension(:,:,:,:), intent(inout) :: u_cmpt, v_cmpt
+  real(8), dimension(:,:,:,:), intent(inout) :: u_cmptp, v_cmptp
+  type(domain2d), intent(inout) :: domain
+  integer,          intent(in), optional :: flags, gridtype
+  logical,          intent(in), optional :: complete
+  integer,          intent(in), optional :: whalo, ehalo, shalo, nhalo
+  character(len=*), intent(in), optional :: name
+  integer,          intent(in), optional :: tile_count
+
+  if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
+
+   call mpp_update_domains_ad(u_cmptp, v_cmptp, domain, flags=flags, gridtype=gridtype, &
+                                              whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+  if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
+
+end subroutine mpp_update_domain2d_4dv_adm_r8
+
+subroutine mpp_update_domain2d_5dv_adm_r8( u_cmpt, u_cmptp, v_cmpt, v_cmptp, domain, flags, gridtype, complete, &
+                                                        whalo, ehalo, shalo, nhalo, name, tile_count )
+
+  real(8), dimension(:,:,:,:,:), intent(inout) :: u_cmpt, v_cmpt
+  real(8), dimension(:,:,:,:,:), intent(inout) :: u_cmptp, v_cmptp
+  type(domain2d), intent(inout) :: domain
+  integer,          intent(in), optional :: flags, gridtype
+  logical,          intent(in), optional :: complete
+  integer,          intent(in), optional :: whalo, ehalo, shalo, nhalo
+  character(len=*), intent(in), optional :: name
+  integer,          intent(in), optional :: tile_count
+
+  if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
+
+   call mpp_update_domains_ad(u_cmptp, v_cmptp, domain, flags=flags, gridtype=gridtype, &
+                                              whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+  if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
+
+end subroutine mpp_update_domain2d_5dv_adm_r8
 
 ! mpp_get_boundary_adm
 ! --------------------
@@ -2623,7 +2793,7 @@ end subroutine mpp_get_boundary_2dv_adm
                                                       ebuffery_ad, sbuffery_ad, wbuffery_ad, nbuffery_ad, &
                                                       flags, gridtype, complete, tile_count )
 
-  real, dimension(:,:,:), intent(in) :: u_cmpt, v_cmpt 
+  real, dimension(:,:,:), intent(in) :: u_cmpt, v_cmpt
   real, dimension(:,:,:), intent(in) :: u_cmptp, v_cmptp
   type(domain2d), intent(in) :: domain
   real, intent(inout), optional :: ebufferx(:,:), sbufferx(:,:), wbufferx(:,:), nbufferx(:,:)
