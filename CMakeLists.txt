@@ -51,6 +51,9 @@ else()
     find_package( LAPACK REQUIRED )
 endif()
 
+#openMP
+find_package( OpenMP REQUIRED COMPONENTS Fortran )
+
 # MPI
 ecbuild_add_option( FEATURE MPI DEFAULT ON
                     DESCRIPTION "Support for MPI distributed parallelism"
