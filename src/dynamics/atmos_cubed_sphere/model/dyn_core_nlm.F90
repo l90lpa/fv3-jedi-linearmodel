@@ -213,12 +213,12 @@ contains
          rgrav = 1.0/grav
            k1k =  akap / (1.-akap)    ! rg/Cv=0.4
 
-!$OMP parallel do default(none) shared(npz,dp_ref,ak,bk)
+!!$OMP parallel do default(none) shared(npz,dp_ref,ak,bk)
        do k=1,npz
           dp_ref(k) = (ak(k+1)-ak(k)) + (bk(k+1)-bk(k))*1.E5  
        enddo
 
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,zs,phis,rgrav)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,zs,phis,rgrav)
        do j=jsd,jed
           do i=isd,ied
              zs(i,j) = phis(i,j) * rgrav
@@ -327,7 +327,7 @@ contains
 
       if ( it==1 ) then
          if (gridstruct%nested) then
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,gz,zs,delz)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,gz,zs,delz)
          do j=jsd,jed
             do i=isd,ied
                gz(i,j,npz+1) = zs(i,j)
@@ -339,7 +339,7 @@ contains
             enddo
          enddo
          else
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zs,delz)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zs,delz)
          do j=js,je
             do i=is,ie
                gz(i,j,npz+1) = zs(i,j)
@@ -378,7 +378,7 @@ contains
      if ( it==n_split .and. end_step ) then
        if ( flagstruct%use_old_omega ) then
           allocate ( pem(is-1:ie+1,npz+1,js-1:je+1) )
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pem,delp,ptop)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pem,delp,ptop)
          do j=js-1,je+1
             do i=is-1,ie+1
                pem(i,1,j) = ptop
@@ -402,9 +402,9 @@ contains
                                                      call timing_off('COMM_TOTAL')
 
                                                      call timing_on('c_sw')
-!$OMP parallel do default(none) shared(npz,isd,jsd,delpc,delp,ptc,pt,u,v,w,uc,vc,ua,va, &
-!$OMP                                  omga,ut,vt,divgd,flagstruct,dt2,hydrostatic,bd,  &
-!$OMP                                  gridstruct)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,delpc,delp,ptc,pt,u,v,w,uc,vc,ua,va, &
+!!$OMP                                  omga,ut,vt,divgd,flagstruct,dt2,hydrostatic,bd,  &
+!!$OMP                                  gridstruct)
       do k=1,npz
          call c_sw(delpc(isd,jsd,k), delp(isd,jsd,k),  ptc(isd,jsd,k),    &
                       pt(isd,jsd,k),    u(isd,jsd,k),    v(isd,jsd,k),    &
@@ -442,7 +442,7 @@ contains
               call complete_group_halo_update(i_pack(5), domain)
                                      call timing_off('COMM_TOTAL')
 
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
            do k=1,npz+1
               do j=jsd,jed
                  do i=isd,ied
@@ -453,7 +453,7 @@ contains
            enddo
 
         else 
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,zh,gz)
            do k=1, npz+1
               do j=jsd,jed
                  do i=isd,ied
@@ -558,13 +558,13 @@ contains
       endif
 
                                                      call timing_on('d_sw')
-!$OMP parallel do default(none) shared(npz,flagstruct,nord_v,pfull,damp_vt,hydrostatic,last_step, &
-!$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,delp,gridstruct,npx,npy,  &
-!$OMP                                  ng,zh,vt,ptc,pt,u,v,w,uc,vc,ua,va,divgd,mfx,mfy,cx,cy,     &
-!$OMP                                  crx,cry,xfx,yfx,q_con,zvir,sphum,nq,q,dt,bd,rdt,iep1,jep1, &
-!$OMP                                  heat_source)                                               &
-!$OMP                          private(nord_k, nord_w, nord_t, damp_w, damp_t, d2_divg,   &
-!$OMP                          d_con_k,kgb, hord_m, hord_v, hord_t, hord_p, wk, heat_s, z_rat)
+!!$OMP parallel do default(none) shared(npz,flagstruct,nord_v,pfull,damp_vt,hydrostatic,last_step, &
+!!$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,delp,gridstruct,npx,npy,  &
+!!$OMP                                  ng,zh,vt,ptc,pt,u,v,w,uc,vc,ua,va,divgd,mfx,mfy,cx,cy,     &
+!!$OMP                                  crx,cry,xfx,yfx,q_con,zvir,sphum,nq,q,dt,bd,rdt,iep1,jep1, &
+!!$OMP                                  heat_source)                                               &
+!!$OMP                          private(nord_k, nord_w, nord_t, damp_w, damp_t, d2_divg,   &
+!!$OMP                          d_con_k,kgb, hord_m, hord_v, hord_t, hord_p, wk, heat_s, z_rat)
     do k=1,npz
        hord_m = flagstruct%hord_mt
        hord_t = flagstruct%hord_tm
@@ -706,7 +706,7 @@ contains
 
     if ( flagstruct%d_ext > 0. ) then
           d2_divg = flagstruct%d_ext * gridstruct%da_min_c
-!$OMP parallel do default(none) shared(is,iep1,js,jep1,npz,wk,ptc,divg2,vt,d2_divg)
+!!$OMP parallel do default(none) shared(is,iep1,js,jep1,npz,wk,ptc,divg2,vt,d2_divg)
           do j=js,jep1
               do i=is,iep1
                     wk(i,j) = ptc(i,j,1)
@@ -825,7 +825,7 @@ contains
         call timing_on('COMM_TOTAL')
         call complete_group_halo_update(i_pack(4), domain)
         call timing_off('COMM_TOTAL')
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zh,grav)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,gz,zh,grav)
         do k=1,npz+1
            do j=js-2,je+2
               do i=is-2,ie+2
@@ -846,7 +846,7 @@ contains
       if (test_case > 1) then
 #else
       if ( remap_step .and. hydrostatic ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,pkc)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,pkc)
            do k=1,npz+1
               do j=js,je
                  do i=is,ie
@@ -881,7 +881,7 @@ contains
 
 #ifdef ROT3
        if ( flagstruct%do_f3d ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ua,gridstruct,w,va,isd,ied,jsd,jed)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ua,gridstruct,w,va,isd,ied,jsd,jed)
            do k=1,npz
               do j=js,je
                  do i=is,ie
@@ -910,7 +910,7 @@ contains
 !-------------------------------------------------------------------------------------------------------
     if ( flagstruct%breed_vortex_inline ) then
         if ( .not. hydrostatic ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pkz,cappa,rdg,delp,delz,pt,k1k)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pkz,cappa,rdg,delp,delz,pt,k1k)
            do k=1,npz
               do j=js,je
                  do i=is,ie
@@ -939,7 +939,7 @@ contains
 ! Prevent accumulation of rounding errors at overlapped domain edges:
        call mpp_get_boundary(u, v, domain, ebuffery=ebuffer,  &
                              nbufferx=nbuffer, gridtype=DGRID_NE )
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,u,nbuffer,v,ebuffer)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,u,nbuffer,v,ebuffer)
           do k=1,npz
              do i=is,ie
                 u(i,je+1,k) = nbuffer(i-is+1,k)
@@ -968,7 +968,7 @@ contains
 #else
     if ( hydrostatic .and. last_step ) then
       if ( flagstruct%use_old_omega ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,pe,pem,rdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga,pe,pem,rdt)
          do k=1,npz
             do j=js,je
                do i=is,ie
@@ -981,7 +981,7 @@ contains
 !------------------------------
          call adv_pe(ua, va, pem, omga, gridstruct, bd, npx, npy,  npz, ng)
       else
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga) private(om2d)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,omga) private(om2d)
          do j=js,je
             do k=1,npz
                do i=is,ie
@@ -1001,7 +1001,7 @@ contains
          enddo
       endif
       if (idiag%id_ws>0 .and. hydrostatic) then
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ws,delz,delp,omga)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ws,delz,delp,omga)
           do j=js,je
              do i=is,ie
                 ws(i,j) = delz(i,j,npz)/delp(i,j,npz) * omga(i,j,npz)
@@ -1058,8 +1058,8 @@ contains
 !
 ! del(Cp*T) = - del(KE)
 !
-!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pt,heat_source,delp,pkz,bdt) &
-!$OMP                          private(dtmp)
+!!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pt,heat_source,delp,pkz,bdt) &
+!!$OMP                          private(dtmp)
        do j=js,je
           do k=1,n_con  ! n_con is usually less than 3;
              if ( k<3 ) then
@@ -1075,9 +1075,9 @@ contains
           enddo
        enddo
     else
-!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pkz,cappa,rdg,delp,delz,pt, &
-!$OMP                                  heat_source,k1k,cv_air,bdt) &
-!$OMP                          private(dtmp, delt)
+!!$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pkz,cappa,rdg,delp,delz,pt, &
+!!$OMP                                  heat_source,k1k,cv_air,bdt) &
+!!$OMP                          private(dtmp, delt)
        do k=1,n_con
           delt = abs(bdt*flagstruct%delt_max)
 ! Sponge layers:
@@ -1136,8 +1136,8 @@ real:: pei(isd:ied)
 real:: pej(jsd:jed)
 integer:: i,j,k
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3,akap) &
-!$OMP                          private(pei)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3,akap) &
+!!$OMP                          private(pei)
   do j=js,je
      pei(is-2) = ptop
      pei(is-1) = ptop
@@ -1157,8 +1157,8 @@ integer:: i,j,k
      enddo
   enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3,akap) &
-!$OMP                          private(pej)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3,akap) &
+!!$OMP                          private(pej)
   do i=is-2,ie+2
      pej(js-2) = ptop
      pej(js-1) = ptop
@@ -1189,8 +1189,8 @@ real, intent(inout), dimension(isd:ied,jsd:jed,npz+1):: pk3
 real:: pet
 integer:: i,j,k
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3) &
-!$OMP                          private(pet)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,npz,ptop,delp,pk3) &
+!!$OMP                          private(pet)
   do j=js,je
      do i=is-2,is-1
         pet = ptop
@@ -1208,8 +1208,8 @@ integer:: i,j,k
      enddo
   enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3) &
-!$OMP                          private(pet)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ptop,delp,pk3) &
+!!$OMP                          private(pet)
   do i=is-2,ie+2
      do j=js-2,js-1
         pet = ptop
@@ -1237,7 +1237,7 @@ real, intent(inout), dimension(is-1:ie+1,npz+1,js-1:je+1):: pe
 ! Local:
 integer:: i,j,k
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
   do j=js,je
      pe(is-1,1,j) = ptop
      pe(ie+1,1,j) = ptop
@@ -1247,7 +1247,7 @@ integer:: i,j,k
      enddo
   enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,ptop)
   do i=is-1,ie+1
      pe(i,1,js-1) = ptop
      pe(i,1,je+1) = ptop
@@ -1290,8 +1290,8 @@ integer :: is,  ie,  js,  je
       js  = bd%js
       je  = bd%je
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ua,va,gridstruct,pem,npx,npy,ng,om) &
-!$OMP                          private(n, pdx, pdy, pin, pb, up, vp, grad, v3)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ua,va,gridstruct,pem,npx,npy,ng,om) &
+!!$OMP                          private(n, pdx, pdy, pin, pb, up, vp, grad, v3)
 do k=1,npz
    if ( k==npz ) then
       do j=js,je
@@ -1391,8 +1391,8 @@ integer :: is,  ie,  js,  je
       js  = bd%js
       je  = bd%je
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pkc,delpc,uc,dt2,rdxc,gz,vc,rdyc) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pkc,delpc,uc,dt2,rdxc,gz,vc,rdyc) &
+!!$OMP                          private(wk)
 do k=1,npz
 
    if ( hydrostatic ) then
@@ -1464,7 +1464,7 @@ else
 endif
 
 !Remember that not all compilers set pp to zero by default
-!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
 do j=js,je+1
    do i=is,ie+1
       pp(i,j,1) = 0.
@@ -1472,8 +1472,8 @@ do j=js,je+1
    enddo
 enddo
 
-!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
-!$OMP                          private(wk1)
+!!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
+!!$OMP                          private(wk1)
 do k=1,npz+1
    if ( k/=1 ) then
       call a2b_ord4(pp(isd,jsd,k), wk1, gridstruct, npx, npy, is, ie, js, je, ng, .true.)
@@ -1482,9 +1482,9 @@ do k=1,npz+1
    call a2b_ord4( gz(isd,jsd,k), wk1, gridstruct, npx, npy, is, ie, js, je, ng, .true.)
 enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,delp,gridstruct,npx,npy,ng,isd,jsd, &
-!$OMP                                  pk,dt,gz,u,pp,v) &
-!$OMP                          private(wk1, wk, du1, dv1)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,delp,gridstruct,npx,npy,ng,isd,jsd, &
+!!$OMP                                  pk,dt,gz,u,pp,v) &
+!!$OMP                          private(wk1, wk, du1, dv1)
 do k=1,npz
    call a2b_ord4(delp(isd,jsd,k), wk1, gridstruct, npx, npy, is, ie, js, je, ng)
    do j=js,je+1
@@ -1567,7 +1567,7 @@ endif
 
 alpha = 1. - beta
 
-!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pp,pk,top_value)
 do j=js,je+1
    do i=is,ie+1
       pp(i,j,1) = 0.
@@ -1575,8 +1575,8 @@ do j=js,je+1
    enddo
 enddo
 
-!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
-!$OMP                          private(wk1)
+!!$OMP parallel do default(none) shared(isd,jsd,npz,pp,gridstruct,npx,npy,is,ie,js,je,ng,pk,gz) &
+!!$OMP                          private(wk1)
 do k=1,npz+1
    if ( k/=1 ) then
       call a2b_ord4(pp(isd,jsd,k), wk1, gridstruct, npx, npy, is, ie, js, je, ng, .true.)
@@ -1585,9 +1585,9 @@ do k=1,npz+1
    call a2b_ord4( gz(isd,jsd,k), wk1, gridstruct, npx, npy, is, ie, js, je, ng, .true.)
 enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,jsd,npz,delp,gridstruct,npx,npy,ng, &
-!$OMP                                  pk,u,beta,du,dt,gz,alpha,pp,v,dv) &
-!$OMP                          private(wk1, wk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,jsd,npz,delp,gridstruct,npx,npy,ng, &
+!!$OMP                                  pk,u,beta,du,dt,gz,alpha,pp,v,dv) &
+!!$OMP                          private(wk1, wk)
 do k=1,npz
    call a2b_ord4(delp(isd,jsd,k), wk1, gridstruct, npx, npy, is, ie, js, je, ng)
 
@@ -1683,15 +1683,15 @@ else
    top_value = ptop
 endif
 
-!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
 do j=js,je+1
    do i=is,ie+1
       pk(i,j,1) = top_value
    enddo
 enddo
 
-!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
 do k=2,npz+1
    if ( a2b_ord==4 ) then
       call a2b_ord4(pk(isd,jsd,k), wk, gridstruct, npx, npy, is, ie, js, je, ng, .true.)
@@ -1700,8 +1700,8 @@ do k=2,npz+1
    endif
 enddo
 
-!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
 do k=1,npz+1
    if ( a2b_ord==4 ) then
       call a2b_ord4( gz(isd,jsd,k), wk, gridstruct, npx, npy, is, ie, js, je, ng, .true.)
@@ -1712,14 +1712,14 @@ enddo
 
 if ( d_ext > 0. ) then
 
-   !$OMP parallel do default(none) shared(is,ie,js,je,wk2,divg2)
+   !!$OMP parallel do default(none) shared(is,ie,js,je,wk2,divg2)
    do j=js,je+1
       do i=is,ie
          wk2(i,j) = divg2(i,j)-divg2(i+1,j)
       enddo
    enddo
 
-   !$OMP parallel do default(none) shared(is,ie,js,je,wk1,divg2)
+   !!$OMP parallel do default(none) shared(is,ie,js,je,wk1,divg2)
    do j=js,je
       do i=is,ie+1
          wk1(i,j) = divg2(i,j)-divg2(i,j+1)
@@ -1728,7 +1728,7 @@ if ( d_ext > 0. ) then
 
 else
 
-   !$OMP parallel do default(none) shared(is,ie,js,je,wk1,wk2)
+   !!$OMP parallel do default(none) shared(is,ie,js,je,wk1,wk2)
    do j=js,je+1
       do i=is,ie
          wk2(i,j) = 0.
@@ -1740,9 +1740,9 @@ else
 
 endif
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,delp,hydrostatic,a2b_ord,gridstruct, &
-!$OMP                                  npx,npy,isd,jsd,ng,u,v,wk2,dt,gz,wk1) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pk,delp,hydrostatic,a2b_ord,gridstruct, &
+!!$OMP                                  npx,npy,isd,jsd,ng,u,v,wk2,dt,gz,wk1) &
+!!$OMP                          private(wk)
 do k=1,npz
 
    if ( hydrostatic ) then
@@ -1812,14 +1812,14 @@ alpha = 1. - beta
 ! pk is pe**kappa if hydrostatic
 top_value = ptk
 
-!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
+!!$OMP parallel do default(none) shared(is,ie,js,je,pk,top_value)
 do j=js,je+1
    do i=is,ie+1
       pk(i,j,1) = top_value
    enddo
 enddo
-!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,pk,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
 do k=2,npz+1
    if ( a2b_ord==4 ) then
       call a2b_ord4(pk(isd,jsd,k), wk, gridstruct, npx, npy, is, ie, js, je, ng, .true.)
@@ -1828,8 +1828,8 @@ do k=2,npz+1
    endif
 enddo
 
-!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,isd,jsd,gz,gridstruct,npx,npy,is,ie,js,je,ng,a2b_ord) &
+!!$OMP                          private(wk)
 do k=1,npz+1
    if ( a2b_ord==4 ) then
       call a2b_ord4( gz(isd,jsd,k), wk, gridstruct, npx, npy, is, ie, js, je, ng, .true.)
@@ -1838,9 +1838,9 @@ do k=1,npz+1
    endif
 enddo
 
-!$OMP parallel do default(none) shared(npz,is,ie,js,je,pk,u,beta,gz,divg2,alpha, &
-!$OMP                                  gridstruct,v,dt,du,dv) &          
-!$OMP                          private(wk)
+!!$OMP parallel do default(none) shared(npz,is,ie,js,je,pk,u,beta,gz,divg2,alpha, &
+!!$OMP                                  gridstruct,v,dt,du,dv) &          
+!!$OMP                          private(wk)
 do k=1,npz
 
    do j=js,je+1
@@ -1907,9 +1907,9 @@ else
 endif
 
 
-!$OMP parallel do default(none) shared(jfirst,jlast,km,ifirst,ilast,delp,ak,bk,pt, &
-!$OMP                                  hydrostatic,w,fv_debug) &
-!$OMP                          private(ip, dpmin, dp)
+!!$OMP parallel do default(none) shared(jfirst,jlast,km,ifirst,ilast,delp,ak,bk,pt, &
+!!$OMP                                  hydrostatic,w,fv_debug) &
+!!$OMP                          private(ip, dpmin, dp)
 do 1000 j=jfirst,jlast
 
    ip = 0
@@ -2004,9 +2004,9 @@ do 1000 j=jfirst,jlast
       if (je == npy-1) jlast  = jed
    end if
 
-!$OMP parallel do default(none) shared(jfirst,jlast,ifirst,ilast,pk,km,gz,hs,ptop,ptk, &
-!$OMP                                  js,je,is,ie,peln,peln1,pe,delp,akap,pt,CG,pkz,q_con) &
-!$OMP                          private(peg, pkg, p1d, g1d, logp)
+!!$OMP parallel do default(none) shared(jfirst,jlast,ifirst,ilast,pk,km,gz,hs,ptop,ptk, &
+!!$OMP                                  js,je,is,ie,peln,peln1,pe,delp,akap,pt,CG,pkz,q_con) &
+!!$OMP                          private(peg, pkg, p1d, g1d, logp)
    do 2000 j=jfirst,jlast
 
       do i=ifirst, ilast
@@ -2137,10 +2137,10 @@ do 1000 j=jfirst,jlast
       do n=1,ntimes
          nt = ntimes - n
 
-!$OMP parallel do default(none) shared(km,q,is,ie,js,je,npx,npy, &
-!$OMP                                  nt,isd,jsd,gridstruct,bd, &
-!$OMP                                  cd) &
-!$OMP                          private(fx, fy)
+!!$OMP parallel do default(none) shared(km,q,is,ie,js,je,npx,npy, &
+!!$OMP                                  nt,isd,jsd,gridstruct,bd, &
+!!$OMP                                  cd) &
+!!$OMP                          private(fx, fy)
          do k=1,km
 
             if ( gridstruct%sw_corner ) then
@@ -2204,7 +2204,7 @@ do 1000 j=jfirst,jlast
       real, intent(in):: var
       integer:: i, j, k
 
-!$OMP parallel do default(none) shared(i1,i2,j1,j2,km,array,var)
+!!$OMP parallel do default(none) shared(i1,i2,j1,j2,km,array,var)
       do k=1,km
          do j=j1,j2
             do i=i1,i2
@@ -2268,7 +2268,7 @@ do 1000 j=jfirst,jlast
           RFF_initialized = .true.
      endif
 
-!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pfull,rf_cutoff,w,rf,u,v,hydrostatic)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmax,pfull,rf_cutoff,w,rf,u,v,hydrostatic)
      do k=1,kmax
         if ( pfull(k) < rf_cutoff ) then
              do j=js,je+1

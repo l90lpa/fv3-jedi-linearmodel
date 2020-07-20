@@ -1931,7 +1931,7 @@ contains
 ! Cloud top temperature & cloud top press:
        if ( (idiag%id_ctt>0 .or. idiag%id_ctp>0).and. Atm(n)%flagstruct%nwat==6) then
             allocate ( var1(isc:iec,jsc:jec) )
-!$OMP parallel do default(shared) private(tmp)
+!!$OMP parallel do default(shared) private(tmp)
             do j=jsc,jec
                do i=isc,iec
                   do k=2,npz
@@ -1961,7 +1961,7 @@ contains
 
 ! Condensates:
        if ( idiag%id_qn>0 .or. idiag%id_qn200>0 .or. idiag%id_qn500>0 .or. idiag%id_qn850>0 ) then
-!$OMP parallel do default(shared)
+!!$OMP parallel do default(shared)
           do k=1,npz
           do j=jsc,jec
           do i=isc,iec
@@ -1970,7 +1970,7 @@ contains
           enddo
           enddo
           if (liq_wat > 0) then
-!$OMP parallel do default(shared)
+!!$OMP parallel do default(shared)
              do k=1,npz
              do j=jsc,jec
              do i=isc,iec
@@ -1980,7 +1980,7 @@ contains
              enddo
           endif
           if (ice_wat > 0) then
-!$OMP parallel do default(shared)
+!!$OMP parallel do default(shared)
              do k=1,npz
              do j=jsc,jec
              do i=isc,iec
@@ -2005,7 +2005,7 @@ contains
        endif
 ! Total 3D condensates
        if ( idiag%id_qp>0 ) then
-!$OMP parallel do default(shared)
+!!$OMP parallel do default(shared)
           do k=1,npz
           do j=jsc,jec
           do i=isc,iec
@@ -2014,7 +2014,7 @@ contains
           enddo
           enddo
           if (rainwat > 0) then
-!$OMP parallel do default(shared)
+!!$OMP parallel do default(shared)
              do k=1,npz
              do j=jsc,jec
              do i=isc,iec
@@ -2024,7 +2024,7 @@ contains
              enddo
           endif
           if (snowwat > 0) then
-!$OMP parallel do default(shared)
+!!$OMP parallel do default(shared)
              do k=1,npz
              do j=jsc,jec
              do i=isc,iec
@@ -2034,7 +2034,7 @@ contains
              enddo
           endif
           if (graupel > 0) then
-!$OMP parallel do default(shared)
+!!$OMP parallel do default(shared)
              do k=1,npz
              do j=jsc,jec
              do i=isc,iec
@@ -2192,7 +2192,7 @@ contains
           if (.not.allocated(wz)) allocate ( wz(isc:iec,jsc:jec,npz+1) )
           if ( Atm(n)%flagstruct%hydrostatic) then
              rgrav = 1. / grav
-!$OMP parallel do default(none) shared(isc,iec,jsc,jec,wz,npz,Atm,n,rgrav)
+!!$OMP parallel do default(none) shared(isc,iec,jsc,jec,wz,npz,Atm,n,rgrav)
             do j=jsc,jec
                do i=isc,iec
                   wz(i,j,npz+1) = 0.
@@ -2205,7 +2205,7 @@ contains
                enddo
             enddo
           else
-!$OMP parallel do default(none) shared(isc,iec,jsc,jec,wz,npz,Atm,n)
+!!$OMP parallel do default(none) shared(isc,iec,jsc,jec,wz,npz,Atm,n)
             do j=jsc,jec
                do i=isc,iec
                   wz(i,j,npz+1) = 0.
@@ -2982,7 +2982,7 @@ contains
  integer i,j,k
  type(domain2d), intent(INOUT) :: domain
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,sum2,delp)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,sum2,delp)
  do j=js,je
     do i=is,ie
        sum2(i,j) = delp(i,j,1)
@@ -3018,8 +3018,8 @@ contains
 
  do n=1,kd
 
-!$OMP parallel do default(none) shared(is,ie,js,je,n,height,wz,km,peln,a2,ginv,ts,fac) &
-!$OMP                          private(ptmp, tm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,n,height,wz,km,peln,a2,ginv,ts,fac) &
+!!$OMP                          private(ptmp, tm)
     do j=js,je
 
        do 1000 i=is,ie
@@ -3064,8 +3064,8 @@ contains
 ! local:
  integer n,i,j,k, k1
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,kd,id,log_p,peln,a2,wz)   &
-!$OMP             private(i,j,n,k,k1)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,kd,id,log_p,peln,a2,wz)   &
+!!$OMP             private(i,j,n,k,k1)
  do j=js,je
     do i=is,ie
        k1 = 1
@@ -3109,8 +3109,8 @@ contains
  real:: s0, a6
  integer:: i,j,k, n, k1
 
-!$OMP parallel do default(none) shared(iv,id,is,ie,js,je,km,kd,pout,qin,qout,pe,wz) & 
-!$OMP             private(k1,s0,a6,q2,dp,qe)
+!!$OMP parallel do default(none) shared(iv,id,is,ie,js,je,km,kd,pout,qin,qout,pe,wz) & 
+!!$OMP             private(k1,s0,a6,q2,dp,qe)
  do j=js,je
 
    do i=is,ie
@@ -3176,8 +3176,8 @@ contains
  real:: pm(km)
  integer i,j,k, n, k1
 
-!$OMP parallel do default(none) shared(id,is,ie,js,je,km,kd,pout,qin,qout,pe) & 
-!$OMP             private(k1,pm)
+!!$OMP parallel do default(none) shared(id,is,ie,js,je,km,kd,pout,qin,qout,pe) & 
+!!$OMP             private(k1,pm)
  do j=js,je
     do i=is,ie
        do k=1,km
@@ -3306,8 +3306,8 @@ contains
 
  logp = log(plev)
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,peln,logp,a2,a3) & 
-!$OMP                          private(pm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,peln,logp,a2,a3) & 
+!!$OMP                          private(pm)
  do j=js,je
     do 1000 i=is,ie
 
@@ -3345,7 +3345,7 @@ contains
  integer i,j,k
 
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,hght,zl,a2,a3) private(zm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,hght,zl,a2,a3) private(zm)
  do j=js,je
     do 1000 i=is,ie
        do k=1,km
@@ -3396,9 +3396,9 @@ contains
 
    rdg = rdgas / grav
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,hydrostatic,rdg,pt,zvir,sphum, &
-!$OMP                                  peln,delz,ua,va,srh,z_bot,z_top) &
-!$OMP                          private(zh,uc,vc,dz,k0,k1,zh0,below)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,hydrostatic,rdg,pt,zvir,sphum, &
+!!$OMP                                  peln,delz,ua,va,srh,z_bot,z_top) &
+!!$OMP                          private(zh,uc,vc,dz,k0,k1,zh0,below)
    do j=js,je
 
       do i=is,ie
@@ -3474,9 +3474,9 @@ contains
 
    rdg = rdgas / grav
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,hydrostatic,rdg,pt,zvir,sphum, &
-!$OMP                                  peln,delz,w,vort,uh,z_bot,z_top) &
-!$OMP                          private(zh,dz,zh0,below)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,hydrostatic,rdg,pt,zvir,sphum, &
+!!$OMP                                  peln,delz,w,vort,uh,z_bot,z_top) &
+!!$OMP                          private(zh,dz,zh0,below)
    do j=js,je
 
       do i=is,ie
@@ -3552,7 +3552,7 @@ contains
       integer i, j, k
 
 #ifdef SW_DYNAMICS
-!$OMP parallel do default(none) shared(is,ie,js,je,vort,grav,f_d,delp)
+!!$OMP parallel do default(none) shared(is,ie,js,je,vort,grav,f_d,delp)
         do j=js,je
           do i=is,ie
             vort(i,j,1) = grav * (vort(i,j,1)+f_d(i,j)) / delp(i,j,1)
@@ -3560,8 +3560,8 @@ contains
         enddo
 #else
 ! Compute PT at layer edges.
-!$OMP parallel do default(none) shared(is,ie,js,je,km,pt,pkz,w3d,delp,te2,te) &
-!$OMP                          private(t2, delp2) 
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,pt,pkz,w3d,delp,te2,te) &
+!!$OMP                          private(t2, delp2) 
      do j=js,je
         do k=1,km
           do i=is,ie
@@ -3580,7 +3580,7 @@ contains
         enddo
      enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,vort,f_d,te,w3d,delp,grav)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,vort,f_d,te,w3d,delp,grav)
      do k=1,km
         do j=js,je
           do i=is,ie
@@ -3773,8 +3773,8 @@ subroutine eqv_pot(theta_e, pt, delp, delz, peln, pkz, q, is, ie, js, je, ng, np
          zvir = 0.
     endif
 
-!$OMP parallel do default(none) shared(moist,pk0,pkz,cv_air,zvir,rdg,is,ie,js,je,npz,pt,q,delp,peln,delz,theta_e,hydrostatic)  &
-!$OMP      private(cappa,p_mb, r, e, t_l, capa)
+!!$OMP parallel do default(none) shared(moist,pk0,pkz,cv_air,zvir,rdg,is,ie,js,je,npz,pt,q,delp,peln,delz,theta_e,hydrostatic)  &
+!!$OMP      private(cappa,p_mb, r, e, t_l, capa)
     do k = 1,npz
        cappa = cappa_b
       do j = js,je
@@ -3852,9 +3852,9 @@ end subroutine eqv_pot
    area_l = area
    cv_air =  cp_air - rdgas
 
-!$OMP parallel do default(none) shared(te,nwat,is,ie,js,je,isd,ied,jsd,jed,km,ua,va,   &
-!$OMP          w,q,pt,delp,delz,hs,cv_air,moist_phys,sphum,liq_wat,rainwat,ice_wat,snowwat,graupel) &
-!$OMP          private(phiz,cvm, qc)
+!!$OMP parallel do default(none) shared(te,nwat,is,ie,js,je,isd,ied,jsd,jed,km,ua,va,   &
+!!$OMP          w,q,pt,delp,delz,hs,cv_air,moist_phys,sphum,liq_wat,rainwat,ice_wat,snowwat,graupel) &
+!!$OMP          private(phiz,cvm, qc)
   do j=js,je
 
      do i=is,ie

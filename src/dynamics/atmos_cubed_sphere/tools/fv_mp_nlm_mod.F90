@@ -205,11 +205,11 @@ contains
          halo_update_type = halo_update_type_in
 
          numthreads = 1
-!$OMP PARALLEL
-!$OMP MASTER
+!!$OMP PARALLEL
+!!$OMP MASTER
 !$       numthreads = omp_get_num_threads()
-!$OMP END MASTER
-!$OMP END PARALLEL
+!!$OMP END MASTER
+!!$OMP END PARALLEL
 
          if ( mpp_pe()==mpp_root_pe() ) then
             master = .true.

@@ -323,7 +323,7 @@ module fv_nwp_nudge_nlm_mod
 
   profile(:) = 1.
 
-!$OMP parallel do default(none) shared(npz,press,ak,bk,P_relax,P_norelax,profile)
+!!$OMP parallel do default(none) shared(npz,press,ak,bk,P_relax,P_norelax,profile)
   do k=1,npz
      press(k) = 0.5*(ak(k) + ak(k+1)) + 0.5*(bk(k)+bk(k+1))*1.E5
      if ( press(k) < P_relax ) then
@@ -337,7 +337,7 @@ module fv_nwp_nudge_nlm_mod
 
 ! Thermodynamics:
   prof_t(:) = 1.
-!$OMP parallel do default(none) shared(npz,press,prof_t)
+!!$OMP parallel do default(none) shared(npz,press,prof_t)
   do k=1,npz
      if ( press(k) < 10.E2 ) then
           prof_t(k) =  max(0.01, press(k)/10.E2) 
@@ -347,7 +347,7 @@ module fv_nwp_nudge_nlm_mod
  
 ! Water vapor:
   prof_q(:) = 1.
-!$OMP parallel do default(none) shared(npz,press,prof_q)
+!!$OMP parallel do default(none) shared(npz,press,prof_q)
   do k=1,npz
      if ( press(k) < 300.E2 ) then
           prof_q(k) =  max(0., press(k)/300.E2) 
@@ -441,7 +441,7 @@ module fv_nwp_nudge_nlm_mod
            call prt_maxmin('SLP_o', slp_n, is, ie, js, je, 0, 1, 0.01)
       endif
 
-!$OMP parallel do default(none) shared(is,ie,js,je,phis,gz0,m_err,mask,slp_m,slp_n)
+!!$OMP parallel do default(none) shared(is,ie,js,je,phis,gz0,m_err,mask,slp_m,slp_n)
       do j=js,je
          do i=is,ie
             if ( abs(phis(i,j)-gz0(i,j))/grav > 2. ) then
@@ -470,8 +470,8 @@ module fv_nwp_nudge_nlm_mod
 
 ! Compute tendencies:
      rdt = 1. / (tau_winds/factor + dt)
-!$OMP parallel do default(none) shared(kstart,npz,kbot_winds,is,ie,js,je,du_obs,dv_obs, &
-!$OMP                                  profile,u_obs,v_obs,ua,va,rdt)
+!!$OMP parallel do default(none) shared(kstart,npz,kbot_winds,is,ie,js,je,du_obs,dv_obs, &
+!!$OMP                                  profile,u_obs,v_obs,ua,va,rdt)
      do k=kstart, npz - kbot_winds
         do j=js,je
            do i=is,ie
@@ -483,8 +483,8 @@ module fv_nwp_nudge_nlm_mod
 
      if ( nf_uv>0 ) call del2_uv(du_obs, dv_obs, del2_cd, npz, nf_uv, bd, npx, npy, gridstruct, domain)
 
-!$OMP parallel do default(none) shared(kstart,kbot_winds,npz,is,ie,js,je,du_obs,dv_obs, &
-!$OMP                                  mask,ps_fac,u_dt,v_dt,ua,va,dt)
+!!$OMP parallel do default(none) shared(kstart,kbot_winds,npz,is,ie,js,je,du_obs,dv_obs, &
+!!$OMP                                  mask,ps_fac,u_dt,v_dt,ua,va,dt)
      do k=kstart, npz - kbot_winds
         if ( k==npz ) then
         do j=js,je
@@ -515,7 +515,7 @@ module fv_nwp_nudge_nlm_mod
      enddo
   endif
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,t_dt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,t_dt)
   do k=1,npz
      do j=js,je
         do i=is,ie
@@ -526,8 +526,8 @@ module fv_nwp_nudge_nlm_mod
 
   if ( nudge_virt ) then
        rdt = 1./(tau_virt/factor + dt)
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,kstart,kht,t_dt,prof_t,t_obs,zvir, &
-!$OMP                                  q,pt,rdt,ps_fac)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,kstart,kht,t_dt,prof_t,t_obs,zvir, &
+!!$OMP                                  q,pt,rdt,ps_fac)
      do k=kstart, kht
         if ( k==npz ) then
         do j=js,je
@@ -547,9 +547,9 @@ module fv_nwp_nudge_nlm_mod
 
   if ( nudge_hght .and. kht<npz ) then     ! averaged (in log-p) temperature
        rdt = 1. / (tau_hght/factor + dt)
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ak,h2,delp,kht,t_obs,pt,zvir, &
-!$OMP                                  q,rdt,ps_fac,mask,t_dt) &
-!$OMP                          private(pe2, peln )
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ak,h2,delp,kht,t_obs,pt,zvir, &
+!!$OMP                                  q,rdt,ps_fac,mask,t_dt) &
+!!$OMP                          private(pe2, peln )
        do j=js,je
            do i=is,ie
               pe2(i,1) = ak(1)
@@ -588,7 +588,7 @@ module fv_nwp_nudge_nlm_mod
 
   if ( nudge_virt .or. nudge_hght ) then
        if ( nf_t>0 ) call del2_scalar(t_dt, del2_cd, npz, nf_t, bd, npx, npy, gridstruct, domain)
-!$OMP parallel do default(none) shared(kstart,npz,is,ie,js,je,pt,t_dt,dt,mask)
+!!$OMP parallel do default(none) shared(kstart,npz,is,ie,js,je,pt,t_dt,dt,mask)
        do k=kstart, npz
           do j=js,je
              do i=is,ie
@@ -601,8 +601,8 @@ module fv_nwp_nudge_nlm_mod
   q_dt(:,:,:) = 0.
   if ( nudge_q ) then
        rdt = 1./(tau_q/factor + dt)
-!$OMP parallel do default(none) shared(kstart,npz,kbot_q,is,ie,js,je,press,p_wvp,nwat, &
-!$OMP                                  q,delp,q_dt,prof_q,q_min,q_obs,rdt,mask,dt)
+!!$OMP parallel do default(none) shared(kstart,npz,kbot_q,is,ie,js,je,press,p_wvp,nwat, &
+!!$OMP                                  q,delp,q_dt,prof_q,q_min,q_obs,rdt,mask,dt)
      do k=kstart, npz - kbot_q
         if ( press(k) > p_wvp ) then
             do iq=2,nwat
@@ -1766,8 +1766,8 @@ module fv_nwp_nudge_nlm_mod
   real, dimension(is:ie,km+1):: pn0
   integer i,j,k
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,ak0,bk0,ps0,gz3,gz0,tv) &
-!$OMP                          private(pn0)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,ak0,bk0,ps0,gz3,gz0,tv) &
+!!$OMP                          private(pn0)
   do 5000 j=js,je
 
      do k=1,km+1
@@ -2093,7 +2093,7 @@ module fv_nwp_nudge_nlm_mod
          return        !  time to return to forecast mode
     endif
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,ps,ak,delp,tm,pkz,pt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,ps,ak,delp,tm,pkz,pt)
     do j=js,je
 ! ---- Compute ps
        do i=is,ie
@@ -2111,8 +2111,8 @@ module fv_nwp_nudge_nlm_mod
     enddo
 !   call prt_maxmin('TM', tm, is, ie, js, je, 0, 1, 1.)
 
-!$OMP parallel do default(none) shared(k_breed,npz,conserve_mom,is,ie,js,je,u,v,delp, &
-!$OMP                                  conserve_hgt,hydrostatic,pt,pkz,q,nwat)
+!!$OMP parallel do default(none) shared(k_breed,npz,conserve_mom,is,ie,js,je,u,v,delp, &
+!!$OMP                                  conserve_hgt,hydrostatic,pt,pkz,q,nwat)
     do k=k_breed+1,npz
 
        if ( conserve_mom ) then
@@ -2292,9 +2292,9 @@ module fv_nwp_nudge_nlm_mod
 
       mass_sink = 0.
 
-!$OMP parallel do default(none) shared(is,ie,js,je,dist,r_vor,phis,p_env,slp_o,r_hi,r_lo, &
-!$OMP                                  ps,tm,relx0,tau_vt_rad,dps_min,slp,ak,k0,delp,npz,area) &
-!$OMP                           private(f1, p_hi, p_lo, relx, delps, pbreed, mass_sink, dp0, pdep)
+!!$OMP parallel do default(none) shared(is,ie,js,je,dist,r_vor,phis,p_env,slp_o,r_hi,r_lo, &
+!!$OMP                                  ps,tm,relx0,tau_vt_rad,dps_min,slp,ak,k0,delp,npz,area) &
+!!$OMP                           private(f1, p_hi, p_lo, relx, delps, pbreed, mass_sink, dp0, pdep)
       do j=js, je
          do i=is, ie
             if( dist(i,j) < r_vor .and. phis(i,j)<250.*grav ) then
@@ -2385,8 +2385,8 @@ module fv_nwp_nudge_nlm_mod
       mass_sink = mass_sink / p_sum ! mean delta pressure to be added back to the environment to conserve mass
       if(master .and. nudge_debug) write(*,*) 'TC#',n, 'Mass tele-ported (pa)=', mass_sink
 
-!$OMP parallel do default(none) shared(is,ie,js,je,dist,r3,r2,ak,k_breed,delp,ps,mass_sink,npz) &
-!$OMP             private(pbreed, f1)
+!!$OMP parallel do default(none) shared(is,ie,js,je,dist,r3,r2,ak,k_breed,delp,ps,mass_sink,npz) &
+!!$OMP             private(pbreed, f1)
       do j=js, je
          do i=is, ie
             if( dist(i,j)<r3 .and. dist(i,j)>r2 ) then
@@ -2421,7 +2421,7 @@ module fv_nwp_nudge_nlm_mod
 !--------------------------
     call mpp_update_domains(delp, domain_local, complete=.true.)
 
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,ak,delp,k_breed,peln,pk)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,ak,delp,k_breed,peln,pk)
     do j=js-1,je+1
        do i=is-1,ie+1
           pe(i,1,j) = ak(1)
@@ -2442,8 +2442,8 @@ module fv_nwp_nudge_nlm_mod
       enddo
     enddo
 
-!$OMP parallel do default(none) shared(k_breed,npz,is,ie,js,je,conserve_mom,u,v,delp, &
-!$OMP                                  conserve_hgt,hydrostatic,pkz,pk,pt,peln)
+!!$OMP parallel do default(none) shared(k_breed,npz,is,ie,js,je,conserve_mom,u,v,delp, &
+!!$OMP                                  conserve_hgt,hydrostatic,pkz,pk,pt,peln)
     do k=k_breed+1,npz
 
        if ( conserve_mom ) then
@@ -2473,7 +2473,7 @@ module fv_nwp_nudge_nlm_mod
 
 ! Convert tracer mass back to moist mixing ratio
 
-!$OMP parallel do default(none) shared(nwat,k_breed,npz,is,ie,js,je,q,delp)
+!!$OMP parallel do default(none) shared(nwat,k_breed,npz,is,ie,js,je,q,delp)
     do iq=1,nwat
        do k=k_breed+1,npz
           do j=js,je
@@ -2550,21 +2550,21 @@ module fv_nwp_nudge_nlm_mod
     endif
 
 ! Compute lat-lon winds on A grid
-!$OMP parallel do default(none) shared(is,ie,js,je,wu,u,npz,dx)
+!!$OMP parallel do default(none) shared(is,ie,js,je,wu,u,npz,dx)
     do j=js,je+1
        do i=is,ie
           wu(i,j) = u(i,j,npz)*dx(i,j)
        enddo
     enddo
-!$OMP parallel do default(none) shared(is,ie,js,je,wv,v,npz,dy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,wv,v,npz,dy)
     do j=js,je
        do i=is,ie+1
           wv(i,j) = v(i,j,npz)*dy(i,j)
        enddo
     enddo
 
-!$OMP parallel do default(none) shared(is,ie,js,je,wu,rdxa,wv,rdya,us,vs,a11,a12,a21,a22,wind) &
-!$OMP                          private(u1,v1)
+!!$OMP parallel do default(none) shared(is,ie,js,je,wu,rdxa,wv,rdya,us,vs,a11,a12,a21,a22,wind) &
+!!$OMP                          private(u1,v1)
     do j=js, je
        do i=is, ie
 ! Co-variant to Co-variant "vorticity-conserving" interpolation
@@ -2821,7 +2821,7 @@ module fv_nwp_nudge_nlm_mod
        rdt = 1./dt
     relx0  = min(1., dt/tau_vt_wind)
 
-!$OMP parallel do default(none) shared(is,ie,js,je,slp,ps,phis,pt,npz,wind,ua,va)
+!!$OMP parallel do default(none) shared(is,ie,js,je,slp,ps,phis,pt,npz,wind,ua,va)
     do j=js, je
        do i=is, ie
            slp(i,j) = ps(i,j)*exp(phis(i,j)/(rdgas*(pt(i,j,npz)+3.25E-3*phis(i,j)/grav)))
@@ -2829,7 +2829,7 @@ module fv_nwp_nudge_nlm_mod
        enddo
     enddo
 
-!!!!!$OMP parallel do default(none) private(pos, w10_o, slp_o, r_vor, p_env)
+!!!!!!$OMP parallel do default(none) private(pos, w10_o, slp_o, r_vor, p_env)
     do 3000 n=1,nstorms  ! loop through all storms
 
       if ( nobs_tc(n) < min_nobs ) goto 3000
@@ -3372,7 +3372,7 @@ module fv_nwp_nudge_nlm_mod
    vlat => gridstruct%vlat
 
 ! transform to 3D Cartesian:
-!$OMP parallel do default(none) shared(kmd,is,ie,js,je,v1,v2,v3,du,vlon,dv,vlat)
+!!$OMP parallel do default(none) shared(kmd,is,ie,js,je,v1,v2,v3,du,vlon,dv,vlat)
    do k=1,kmd
       do j=js,je
          do i=is,ie
@@ -3389,7 +3389,7 @@ module fv_nwp_nudge_nlm_mod
    call del2_scalar( v3(is,js,1), cd, kmd, ntimes, bd, npx, npy, gridstruct, domain )
 
 ! Convert back to lat-lon components:
-!$OMP parallel do default(none) shared(kmd,is,ie,js,je,du,dv,v1,v2,v3,vlon,vlat)
+!!$OMP parallel do default(none) shared(kmd,is,ie,js,je,du,dv,v1,v2,v3,vlon,vlat)
    do k=1,kmd
       do j=js,je
          do i=is,ie
@@ -3451,7 +3451,7 @@ module fv_nwp_nudge_nlm_mod
 
    damp = cd * da_min
 
-!$OMP parallel do default(none) shared(is,ie,js,je,kmd,q,qdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmd,q,qdt)
    do k=1,kmd
       do j=js,je
          do i=is,ie
@@ -3467,10 +3467,10 @@ module fv_nwp_nudge_nlm_mod
 
    nt = ntimes - n
 
-!$OMP parallel do default(none) shared(is,ie,js,je,kmd,nt,dy,q,isd,jsd,npx,npy,nested,   &
-!$OMP                                  bd,sw_corner,se_corner,nw_corner,ne_corner,       &
-!$OMP                                  sina_u,rdxc,sin_sg,dx,rdyc,sina_v,qdt,damp,rarea) &
-!$OMP                          private(fx, fy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kmd,nt,dy,q,isd,jsd,npx,npy,nested,   &
+!!$OMP                                  bd,sw_corner,se_corner,nw_corner,ne_corner,       &
+!!$OMP                                  sina_u,rdxc,sin_sg,dx,rdyc,sina_v,qdt,damp,rarea) &
+!!$OMP                          private(fx, fy)
    do k=1,kmd
 
       if(nt>0) call copy_corners(q(isd,jsd,k), npx, npy, 1, nested, bd, &

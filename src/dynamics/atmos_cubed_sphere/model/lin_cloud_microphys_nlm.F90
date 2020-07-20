@@ -4732,7 +4732,7 @@ endif
  integer i,j,k
 
 
-!$OMP parallel do default(none) shared(is,ie,js,je,km,hght,zl,a2,a3) private(zm)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,hght,zl,a2,a3) private(zm)
  do j=js,je
     do 1000 i=is,ie
        do k=1,km

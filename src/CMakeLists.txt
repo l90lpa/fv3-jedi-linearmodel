@@ -18,9 +18,9 @@ list( APPEND fv3jedilm_src_files
 )
 
 #Requirement libraries
-set(FV3JEDILM_LIB_DEP ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES})
+set(FV3JEDILM_LIB_DEP ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} OpenMP::OpenMP_Fortran)
 
-if( NOT ${BUILD_WITH_MODEL} MATCHES "GEOS" AND NOT ${BUILD_WITH_MODEL} MATCHES "UFS" )
+if( NOT BUILD_WITH_MODEL MATCHES "GEOS" AND NOT BUILD_WITH_MODEL MATCHES "UFS" )
   list( APPEND FV3JEDILM_LIB_DEP fms )
 endif()
 
@@ -30,6 +30,10 @@ ecbuild_add_library( TARGET   fv3jedilm
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${FV3JEDILM_LINKER_LANGUAGE}
                     )
+
+if(OpenMP_Fortran_FOUND)
+  target_link_libraries(fv3jedilm OpenMP::OpenMP_Fortran)
+endif()
 
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
     target_compile_options(fv3jedilm PRIVATE -fallow-argument-mismatch)

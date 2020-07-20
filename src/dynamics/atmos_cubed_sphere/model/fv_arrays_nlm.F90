@@ -949,7 +949,7 @@ contains
 ! Notes by SJL
 ! Place the memory in the optimal shared mem space
 ! This will help the scaling with OpenMP
-!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,Atm,nq,ncnst)
+!!$OMP parallel do default(none) shared(isd,ied,jsd,jed,npz,Atm,nq,ncnst)
      do k=1, npz
         do j=jsd, jed
            do i=isd, ied

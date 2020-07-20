@@ -223,7 +223,7 @@ contains
     je1 = je
  endif
 
-!$OMP parallel do default(shared)
+!!$OMP parallel do default(shared)
  do k=1, km
     do j=js1,je1
        do i=is1,ie1
@@ -233,7 +233,7 @@ contains
  enddo
  call mpp_update_domains(qt, domain, whalo=1, ehalo=1, shalo=1, nhalo=1)
 
-!$OMP parallel do default(shared) private(fx,fy)
+!!$OMP parallel do default(shared) private(fx,fy)
  do k=1, km
     fx(:,:) = 0.
     do j=js,je

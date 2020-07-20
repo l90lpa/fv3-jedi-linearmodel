@@ -77,7 +77,7 @@ CONTAINS
 &   do_omega, adiabatic, do_adiabatic_init, mfx, mfy, remap_option, &
 &   kord_mt_pert, kord_wz_pert, kord_tr_pert, kord_tm_pert)
     IMPLICIT NONE
-!$OMP end parallel
+!!$OMP end parallel
     LOGICAL, INTENT(IN) :: last_step
 ! remap time step
     REAL, INTENT(IN) :: mdt
@@ -334,14 +334,14 @@ CONTAINS
       pk1_tl = 0.0
       pk2_tl = 0.0
     END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,km,pe,ptop,kord_tm,hydrostatic, &
-!$OMP                                  pt,pk,rg,peln,q,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
-!$OMP                                  graupel,q_con,sphum,cappa,r_vir,rcp,k1k,delp, &
-!$OMP                                  delz,akap,pkz,te,u,v,ps, gridstruct, last_step, &
-!$OMP                                  ak,bk,nq,isd,ied,jsd,jed,kord_tr,fill, adiabatic, &
-!$OMP                                  hs,w,ws,kord_wz,do_omega,omga,rrg,kord_mt,ua)    &
-!$OMP                          private(qv,gz,cvm,kp,k_next,bkh,dp2,   &
-!$OMP                                  pe0,pe1,pe2,pe3,pk1,pk2,pn2,phis,q2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,pe,ptop,kord_tm,hydrostatic, &
+!!$OMP                                  pt,pk,rg,peln,q,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
+!!$OMP                                  graupel,q_con,sphum,cappa,r_vir,rcp,k1k,delp, &
+!!$OMP                                  delz,akap,pkz,te,u,v,ps, gridstruct, last_step, &
+!!$OMP                                  ak,bk,nq,isd,ied,jsd,jed,kord_tr,fill, adiabatic, &
+!!$OMP                                  hs,w,ws,kord_wz,do_omega,omga,rrg,kord_mt,ua)    &
+!!$OMP                          private(qv,gz,cvm,kp,k_next,bkh,dp2,   &
+!!$OMP                                  pe0,pe1,pe2,pe3,pk1,pk2,pn2,phis,q2)
     DO j=js,je+1
       DO k=1,km+1
         DO i=is,ie
@@ -840,16 +840,16 @@ v_tj = v
         END DO
       END DO
     END DO
-!$OMP parallel default(none) shared(is,ie,js,je,km,kmp,ptop,u,v,pe,ua,isd,ied,jsd,jed,kord_mt, &
-!$OMP                               te_2d,te,delp,hydrostatic,hs,rg,pt,peln, adiabatic, &
-!$OMP                               cp,delz,nwat,rainwat,liq_wat,ice_wat,snowwat,       &
-!$OMP                               graupel,q_con,r_vir,sphum,w,pk,pkz,last_step,consv, &
-!$OMP                               do_adiabatic_init,zsum1,zsum0,te0_2d,domain,        &
-!$OMP                               ng,gridstruct,E_Flux,pdt,dtmp,reproduce_sum,q,      &
-!$OMP                               mdt,cld_amt,cappa,dtdt,out_dt,rrg,akap,do_sat_adj,  &
-!$OMP                               fast_mp_consv,kord_tm) &
-!$OMP                       private(pe0,pe1,pe2,pe3,qv,cvm,gz,phis,tpe,tmp, dpln)
-!$OMP do
+!!$OMP parallel default(none) shared(is,ie,js,je,km,kmp,ptop,u,v,pe,ua,isd,ied,jsd,jed,kord_mt, &
+!!$OMP                               te_2d,te,delp,hydrostatic,hs,rg,pt,peln, adiabatic, &
+!!$OMP                               cp,delz,nwat,rainwat,liq_wat,ice_wat,snowwat,       &
+!!$OMP                               graupel,q_con,r_vir,sphum,w,pk,pkz,last_step,consv, &
+!!$OMP                               do_adiabatic_init,zsum1,zsum0,te0_2d,domain,        &
+!!$OMP                               ng,gridstruct,E_Flux,pdt,dtmp,reproduce_sum,q,      &
+!!$OMP                               mdt,cld_amt,cappa,dtdt,out_dt,rrg,akap,do_sat_adj,  &
+!!$OMP                               fast_mp_consv,kord_tm) &
+!!$OMP                       private(pe0,pe1,pe2,pe3,qv,cvm,gz,phis,tpe,tmp, dpln)
+!!$OMP do
     DO k=2,km
       DO j=js,je
         DO i=is,ie
@@ -876,7 +876,7 @@ v_tj = v
         te_2d_tl = 0.0
         zsum0_tl = 0.0
         zsum1_tl = 0.0
-!$OMP do
+!!$OMP do
         DO j=js,je
           IF (remap_t) THEN
 ! end non-hydro
@@ -1083,7 +1083,7 @@ v_tj = v
           END IF
         END DO
 ! j-loop
-!$OMP single
+!!$OMP single
         result1_tl = G_SUM_TLM(domain, te_2d, te_2d_tl, is, ie, js, je, &
 &         ng, gridstruct%area_64, 0, reproduce=.true., g_sum=result1)
         tpe_tl = consv*result1_tl
@@ -1107,10 +1107,10 @@ v_tj = v
           dtmp = tpe/(cv_air*result1)
         END IF
       ELSE IF (consv .LT. -consv_min) THEN
-!$OMP end single
+!!$OMP end single
         zsum0_tl = 0.0
         zsum1_tl = 0.0
-!$OMP do
+!!$OMP do
         DO j=js,je
           DO i=is,ie
             zsum1_tl(i, j) = pkz_tl(i, j, 1)*delp(i, j, 1) + pkz(i, j, 1&
@@ -1134,7 +1134,7 @@ v_tj = v
           END IF
         END DO
         e_flux = consv
-!$OMP single
+!!$OMP single
         IF (hydrostatic) THEN
           result1_tl = G_SUM_TLM(domain, zsum0, zsum0_tl, is, ie, js, je&
 &           , ng, gridstruct%area_64, 0, reproduce=.true., g_sum=result1&
@@ -1160,13 +1160,13 @@ v_tj = v
       gz_tl = 0.0
       dtmp_tl = 0.0
     END IF
-!$OMP end single
+!!$OMP end single
 ! do_sat_adj
 ! Note: pt at this stage is T_v
     IF (remap_t .AND. (.NOT.do_adiabatic_init) .AND. do_sat_adj) THEN
 ! if ( do_sat_adj ) then
       CALL TIMING_ON('sat_adj2')
-!$OMP do
+!!$OMP do
       DO k=kmp,km
         DO j=js,je
           DO i=is,ie
@@ -1206,7 +1206,7 @@ v_tj = v
       END DO
 ! OpenMP k-loop
       IF (fast_mp_consv) THEN
-!$OMP do
+!!$OMP do
         DO j=js,je
           DO i=is,ie
             DO k=kmp,km
@@ -1222,7 +1222,7 @@ v_tj = v
     IF (last_step) THEN
 ! Output temperature if last_step
       IF (remap_t) THEN
-!$OMP do
+!!$OMP do
         DO k=1,km
           DO j=js,je
             IF (.NOT.adiabatic) THEN
@@ -1240,7 +1240,7 @@ v_tj = v
       ELSE IF (remap_pt) THEN
 ! j-loop
 ! k-loop
-!$OMP do
+!!$OMP do
         DO k=1,km
           DO j=js,je
             DO i=is,ie
@@ -1254,7 +1254,7 @@ v_tj = v
           END DO
         END DO
       ELSE IF (remap_te) THEN
-!$OMP do
+!!$OMP do
         DO j=js,je
           DO i=is,ie
             gz_tl(i) = 0.0
@@ -1303,7 +1303,7 @@ v_tj = v
     ELSE
 ! not last_step
       IF (remap_t) THEN
-!$OMP do
+!!$OMP do
         DO k=1,km
           DO j=js,je
             DO i=is,ie
@@ -1314,7 +1314,7 @@ v_tj = v
           END DO
         END DO
       ELSE IF (remap_te) THEN
-!$OMP do
+!!$OMP do
         DO j=js,je
           DO i=is,ie
             gz_tl(i) = 0.0
@@ -1367,7 +1367,7 @@ v_tj = v
 &   do_omega, adiabatic, do_adiabatic_init, mfx, mfy, remap_option, &
 &   kord_mt_pert, kord_wz_pert, kord_tr_pert, kord_tm_pert)
     IMPLICIT NONE
-!$OMP end parallel
+!!$OMP end parallel
     LOGICAL, INTENT(IN) :: last_step
 ! remap time step
     REAL, INTENT(IN) :: mdt
@@ -1567,14 +1567,14 @@ v_tj = v
       END DO
  100  CALL QS_INIT(kmp)
     END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,km,pe,ptop,kord_tm,hydrostatic, &
-!$OMP                                  pt,pk,rg,peln,q,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
-!$OMP                                  graupel,q_con,sphum,cappa,r_vir,rcp,k1k,delp, &
-!$OMP                                  delz,akap,pkz,te,u,v,ps, gridstruct, last_step, &
-!$OMP                                  ak,bk,nq,isd,ied,jsd,jed,kord_tr,fill, adiabatic, &
-!$OMP                                  hs,w,ws,kord_wz,do_omega,omga,rrg,kord_mt,ua)    &
-!$OMP                          private(qv,gz,cvm,kp,k_next,bkh,dp2,   &
-!$OMP                                  pe0,pe1,pe2,pe3,pk1,pk2,pn2,phis,q2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,pe,ptop,kord_tm,hydrostatic, &
+!!$OMP                                  pt,pk,rg,peln,q,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
+!!$OMP                                  graupel,q_con,sphum,cappa,r_vir,rcp,k1k,delp, &
+!!$OMP                                  delz,akap,pkz,te,u,v,ps, gridstruct, last_step, &
+!!$OMP                                  ak,bk,nq,isd,ied,jsd,jed,kord_tr,fill, adiabatic, &
+!!$OMP                                  hs,w,ws,kord_wz,do_omega,omga,rrg,kord_mt,ua)    &
+!!$OMP                          private(qv,gz,cvm,kp,k_next,bkh,dp2,   &
+!!$OMP                                  pe0,pe1,pe2,pe3,pk1,pk2,pn2,phis,q2)
     DO j=js,je+1
       DO k=1,km+1
         DO i=is,ie
@@ -1943,16 +1943,16 @@ v_tj = v
         END DO
       END DO
     END DO
-!$OMP parallel default(none) shared(is,ie,js,je,km,kmp,ptop,u,v,pe,ua,isd,ied,jsd,jed,kord_mt, &
-!$OMP                               te_2d,te,delp,hydrostatic,hs,rg,pt,peln, adiabatic, &
-!$OMP                               cp,delz,nwat,rainwat,liq_wat,ice_wat,snowwat,       &
-!$OMP                               graupel,q_con,r_vir,sphum,w,pk,pkz,last_step,consv, &
-!$OMP                               do_adiabatic_init,zsum1,zsum0,te0_2d,domain,        &
-!$OMP                               ng,gridstruct,E_Flux,pdt,dtmp,reproduce_sum,q,      &
-!$OMP                               mdt,cld_amt,cappa,dtdt,out_dt,rrg,akap,do_sat_adj,  &
-!$OMP                               fast_mp_consv,kord_tm) &
-!$OMP                       private(pe0,pe1,pe2,pe3,qv,cvm,gz,phis,tpe,tmp, dpln)
-!$OMP do
+!!$OMP parallel default(none) shared(is,ie,js,je,km,kmp,ptop,u,v,pe,ua,isd,ied,jsd,jed,kord_mt, &
+!!$OMP                               te_2d,te,delp,hydrostatic,hs,rg,pt,peln, adiabatic, &
+!!$OMP                               cp,delz,nwat,rainwat,liq_wat,ice_wat,snowwat,       &
+!!$OMP                               graupel,q_con,r_vir,sphum,w,pk,pkz,last_step,consv, &
+!!$OMP                               do_adiabatic_init,zsum1,zsum0,te0_2d,domain,        &
+!!$OMP                               ng,gridstruct,E_Flux,pdt,dtmp,reproduce_sum,q,      &
+!!$OMP                               mdt,cld_amt,cappa,dtdt,out_dt,rrg,akap,do_sat_adj,  &
+!!$OMP                               fast_mp_consv,kord_tm) &
+!!$OMP                       private(pe0,pe1,pe2,pe3,qv,cvm,gz,phis,tpe,tmp, dpln)
+!!$OMP do
     DO k=2,km
       DO j=js,je
         DO i=is,ie
@@ -1974,7 +1974,7 @@ v_tj = v
     IF (last_step .AND. (.NOT.do_adiabatic_init)) THEN
 ! end consv check
       IF (consv .GT. consv_min) THEN
-!$OMP do
+!!$OMP do
         DO j=js,je
           IF (remap_t) THEN
 ! end non-hydro
@@ -2094,7 +2094,7 @@ v_tj = v
           END IF
         END DO
 ! j-loop
-!$OMP single
+!!$OMP single
         result1 = G_SUM(domain, te_2d, is, ie, js, je, ng, gridstruct%&
 &         area_64, 0, .true.)
         tpe = consv*result1
@@ -2111,8 +2111,8 @@ v_tj = v
           dtmp = tpe/(cv_air*result1)
         END IF
       ELSE IF (consv .LT. -consv_min) THEN
-!$OMP end single
-!$OMP do
+!!$OMP end single
+!!$OMP do
         DO j=js,je
           DO i=is,ie
             zsum1(i, j) = pkz(i, j, 1)*delp(i, j, 1)
@@ -2130,7 +2130,7 @@ v_tj = v
           END IF
         END DO
         e_flux = consv
-!$OMP single
+!!$OMP single
         IF (hydrostatic) THEN
           result1 = G_SUM(domain, zsum0, is, ie, js, je, ng, gridstruct%&
 &           area_64, 0, .true.)
@@ -2142,13 +2142,13 @@ v_tj = v
         END IF
       END IF
     END IF
-!$OMP end single
+!!$OMP end single
 ! do_sat_adj
 ! Note: pt at this stage is T_v
     IF (remap_t .AND. (.NOT.do_adiabatic_init) .AND. do_sat_adj) THEN
 ! if ( do_sat_adj ) then
       CALL TIMING_ON('sat_adj2')
-!$OMP do
+!!$OMP do
       DO k=kmp,km
         DO j=js,je
           DO i=is,ie
@@ -2183,7 +2183,7 @@ v_tj = v
       END DO
 ! OpenMP k-loop
       IF (fast_mp_consv) THEN
-!$OMP do
+!!$OMP do
         DO j=js,je
           DO i=is,ie
             DO k=kmp,km
@@ -2198,7 +2198,7 @@ v_tj = v
     IF (last_step) THEN
 ! Output temperature if last_step
       IF (remap_t) THEN
-!$OMP do
+!!$OMP do
         DO k=1,km
           DO j=js,je
             IF (.NOT.adiabatic) THEN
@@ -2212,7 +2212,7 @@ v_tj = v
       ELSE IF (remap_pt) THEN
 ! j-loop
 ! k-loop
-!$OMP do
+!!$OMP do
         DO k=1,km
           DO j=js,je
             DO i=is,ie
@@ -2222,7 +2222,7 @@ v_tj = v
           END DO
         END DO
       ELSE IF (remap_te) THEN
-!$OMP do
+!!$OMP do
         DO j=js,je
           DO i=is,ie
             gz(i) = hs(i, j)
@@ -2250,7 +2250,7 @@ v_tj = v
     ELSE
 ! not last_step
       IF (remap_t) THEN
-!$OMP do
+!!$OMP do
         DO k=1,km
           DO j=js,je
             DO i=is,ie
@@ -2259,7 +2259,7 @@ v_tj = v
           END DO
         END DO
       ELSE IF (remap_te) THEN
-!$OMP do
+!!$OMP do
         DO j=js,je
           DO i=is,ie
             gz(i) = hs(i, j)
@@ -2351,10 +2351,10 @@ v_tj = v
 ! Output lat-lon winds:
 !----------------------
 !  call cubed_to_latlon(u, v, ua, va, dx, dy, rdxa, rdya, km, flagstruct%c2l_ord)
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,km,hydrostatic,hs,pt,qc,rg,peln,te_2d, &
-!$OMP                                  pe,delp,cp,rsin2_l,u,v,cosa_s_l,delz,moist_phys,w, &
-!$OMP                                  q,nwat,liq_wat,rainwat,ice_wat,snowwat,graupel,sphum)   &
-!$OMP                          private(phiz, tv, cvm, qd)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,km,hydrostatic,hs,pt,qc,rg,peln,te_2d, &
+!!$OMP                                  pe,delp,cp,rsin2_l,u,v,cosa_s_l,delz,moist_phys,w, &
+!!$OMP                                  q,nwat,liq_wat,rainwat,ice_wat,snowwat,graupel,sphum)   &
+!!$OMP                          private(phiz, tv, cvm, qd)
     DO j=js,je
       IF (hydrostatic) THEN
         DO i=is,ie
@@ -2465,7 +2465,7 @@ v_tj = v
 !-------------------------------------
     IF (id_te .GT. 0) THEN
       teq_tl = 0.0
-!$OMP parallel do default(none) shared(is,ie,js,je,teq,te_2d,moist_phys,km,hlv,sphum,q,delp)
+!!$OMP parallel do default(none) shared(is,ie,js,je,teq,te_2d,moist_phys,km,hlv,sphum,q,delp)
       DO j=js,je
         DO i=is,ie
           teq_tl(i, j) = te_2d_tl(i, j)
@@ -2531,10 +2531,10 @@ v_tj = v
 ! Output lat-lon winds:
 !----------------------
 !  call cubed_to_latlon(u, v, ua, va, dx, dy, rdxa, rdya, km, flagstruct%c2l_ord)
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,km,hydrostatic,hs,pt,qc,rg,peln,te_2d, &
-!$OMP                                  pe,delp,cp,rsin2_l,u,v,cosa_s_l,delz,moist_phys,w, &
-!$OMP                                  q,nwat,liq_wat,rainwat,ice_wat,snowwat,graupel,sphum)   &
-!$OMP                          private(phiz, tv, cvm, qd)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,km,hydrostatic,hs,pt,qc,rg,peln,te_2d, &
+!!$OMP                                  pe,delp,cp,rsin2_l,u,v,cosa_s_l,delz,moist_phys,w, &
+!!$OMP                                  q,nwat,liq_wat,rainwat,ice_wat,snowwat,graupel,sphum)   &
+!!$OMP                          private(phiz, tv, cvm, qd)
     DO j=js,je
       IF (hydrostatic) THEN
         DO i=is,ie
@@ -2599,7 +2599,7 @@ v_tj = v
 ! Diganostics computation for moist TE
 !-------------------------------------
     IF (id_te .GT. 0) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,teq,te_2d,moist_phys,km,hlv,sphum,q,delp)
+!!$OMP parallel do default(none) shared(is,ie,js,je,teq,te_2d,moist_phys,km,hlv,sphum,q,delp)
       DO j=js,je
         DO i=is,ie
           teq(i, j) = te_2d(i, j)
@@ -5230,14 +5230,14 @@ v_tj = v
     INTRINSIC LOG
     r_vir = rvgas/rdgas - 1.
     rgrav = 1./grav
-!$OMP parallel do default(none) shared(is,ie,js,je,ps,ak_r)
+!!$OMP parallel do default(none) shared(is,ie,js,je,ps,ak_r)
     DO j=js,je
       DO i=is,ie
         ps(i, j) = ak_r(1)
       END DO
     END DO
 ! this OpenMP do-loop setup cannot work in it's current form....
-!$OMP parallel do default(none) shared(is,ie,js,je,km,ps,delp_r)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,ps,delp_r)
     DO j=js,je
       DO k=1,km
         DO i=is,ie
@@ -5253,7 +5253,7 @@ v_tj = v
       CALL MPP_UPDATE_DOMAINS(ps, domain, complete=.true.)
     END IF
 ! Compute virtual Temp
-!$OMP parallel do default(none) shared(is,ie,js,je,km,pt_r,r_vir,q_r)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,pt_r,r_vir,q_r)
     DO k=1,km
       DO j=js,je
         DO i=is,ie
@@ -5261,10 +5261,10 @@ v_tj = v
         END DO
       END DO
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,km,ak_r,bk_r,ps,kn,ak,bk,u_r,u,delp, &
-!$OMP                                  ntp,nq,hydrostatic,make_nh,w_r,w,delz_r,delp_r,delz, &
-!$OMP                                  pt_r,pt,v_r,v,q,q_r,qdiag,qdiag_r) &
-!$OMP                          private(pe1,  pe2, pv1, pv2)
+!!$OMP parallel do default(none) shared(is,ie,js,je,km,ak_r,bk_r,ps,kn,ak,bk,u_r,u,delp, &
+!!$OMP                                  ntp,nq,hydrostatic,make_nh,w_r,w,delz_r,delp_r,delz, &
+!!$OMP                                  pt_r,pt,v_r,v,q,q_r,qdiag,qdiag_r) &
+!!$OMP                          private(pe1,  pe2, pv1, pv2)
     DO j=js,je+1
 !------
 ! map u
@@ -5367,7 +5367,7 @@ v_tj = v
 &               +1, j:j, 1:kn), is, ie + 1, -1, kord)
       END IF
     END DO
-!$OMP parallel do default(none) shared(is,ie,js,je,kn,pt,r_vir,q)
+!!$OMP parallel do default(none) shared(is,ie,js,je,kn,pt,r_vir,q)
     DO k=1,kn
       DO j=js,je
         DO i=is,ie

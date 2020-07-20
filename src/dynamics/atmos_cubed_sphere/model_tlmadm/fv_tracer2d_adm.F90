@@ -174,8 +174,8 @@ CONTAINS
     dya => gridstruct%dya
     dx => gridstruct%dx
     dy => gridstruct%dy
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
-!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
+!!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax)
     DO k=1,npz
       DO j=jsd,jed
         DO i=is,ie+1
@@ -268,9 +268,9 @@ CONTAINS
     END DO
 ! k-loop
     CALL MP_REDUCE_MAX(cmax, npz)
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx, &
-!$OMP                                  cy,yfx,mfx,mfy,cmax)   &
-!$OMP                          private(nsplt, frac)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx, &
+!!$OMP                                  cy,yfx,mfx,mfy,cmax)   &
+!!$OMP                          private(nsplt, frac)
     DO k=1,npz
       nsplt = INT(1. + cmax(k))
       IF (nsplt .GT. 1) THEN
@@ -309,7 +309,7 @@ CONTAINS
     END DO
 ! Begin k-independent tracer transport; can not be OpenMPed because the mpp_update call.
     DO k=1,npz
-!$OMP parallel do default(none) shared(k,is,ie,js,je,isd,ied,jsd,jed,xfx,area,yfx,ra_x,ra_y)
+!!$OMP parallel do default(none) shared(k,is,ie,js,je,isd,ied,jsd,jed,xfx,area,yfx,ra_x,ra_y)
       DO j=jsd,jed
         DO i=is,ie
           CALL PUSHREALARRAY(ra_x(i, j))
@@ -327,7 +327,7 @@ CONTAINS
       END DO
       nsplt = INT(1. + cmax(k))
       DO it=1,nsplt
-!$OMP parallel do default(none) shared(k,is,ie,js,je,rarea,mfx,mfy,dp1,dp2)
+!!$OMP parallel do default(none) shared(k,is,ie,js,je,rarea,mfx,mfy,dp1,dp2)
         DO j=js,je
           DO i=is,ie
             CALL PUSHREALARRAY(dp2(i, j))
@@ -335,9 +335,9 @@ CONTAINS
 &             (i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
           END DO
         END DO
-!$OMP parallel do default(none) shared(k,nsplt,it,is,ie,js,je,isd,ied,jsd,jed,npx,npy,cx,xfx,hord,trdm, &
-!$OMP                                  nord_tr,nq,gridstruct,bd,cy,yfx,mfx,mfy,qn2,q,ra_x,ra_y,dp1,dp2,rarea) &
-!$OMP                          private(fx,fy)
+!!$OMP parallel do default(none) shared(k,nsplt,it,is,ie,js,je,isd,ied,jsd,jed,npx,npy,cx,xfx,hord,trdm, &
+!!$OMP                                  nord_tr,nq,gridstruct,bd,cy,yfx,mfx,mfy,qn2,q,ra_x,ra_y,dp1,dp2,rarea) &
+!!$OMP                          private(fx,fy)
         DO iq=1,nq
           IF (nsplt .NE. 1) THEN
             IF (it .EQ. 1) THEN
@@ -960,8 +960,8 @@ CONTAINS
     dya => gridstruct%dya
     dx => gridstruct%dx
     dy => gridstruct%dy
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
-!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
+!!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax)
     DO k=1,npz
       DO j=jsd,jed
         DO i=is,ie+1
@@ -1042,9 +1042,9 @@ CONTAINS
     END DO
 ! k-loop
     CALL MP_REDUCE_MAX(cmax, npz)
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx, &
-!$OMP                                  cy,yfx,mfx,mfy,cmax)   &
-!$OMP                          private(nsplt, frac)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx, &
+!!$OMP                                  cy,yfx,mfx,mfy,cmax)   &
+!!$OMP                          private(nsplt, frac)
     DO k=1,npz
       nsplt = INT(1. + cmax(k))
       IF (nsplt .GT. 1) THEN
@@ -1080,7 +1080,7 @@ CONTAINS
     CALL TIMING_OFF('COMM_TOTAL')
 ! Begin k-independent tracer transport; can not be OpenMPed because the mpp_update call.
     DO k=1,npz
-!$OMP parallel do default(none) shared(k,is,ie,js,je,isd,ied,jsd,jed,xfx,area,yfx,ra_x,ra_y)
+!!$OMP parallel do default(none) shared(k,is,ie,js,je,isd,ied,jsd,jed,xfx,area,yfx,ra_x,ra_y)
       DO j=jsd,jed
         DO i=is,ie
           ra_x(i, j) = area(i, j) + (xfx(i, j, k)-xfx(i+1, j, k))
@@ -1093,16 +1093,16 @@ CONTAINS
       END DO
       nsplt = INT(1. + cmax(k))
       DO it=1,nsplt
-!$OMP parallel do default(none) shared(k,is,ie,js,je,rarea,mfx,mfy,dp1,dp2)
+!!$OMP parallel do default(none) shared(k,is,ie,js,je,rarea,mfx,mfy,dp1,dp2)
         DO j=js,je
           DO i=is,ie
             dp2(i, j) = dp1(i, j, k) + (mfx(i, j, k)-mfx(i+1, j, k)+(mfy&
 &             (i, j, k)-mfy(i, j+1, k)))*rarea(i, j)
           END DO
         END DO
-!$OMP parallel do default(none) shared(k,nsplt,it,is,ie,js,je,isd,ied,jsd,jed,npx,npy,cx,xfx,hord,trdm, &
-!$OMP                                  nord_tr,nq,gridstruct,bd,cy,yfx,mfx,mfy,qn2,q,ra_x,ra_y,dp1,dp2,rarea) &
-!$OMP                          private(fx,fy)
+!!$OMP parallel do default(none) shared(k,nsplt,it,is,ie,js,je,isd,ied,jsd,jed,npx,npy,cx,xfx,hord,trdm, &
+!!$OMP                                  nord_tr,nq,gridstruct,bd,cy,yfx,mfx,mfy,qn2,q,ra_x,ra_y,dp1,dp2,rarea) &
+!!$OMP                          private(fx,fy)
         DO iq=1,nq
           IF (nsplt .NE. 1) THEN
             IF (it .EQ. 1) THEN
@@ -1319,8 +1319,8 @@ CONTAINS
     dya => gridstruct%dya
     dx => gridstruct%dx
     dy => gridstruct%dy
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
-!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax,q_split,ksplt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
+!!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax,q_split,ksplt)
     DO k=1,npz
       DO j=jsd,jed
         DO i=is,ie+1
@@ -1451,8 +1451,8 @@ CONTAINS
     END IF
 !--------------------------------------------------------------------------------
     IF (nsplt .NE. 1) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,mfx,cy,yfx,mfy,cmax,nsplt,ksplt) &
-!$OMP                          private( frac )
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,mfx,cy,yfx,mfy,cmax,nsplt,ksplt) &
+!!$OMP                          private( frac )
       DO k=1,npz
         ksplt(k) = INT(1. + cmax(k))
         CALL PUSHREALARRAY(frac)
@@ -1489,9 +1489,9 @@ CONTAINS
       CALL PUSHCONTROL(1,0)
     END IF
     DO it=1,nsplt
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq,ksplt,&
-!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
-!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq,ksplt,&
+!!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
+!!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
       DO k=1,npz
 ! ksplt
         IF (it .LE. ksplt(k)) THEN
@@ -2060,8 +2060,8 @@ CONTAINS
     dya => gridstruct%dya
     dx => gridstruct%dx
     dy => gridstruct%dy
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
-!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax,q_split,ksplt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
+!!$OMP                                  sin_sg,cy,yfx,dya,dx,cmax,q_split,ksplt)
     DO k=1,npz
       DO j=jsd,jed
         DO i=is,ie+1
@@ -2167,8 +2167,8 @@ CONTAINS
     END IF
 !--------------------------------------------------------------------------------
     IF (nsplt .NE. 1) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,mfx,cy,yfx,mfy,cmax,nsplt,ksplt) &
-!$OMP                          private( frac )
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,mfx,cy,yfx,mfy,cmax,nsplt,ksplt) &
+!!$OMP                          private( frac )
       DO k=1,npz
         ksplt(k) = INT(1. + cmax(k))
         frac = 1./REAL(ksplt(k))
@@ -2202,9 +2202,9 @@ CONTAINS
       CALL COMPLETE_GROUP_HALO_UPDATE(q_pack, domain)
       CALL TIMING_OFF('COMM_TRACER')
       CALL TIMING_OFF('COMM_TOTAL')
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq,ksplt,&
-!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
-!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq,ksplt,&
+!!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
+!!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
       DO k=1,npz
 ! ksplt
         IF (it .LE. ksplt(k)) THEN
@@ -2422,8 +2422,8 @@ CONTAINS
     dya => gridstruct%dya
     dx => gridstruct%dx
     dy => gridstruct%dy
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
-!$OMP                                  sin_sg,cy,yfx,dya,dx)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
+!!$OMP                                  sin_sg,cy,yfx,dya,dx)
     DO k=1,npz
       DO j=jsd,jed
         DO i=is,ie+1
@@ -2455,8 +2455,8 @@ CONTAINS
 !--------------------------------------------------------------------------------
     IF (q_split .EQ. 0) THEN
 ! Determine nsplt
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,cmax,cx,cy,sin_sg) &
-!$OMP                          private(cmax_t )
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,cmax,cx,cy,sin_sg) &
+!!$OMP                          private(cmax_t )
       DO k=1,npz
         cmax(k) = 0.
         IF (k .LT. 4) THEN
@@ -2552,7 +2552,7 @@ CONTAINS
 !--------------------------------------------------------------------------------
     frac = 1./REAL(nsplt)
     IF (nsplt .NE. 1) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,frac,xfx,mfx,cy,yfx,mfy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,frac,xfx,mfx,cy,yfx,mfy)
       DO k=1,npz
         DO j=jsd,jed
           DO i=is,ie+1
@@ -2606,9 +2606,9 @@ CONTAINS
       ELSE
         CALL PUSHCONTROL(1,0)
       END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq, &
-!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
-!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq, &
+!!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
+!!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -2714,7 +2714,7 @@ CONTAINS
 ! nsplt
     IF (id_divg .GT. 0) THEN
       rdt = 1./(frac*dt)
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,dp1,xfx,yfx,rarea,rdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,dp1,xfx,yfx,rarea,rdt)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -3279,8 +3279,8 @@ CONTAINS
     dya => gridstruct%dya
     dx => gridstruct%dx
     dy => gridstruct%dy
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
-!$OMP                                  sin_sg,cy,yfx,dya,dx)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
+!!$OMP                                  sin_sg,cy,yfx,dya,dx)
     DO k=1,npz
       DO j=jsd,jed
         DO i=is,ie+1
@@ -3308,8 +3308,8 @@ CONTAINS
 !--------------------------------------------------------------------------------
     IF (q_split .EQ. 0) THEN
 ! Determine nsplt
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,cmax,cx,cy,sin_sg) &
-!$OMP                          private(cmax_t )
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,cmax,cx,cy,sin_sg) &
+!!$OMP                          private(cmax_t )
       DO k=1,npz
         cmax(k) = 0.
         IF (k .LT. 4) THEN
@@ -3395,7 +3395,7 @@ CONTAINS
 !--------------------------------------------------------------------------------
     frac = 1./REAL(nsplt)
     IF (nsplt .NE. 1) THEN
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,frac,xfx,mfx,cy,yfx,mfy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,frac,xfx,mfx,cy,yfx,mfy)
       DO k=1,npz
         DO j=jsd,jed
           DO i=is,ie+1
@@ -3440,9 +3440,9 @@ CONTAINS
 &                                  nestbctype)
         END DO
       END IF
-!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq, &
-!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
-!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
+!!$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,dp1,mfx,mfy,rarea,nq, &
+!!$OMP                                  area,xfx,yfx,q,cx,cy,npx,npy,hord,gridstruct,bd,it,nsplt,nord_tr,trdm) &
+!!$OMP                          private(dp2, ra_x, ra_y, fx, fy)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
@@ -3521,7 +3521,7 @@ CONTAINS
 ! nsplt
     IF (id_divg .GT. 0) THEN
       rdt = 1./(frac*dt)
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,dp1,xfx,yfx,rarea,rdt)
+!!$OMP parallel do default(none) shared(is,ie,js,je,npz,dp1,xfx,yfx,rarea,rdt)
       DO k=1,npz
         DO j=js,je
           DO i=is,ie
