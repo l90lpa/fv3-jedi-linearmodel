@@ -9,7 +9,7 @@
 
 cmake_minimum_required( VERSION 3.3.2 FATAL_ERROR )
 
-project( fv3jedilm Fortran )
+project( fv3jedilm LANGUAGES Fortran C )
 
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH} )
 
@@ -32,8 +32,6 @@ ecbuild_declare_project()
 
 ecbuild_enable_fortran( REQUIRED )
 
-set( FV3JEDILM_LINKER_LANGUAGE Fortran )
-
 ################################################################################
 # Dependencies
 ################################################################################
@@ -52,7 +50,7 @@ else()
 endif()
 
 #openMP
-find_package( OpenMP COMPONENTS Fortran )
+find_package( OpenMP COMPONENTS Fortran C )
 
 # MPI
 ecbuild_add_option( FEATURE MPI DEFAULT ON

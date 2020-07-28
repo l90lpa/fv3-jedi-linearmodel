@@ -18,7 +18,7 @@ list( APPEND fv3jedilm_src_files
 )
 
 #Requirement libraries
-set(FV3JEDILM_LIB_DEP ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} OpenMP::OpenMP_Fortran)
+set(FV3JEDILM_LIB_DEP ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES})
 
 if( NOT FV3_FORECAST_MODEL MATCHES "GEOS" AND NOT FV3_FORECAST_MODEL MATCHES "UFS" )
   list( APPEND FV3JEDILM_LIB_DEP fms )
@@ -27,9 +27,7 @@ endif()
 ecbuild_add_library( TARGET   fv3jedilm
                      SOURCES  ${fv3jedilm_src_files}
                      LIBS     ${FV3JEDILM_LIB_DEP}
-                     INSTALL_HEADERS LISTED
-                     LINKER_LANGUAGE ${FV3JEDILM_LINKER_LANGUAGE}
-                    )
+                     INSTALL_HEADERS LISTED )
 
 if(OpenMP_Fortran_FOUND)
   target_link_libraries(fv3jedilm OpenMP::OpenMP_Fortran)
