@@ -36,5 +36,5 @@ if(OpenMP_Fortran_FOUND)
 endif()
 
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
-    target_compile_options(fv3jedilm PRIVATE -fallow-argument-mismatch)
+    target_compile_options(fv3jedilm PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-fallow-argument-mismatch>)
 endif()
