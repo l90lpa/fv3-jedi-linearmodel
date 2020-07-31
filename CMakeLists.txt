@@ -93,6 +93,8 @@ endif()
 # ufs
 if(FV3_FORECAST_MODEL MATCHES "UFS")
   # Should be: find_package(fms REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake )
+  find_package(fms REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake )
+  find_package(fv3atm REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake )
   find_package(ufs-weather-model-lib REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake )
   link_libraries(fms)
   link_libraries(NetCDF::NetCDF_Fortran)
