@@ -116,6 +116,20 @@ interface mpp_get_boundary_adm
     module procedure mpp_get_boundary_3dv_adm
 end interface
 
+interface zero_domain
+#ifdef OVERLOAD_R4
+    module procedure zero_domain_2d_r4
+    module procedure zero_domain_3d_r4
+    module procedure zero_domain_4d_r4
+    module procedure zero_domain_5d_r4
+#endif
+    module procedure zero_domain_2d_r8
+    module procedure zero_domain_3d_r8
+    module procedure zero_domain_4d_r8
+    module procedure zero_domain_5d_r8
+end interface
+
+
 contains
 
 
@@ -481,7 +495,6 @@ end subroutine complete_group_halo_update
   type(group_halo_update_type), intent(inout) :: groupp
 #endif
   real, dimension(:,:),         intent(inout) :: array, arrayp
-  real(8) :: array8(10,10)
   type(domain2D),               intent(inout) :: domain
   integer,      optional,       intent(in)    :: flags
   integer,      optional,       intent(in)    :: position
@@ -508,6 +521,8 @@ end subroutine complete_group_halo_update
 #ifdef OLDMPP
 
      call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+     call zero_domain(arrayp, domain)
 
 #endif
 
@@ -552,6 +567,8 @@ subroutine start_var_group_update_3d_adm(group, &
 #ifdef OLDMPP
 
      call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+     call zero_domain(arrayp, domain)
 
 #endif
 
@@ -598,6 +615,8 @@ subroutine start_var_group_update_4d_adm(group, &
 #ifdef OLDMPP
 
      call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+     call zero_domain(arrayp, domain)
 
 #endif
 
@@ -2404,6 +2423,8 @@ subroutine mpp_update_domain2d_2d_adm_r4(array, arrayp, domain, flags, complete,
 
    call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
 
+   call zero_domain(arrayp, domain)
+
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
 end subroutine mpp_update_domain2d_2d_adm_r4
@@ -2424,6 +2445,8 @@ subroutine mpp_update_domain2d_3d_adm_r4(array, arrayp, domain, flags, complete,
 
    call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
 
+   call zero_domain(arrayp, domain)
+
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
 end subroutine mpp_update_domain2d_3d_adm_r4
@@ -2442,6 +2465,8 @@ subroutine mpp_update_domain2d_4d_adm_r4(array, arrayp, domain, flags, complete,
 
   if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
    call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+   call zero_domain(arrayp, domain)
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
@@ -2462,6 +2487,8 @@ subroutine mpp_update_domain2d_5d_adm_r4(array, arrayp, domain, flags, complete,
   if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
 
    call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+   call zero_domain(arrayp, domain)
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
@@ -2567,6 +2594,8 @@ subroutine mpp_update_domain2d_2d_adm_r8(array, arrayp, domain, flags, complete,
 
    call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
 
+   call zero_domain(arrayp, domain)
+
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
 end subroutine mpp_update_domain2d_2d_adm_r8
@@ -2586,6 +2615,8 @@ subroutine mpp_update_domain2d_3d_adm_r8(array, arrayp, domain, flags, complete,
   if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
 
    call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+   call zero_domain(arrayp, domain)
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
@@ -2625,6 +2656,8 @@ subroutine mpp_update_domain2d_5d_adm_r8(array, arrayp, domain, flags, complete,
   if (fv_timing_onoff) call timing_on('  BWD_COMM_TOTAL')
 
    call mpp_update_domains_ad(arrayp, domain, flags=flags, position=position, whalo=whalo, ehalo=ehalo, shalo=shalo, nhalo=nhalo, complete=complete)
+
+   call zero_domain(arrayp, domain)
 
   if (fv_timing_onoff) call timing_off('  BWD_COMM_TOTAL')
 
@@ -2817,5 +2850,238 @@ end subroutine mpp_get_boundary_2dv_adm
 
 end subroutine mpp_get_boundary_3dv_adm
 
+! --------------------------------------------------------------------------------------------------
+#ifdef OVERLOAD_R4
+subroutine zero_domain_2d_r4(array, domain)
+
+real(4), dimension(:,:), intent(inout) :: array
+type(domain2d),          intent(in)    :: domain
+
+integer :: isc, iec, jsc, jec, isd, ied, jsd, jed
+
+isd = 1
+ied = size(array,1)
+jsd = 1
+jed = size(array,2)
+
+isc = isd + ng
+iec = ied - ng
+jsc = jsd + ng
+jec = jed - ng
+
+! Zero halos east/west
+array(isd  :isc-1,jsd:jed,:) = 0.0_8
+array(iec+1:ied  ,jsd:jed,:) = 0.0_8
+
+! Zero halos north/south
+array(isd:ied,jsd  :jsc-1,:) = 0.0_8
+array(isd:ied,jec+1:jed  ,:) = 0.0_8
+
+end subroutine zero_domain_2d_r4
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine zero_domain_3d_r4(array, domain)
+
+real(4), dimension(:,:,:), intent(inout) :: array
+type(domain2d),            intent(in)    :: domain
+
+integer :: isc, iec, jsc, jec, isd, ied, jsd, jed
+
+isd = 1
+ied = size(array,1)
+jsd = 1
+jed = size(array,2)
+
+isc = isd + ng
+iec = ied - ng
+jsc = jsd + ng
+jec = jed - ng
+
+! Zero halos east/west
+array(isd  :isc-1,jsd:jed) = 0.0_8
+array(iec+1:ied  ,jsd:jed) = 0.0_8
+
+! Zero halos north/south
+array(isd:ied,jsd  :jsc-1) = 0.0_8
+array(isd:ied,jec+1:jed  ) = 0.0_8
+
+end subroutine zero_domain_3d_r4
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine zero_domain_4d_r4(array, domain)
+
+real(4), dimension(:,:,:,:), intent(inout) :: array
+type(domain2d),              intent(in)    :: domain
+
+integer :: isc, iec, jsc, jec, isd, ied, jsd, jed
+
+isd = 1
+ied = size(array,1)
+jsd = 1
+jed = size(array,2)
+
+isc = isd + ng
+iec = ied - ng
+jsc = jsd + ng
+jec = jed - ng
+
+! Zero halos east/west
+array(isd  :isc-1,jsd:jed,:,:) = 0.0_8
+array(iec+1:ied  ,jsd:jed,:,:) = 0.0_8
+
+! Zero halos north/south
+array(isd:ied,jsd  :jsc-1,:,:) = 0.0_8
+array(isd:ied,jec+1:jed  ,:,:) = 0.0_8
+
+end subroutine zero_domain_4d_r4
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine zero_domain_5d_r4(array, domain)
+
+real(4), dimension(:,:,:,:,:), intent(inout) :: array
+type(domain2d),                intent(in)    :: domain
+
+integer :: isc, iec, jsc, jec, isd, ied, jsd, jed
+
+isd = 1
+ied = size(array,1)
+jsd = 1
+jed = size(array,2)
+
+isc = isd + ng
+iec = ied - ng
+jsc = jsd + ng
+jec = jed - ng
+
+! Zero halos east/west
+array(isd  :isc-1,jsd:jed,:,:,:) = 0.0_8
+array(iec+1:ied  ,jsd:jed,:,:,:) = 0.0_8
+
+! Zero halos north/south
+array(isd:ied,jsd  :jsc-1,:,:,:) = 0.0_8
+array(isd:ied,jec+1:jed  ,:,:,:) = 0.0_8
+
+end subroutine zero_domain_5d_r4
+#endif
+! --------------------------------------------------------------------------------------------------
+
+subroutine zero_domain_2d_r8(array, domain)
+
+real(8), dimension(:,:), intent(inout) :: array
+type(domain2d),          intent(in)    :: domain
+
+integer :: isc, iec, jsc, jec, isd, ied, jsd, jed
+
+isd = 1
+ied = size(array,1)
+jsd = 1
+jed = size(array,2)
+
+isc = isd + ng
+iec = ied - ng
+jsc = jsd + ng
+jec = jed - ng
+
+! Zero halos east/west
+array(isd  :isc-1,jsd:jed) = 0.0_8
+array(iec+1:ied  ,jsd:jed) = 0.0_8
+
+! Zero halos north/south
+array(isd:ied,jsd  :jsc-1) = 0.0_8
+array(isd:ied,jec+1:jed  ) = 0.0_8
+
+end subroutine zero_domain_2d_r8
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine zero_domain_3d_r8(array, domain)
+
+real(8), dimension(:,:,:), intent(inout) :: array
+type(domain2d),            intent(in)    :: domain
+
+integer :: isc, iec, jsc, jec, isd, ied, jsd, jed
+
+isd = 1
+ied = size(array,1)
+jsd = 1
+jed = size(array,2)
+
+isc = isd + ng
+iec = ied - ng
+jsc = jsd + ng
+jec = jed - ng
+
+! Zero halos east/west
+array(isd  :isc-1,jsd:jed,:) = 0.0_8
+array(iec+1:ied  ,jsd:jed,:) = 0.0_8
+
+! Zero halos north/south
+array(isd:ied,jsd  :jsc-1,:) = 0.0_8
+array(isd:ied,jec+1:jed  ,:) = 0.0_8
+
+end subroutine zero_domain_3d_r8
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine zero_domain_4d_r8(array, domain)
+
+real(8), dimension(:,:,:,:), intent(inout) :: array
+type(domain2d),              intent(in)    :: domain
+
+integer :: isc, iec, jsc, jec, isd, ied, jsd, jed
+
+isd = 1
+ied = size(array,1)
+jsd = 1
+jed = size(array,2)
+
+isc = isd + ng
+iec = ied - ng
+jsc = jsd + ng
+jec = jed - ng
+
+! Zero halos east/west
+array(isd  :isc-1,jsd:jed,:,:) = 0.0_8
+array(iec+1:ied  ,jsd:jed,:,:) = 0.0_8
+
+! Zero halos north/south
+array(isd:ied,jsd  :jsc-1,:,:) = 0.0_8
+array(isd:ied,jec+1:jed  ,:,:) = 0.0_8
+
+end subroutine zero_domain_4d_r8
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine zero_domain_5d_r8(array, domain)
+
+real(8), dimension(:,:,:,:,:), intent(inout) :: array
+type(domain2d),                intent(in)    :: domain
+
+integer :: isc, iec, jsc, jec, isd, ied, jsd, jed
+
+isd = 1
+ied = size(array,1)
+jsd = 1
+jed = size(array,2)
+
+isc = isd + ng
+iec = ied - ng
+jsc = jsd + ng
+jec = jed - ng
+
+! Zero halos east/west
+array(isd  :isc-1,jsd:jed,:,:,:) = 0.0_8
+array(iec+1:ied  ,jsd:jed,:,:,:) = 0.0_8
+
+! Zero halos north/south
+array(isd:ied,jsd  :jsc-1,:,:,:) = 0.0_8
+array(isd:ied,jec+1:jed  ,:,:,:) = 0.0_8
+
+end subroutine zero_domain_5d_r8
+
+! --------------------------------------------------------------------------------------------------
 
 end module fv_mp_adm_mod
