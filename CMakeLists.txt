@@ -93,7 +93,7 @@ if(FV3_FORECAST_MODEL MATCHES "UFS")
   # Set CMAKE_PREFIX_PATH to include the install location of ufs
   find_package(fms REQUIRED )
   find_package(fv3atm REQUIRED )
-  find_package(ufs-weather-model-lib REQUIRED )
+  find_package(ufs REQUIRED )
   link_libraries(fms)
   link_libraries(NetCDF::NetCDF_Fortran)
   # Install includes
