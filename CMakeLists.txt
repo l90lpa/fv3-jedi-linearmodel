@@ -90,22 +90,15 @@ endif()
 
 # ufs
 if(FV3_FORECAST_MODEL MATCHES "UFS")
-  find_package(ufs-weather-model-lib REQUIRED PATHS ${FV3_FORECAST_MODEL_ROOT}/lib/cmake )
+  # Set CMAKE_PREFIX_PATH to include the install location of ufs
+  find_package(fms REQUIRED )
+  find_package(fv3atm REQUIRED )
+  find_package(ufs REQUIRED )
   link_libraries(fms)
   link_libraries(NetCDF::NetCDF_Fortran)
   # Install includes
-  include_directories( ${FV3_FORECAST_MODEL_ROOT}/mod )
-  # Source incudes
-  include_directories( ${FV3_FORECAST_MODEL_SRC}/FMS/include )
-  include_directories( ${FV3_FORECAST_MODEL_SRC}/FMS/mpp/include )
-  # Build includes
-  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FMS/mod )
-  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/mod )
-  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/cpl/mod )
-  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/gfsphysics/mod )
-  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/io/mod )
-  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/ipd/mod )
-  include_directories( ${FV3_FORECAST_MODEL_BUILD}/FV3/stochastic_physics )
+  get_target_property(fmsinc fms INTERFACE_INCLUDE_DIRECTORIES)
+  include_directories( ${fmsinc} )
 endif()
 
 ################################################################################
