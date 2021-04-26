@@ -26,12 +26,12 @@ endif()
 
 ecbuild_add_library( TARGET   fv3jedilm
                      SOURCES  ${fv3jedilm_src_files}
-                     LIBS     ${FV3JEDILM_LIB_DEP}
+                     PUBLIC_LIBS NetCDF::NetCDF_Fortran
+                     PRIVATE_LIBS     ${FV3JEDILM_LIB_DEP}
                      INSTALL_HEADERS LISTED )
 
-if(OpenMP_Fortran_FOUND)
-  target_link_libraries(fv3jedilm OpenMP::OpenMP_Fortran)
-endif()
+target_include_directories( fv3jedilm INTERFACE $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
+                                                $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>)
 
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
     target_compile_options(fv3jedilm PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-fallow-argument-mismatch>)
