@@ -9,7 +9,7 @@
 
 cmake_minimum_required( VERSION 3.3.2 FATAL_ERROR )
 
-project( fv3jedilm VERSION 1.0.0 LANGUAGES Fortran C )
+project( fv3jedilm VERSION 1.1.0 LANGUAGES Fortran C )
 
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH} )
 
@@ -50,20 +50,17 @@ else()
 endif()
 
 #openMP
-find_package( OpenMP COMPONENTS Fortran )
+ecbuild_enable_omp()
 
 # MPI
 ecbuild_add_option( FEATURE MPI DEFAULT ON
                     DESCRIPTION "Support for MPI distributed parallelism"
                     REQUIRED_PACKAGES "MPI COMPONENTS Fortran" )
 ecbuild_find_mpi( COMPONENTS Fortran REQUIRED )
-ecbuild_include_mpi()
-link_libraries(${MPI_Fortran_LIBRARIES})
 
 # NetCDF
-set( NETCDF_F90 ON CACHE BOOL "Compile with Fortran NetCDF" )
+find_package( jedicmake QUIET )
 find_package( NetCDF REQUIRED COMPONENTS Fortran )
-include_directories( ${NETCDF_INCLUDE_DIRS} )
 
 # Set default model
 if (NOT FV3_FORECAST_MODEL MATCHES "GEOS" AND NOT FV3_FORECAST_MODEL MATCHES "UFS")
@@ -72,7 +69,7 @@ endif()
 
 # fms
 if (FV3_FORECAST_MODEL MATCHES "FV3CORE")
-  ecbuild_use_package( PROJECT fms REQUIRED )
+  find_package( fms REQUIRED )
   include_directories( ${FMS_INCLUDE_DIRS} )
   list( APPEND FV3JEDILM_TPLS fms )
 endif()
@@ -95,7 +92,6 @@ if(FV3_FORECAST_MODEL MATCHES "UFS")
   find_package(fv3atm REQUIRED )
   find_package(ufs REQUIRED )
   link_libraries(fms)
-  link_libraries(NetCDF::NetCDF_Fortran)
   # Install includes
   get_target_property(fmsinc fms INTERFACE_INCLUDE_DIRECTORIES)
   include_directories( ${fmsinc} )
