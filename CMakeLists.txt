@@ -89,11 +89,15 @@ endif()
 if(FV3_FORECAST_MODEL MATCHES "UFS")
   # Set CMAKE_PREFIX_PATH to include the install location of ufs
   find_package(fms REQUIRED )
+  find_package(stochastic_physics REQUIRED )
+  find_package(ccpp REQUIRED )
+  find_package(ccppphys REQUIRED )
   find_package(fv3atm REQUIRED )
   find_package(ufs REQUIRED )
-  link_libraries(fms)
+  link_libraries(FMS::fms_r8)
+  link_libraries(NetCDF::NetCDF_Fortran)
   # Install includes
-  get_target_property(fmsinc fms INTERFACE_INCLUDE_DIRECTORIES)
+  get_target_property(fmsinc FMS::fms_r8 INTERFACE_INCLUDE_DIRECTORIES)
   include_directories( ${fmsinc} )
 endif()
 
