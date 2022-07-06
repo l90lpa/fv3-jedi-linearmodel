@@ -5,7 +5,7 @@
 
 # Compiler definitions
 # --------------------
-add_definitions( -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DOLDMPP -DGFS_PHYS )
+add_definitions( -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DOLDMPP -DGFS_PHYS -DINTERNAL_FILE_NML )
 
 # Special cases
 # -------------
@@ -35,6 +35,10 @@ if (FV3LM_PRECISION MATCHES "DOUBLE" OR NOT FV3LM_PRECISION)
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8")
 
   elseif( CMAKE_Fortran_COMPILER_ID MATCHES "PGI" )
+
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8")
+
+  elseif( CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC" )
 
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8")
 

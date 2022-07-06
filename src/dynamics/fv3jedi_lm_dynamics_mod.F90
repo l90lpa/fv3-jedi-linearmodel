@@ -152,7 +152,7 @@ subroutine create(self,conf)
   FV_Atm(1)%flagstruct%breed_vortex_inline = .false.
 
   !Initialze the perturbation fv3 structure
-  call fv_init_pert(self%FV_Atm,self%FV_AtmP)
+  call fv_init_pert(self%FV_Atm,self%FV_AtmP,conf%inputpert_filename)
 
   !Not using field_table here to allocate q based on hardwiring
   deallocate(FV_Atm(1)%q,self%FV_AtmP(1)%qp)
