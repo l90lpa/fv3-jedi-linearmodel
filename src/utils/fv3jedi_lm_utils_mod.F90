@@ -28,6 +28,7 @@ type :: fv3jedi_lm_conf
   real(kind_real), allocatable, dimension(:) :: ak, bk !<Vertical grid
   logical         :: hydrostatic                       !<Hydrostatic dy core
   logical         :: rpe                               !<True if root process
+  character(len=1024) :: inputpert_filename            !<Filename for inputpert.nml
 end type fv3jedi_lm_conf
 
 !> Fortran derived type to hold the linearized model increment
@@ -90,7 +91,7 @@ subroutine allocate_pert(pert,isc,iec,jsc,jec,npz,hydrostatic)
  allocate(pert%o3     (isc:iec, jsc:jec, npz))
 
  allocate(pert%cfcn     (isc:iec, jsc:jec, npz))
- 
+
  if (.not. hydrostatic) then
    allocate(pert%w      (isc:iec, jsc:jec, npz))
    allocate(pert%delz   (isc:iec, jsc:jec, npz))
@@ -141,18 +142,18 @@ subroutine allocate_traj(traj,isc,iec,jsc,jec,npz,hydrostatic,dpm)
  allocate(traj%ql     (isc:iec, jsc:jec, npz))
  allocate(traj%qi     (isc:iec, jsc:jec, npz))
  allocate(traj%o3     (isc:iec, jsc:jec, npz))
- 
+
  if (.not. hydrostatic) then
    allocate(traj%w      (isc:iec, jsc:jec, npz))
    allocate(traj%delz   (isc:iec, jsc:jec, npz))
  endif
- 
+
  if (dpm .ne. 0) then
    allocate(traj%qls    (isc:iec, jsc:jec, npz))
    allocate(traj%qcn    (isc:iec, jsc:jec, npz))
    allocate(traj%cfcn   (isc:iec, jsc:jec, npz))
  endif
- 
+
  allocate(traj%phis   (isc:iec, jsc:jec))
  allocate(traj%ps     (isc:iec, jsc:jec))
  allocate(traj%frocean(isc:iec, jsc:jec))
@@ -177,7 +178,7 @@ subroutine deallocate_traj(traj)
 
  implicit none
  type(fv3jedi_lm_traj), intent(inout) :: traj
- 
+
  if (allocated(traj%u      )) deallocate(traj%u      )
  if (allocated(traj%v      )) deallocate(traj%v      )
  if (allocated(traj%ua     )) deallocate(traj%ua     )
@@ -220,7 +221,7 @@ subroutine copy_traj( traj_in, traj_out, hydrostatic, dpm )
  type(fv3jedi_lm_traj), intent(inout) :: traj_out
  logical,               intent(in)    :: hydrostatic
  integer,               intent(in)    :: dpm
- 
+
  traj_out%u    = traj_in%u
  traj_out%v    = traj_in%v
  traj_out%ua   = traj_in%ua
@@ -231,18 +232,18 @@ subroutine copy_traj( traj_in, traj_out, hydrostatic, dpm )
  traj_out%ql   = traj_in%ql
  traj_out%qi   = traj_in%qi
  traj_out%o3   = traj_in%o3
- 
+
  if (.not. hydrostatic) then
  traj_out%w    = traj_in%w
  traj_out%delz = traj_in%delz
  endif
- 
+
  if (dpm /= 0) then
  traj_out%qls  = traj_in%qls
  traj_out%qcn  = traj_in%qcn
  traj_out%cfcn = traj_in%cfcn
  endif
- 
+
  traj_out%phis    = traj_in%phis
  traj_out%ps      = traj_in%ps
  traj_out%frocean = traj_in%frocean
@@ -327,7 +328,7 @@ subroutine compute_pressures_r4(im,jm,lm,ptop,delp,pe,p,pk)
  real(4), intent(out) :: pe  (1:im,1:jm,0:lm) !Pressure at edges
  real(4), intent(out) :: p   (1:im,1:jm,1:lm) !Pressure at mid-point
  real(4), intent(out) :: pk  (1:im,1:jm,1:lm) !Pressure to the kappa at mid-point
- 
+
  real(4) :: lpe(1:im,1:jm,0:lm)
  real(4) :: pek(1:im,1:jm,0:lm)
 
@@ -363,7 +364,7 @@ subroutine compute_pressures_r8(im,jm,lm,ptop,delp,pe,p,pk)
  real(8), intent(out) :: pe  (1:im,1:jm,0:lm) !Pressure at edges
  real(8), intent(out) :: p   (1:im,1:jm,1:lm) !Pressure at mid-point
  real(8), intent(out) :: pk  (1:im,1:jm,1:lm) !Pressure to the kappa at mid-point
- 
+
  real(8) :: lpe(1:im,1:jm,0:lm)
  real(8) :: pek(1:im,1:jm,0:lm)
 

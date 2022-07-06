@@ -22,14 +22,14 @@
 ! FV contro panel
 !----------------
 
-!Prepare the FV_AtmP derived type that holds the perturbation variables and the 
+!Prepare the FV_AtmP derived type that holds the perturbation variables and the
 !coefficients used for advection, remapping and damping in the tangent linear
 !and adjoint versions of FV3.
 
 module fv_control_tlmadm_mod
 
- use fv_arrays_nlm_mod,     only: fv_atmos_type 
- use fv_arrays_tlmadm_mod, only: fv_atmos_pert_type, allocate_fv_atmos_pert_type, deallocate_fv_atmos_pert_type 
+ use fv_arrays_nlm_mod,     only: fv_atmos_type
+ use fv_arrays_tlmadm_mod, only: fv_atmos_pert_type, allocate_fv_atmos_pert_type, deallocate_fv_atmos_pert_type
  use fms_mod,           only: open_namelist_file, check_nml_error, close_file
  use mpp_mod,           only: stdlog, mpp_pe, mpp_root_pe
 
@@ -39,38 +39,38 @@ module fv_control_tlmadm_mod
  integer, public :: ngrids = 1
 
 !Convenience pointer to AtmP(n)
- logical, pointer :: split_hord 
- integer, pointer :: hord_mt_pert 
- integer, pointer :: hord_vt_pert 
- integer, pointer :: hord_tm_pert 
- integer, pointer :: hord_dp_pert 
- integer, pointer :: hord_tr_pert 
- logical, pointer :: split_kord 
- integer, pointer :: kord_mt_pert 
- integer, pointer :: kord_wz_pert 
- integer, pointer :: kord_tm_pert 
- integer, pointer :: kord_tr_pert 
- logical, pointer :: split_damp 
- logical, pointer :: do_vort_damp_pert 
- integer, pointer :: nord_pert 
- real,    pointer :: dddmp_pert 
- real,    pointer :: d2_bg_pert 
+ logical, pointer :: split_hord
+ integer, pointer :: hord_mt_pert
+ integer, pointer :: hord_vt_pert
+ integer, pointer :: hord_tm_pert
+ integer, pointer :: hord_dp_pert
+ integer, pointer :: hord_tr_pert
+ logical, pointer :: split_kord
+ integer, pointer :: kord_mt_pert
+ integer, pointer :: kord_wz_pert
+ integer, pointer :: kord_tm_pert
+ integer, pointer :: kord_tr_pert
+ logical, pointer :: split_damp
+ logical, pointer :: do_vort_damp_pert
+ integer, pointer :: nord_pert
+ real,    pointer :: dddmp_pert
+ real,    pointer :: d2_bg_pert
  real,    pointer :: d4_bg_pert
- real,    pointer :: vtdm4_pert 
+ real,    pointer :: vtdm4_pert
  real,    pointer :: d2_bg_k1_pert
  real,    pointer :: d2_bg_k2_pert
  real,    pointer :: d2_bg_ks_pert
- logical, pointer :: split_damp_tr 
- integer, pointer :: nord_tr_pert 
+ logical, pointer :: split_damp_tr
+ integer, pointer :: nord_tr_pert
  real,    pointer :: trdm2_pert
  integer, pointer :: n_sponge_pert
  logical, pointer :: hord_ks_pert
- integer, pointer :: hord_mt_ks_pert 
- integer, pointer :: hord_vt_ks_pert 
- integer, pointer :: hord_tm_ks_pert 
- integer, pointer :: hord_dp_ks_pert 
- integer, pointer :: hord_tr_ks_pert 
- logical, pointer :: hord_ks_traj 
+ integer, pointer :: hord_mt_ks_pert
+ integer, pointer :: hord_vt_ks_pert
+ integer, pointer :: hord_tm_ks_pert
+ integer, pointer :: hord_dp_ks_pert
+ integer, pointer :: hord_tr_ks_pert
+ logical, pointer :: hord_ks_traj
  integer, pointer :: hord_mt_ks_traj
  integer, pointer :: hord_vt_ks_traj
  integer, pointer :: hord_tm_ks_traj
@@ -84,18 +84,19 @@ module fv_control_tlmadm_mod
 
 !-------------------------------------------------------------------------------
 
- subroutine fv_init_pert(Atm, AtmP) 
+ subroutine fv_init_pert(Atm, AtmP, inputpert_filename)
 
  type(fv_atmos_type), allocatable, intent(inout), target :: Atm(:)
  type(fv_atmos_pert_type), allocatable, intent(inout), target :: AtmP(:)
+ character(len=*), intent(in) :: inputpert_filename
 
  integer :: n, ntilesMe
 
   allocate(AtmP(ngrids))
 
-  call run_setup_pert(AtmP,Atm)
+  call run_setup_pert(AtmP, Atm, inputpert_filename)
 
-  ntilesMe = size(AtmP(:)) 
+  ntilesMe = size(AtmP(:))
 
   do n=1,ntilesMe
 
@@ -115,7 +116,7 @@ module fv_control_tlmadm_mod
 
   integer :: n, ntilesMe
 
-  ntilesMe = size(AtmP(:)) 
+  ntilesMe = size(AtmP(:))
 
   do n=1,ntilesMe
 
@@ -163,7 +164,7 @@ module fv_control_tlmadm_mod
    hord_tm_ks_pert   => AtmP%flagstruct%hord_tm_ks_pert
    hord_dp_ks_pert   => AtmP%flagstruct%hord_dp_ks_pert
    hord_tr_ks_pert   => AtmP%flagstruct%hord_tr_ks_pert
-   hord_ks_traj      => AtmP%flagstruct%hord_ks_traj 
+   hord_ks_traj      => AtmP%flagstruct%hord_ks_traj
    hord_mt_ks_traj   => AtmP%flagstruct%hord_mt_ks_traj
    hord_vt_ks_traj   => AtmP%flagstruct%hord_vt_ks_traj
    hord_tm_ks_traj   => AtmP%flagstruct%hord_tm_ks_traj
@@ -174,14 +175,15 @@ module fv_control_tlmadm_mod
 
 !-------------------------------------------------------------------------------
 
- subroutine run_setup_pert(AtmP,Atm)
+ subroutine run_setup_pert(AtmP, Atm, inputpert_filename)
 
   type(fv_atmos_pert_type), intent(inout), target :: AtmP(:)
   type(fv_atmos_type), intent(inout), target :: Atm(:)
+  character(len=*), intent(in) :: inputpert_filename
 
   integer :: f_unit, n, ierr, ios, unit
-  character(len=80) :: nested_grid_filename
- 
+  logical :: file_exists
+
   namelist /fv_core_pert_nml/split_hord, hord_mt_pert, hord_vt_pert, hord_tm_pert, hord_dp_pert, hord_tr_pert, &
                              split_kord, kord_mt_pert, kord_wz_pert, kord_tm_pert, kord_tr_pert, split_damp, do_vort_damp_pert, &
                              nord_pert, dddmp_pert, d2_bg_pert, d4_bg_pert, vtdm4_pert, d2_bg_k1_pert, d2_bg_k2_pert, d2_bg_ks_pert, &
@@ -194,24 +196,25 @@ module fv_control_tlmadm_mod
 
      call setup_pointers_pert(AtmP(n))
 
-     if (size(AtmP) == 1) then
-        f_unit = open_namelist_file('inputpert.nml')
-     else if (n == 1) then
-        f_unit = open_namelist_file('inputpert.nml')
-     else 
-        write(nested_grid_filename,'(A10, I2.2, A4)') 'input_nest_pert', n, '.nml'
-        f_unit = open_namelist_file(nested_grid_filename)
+     ! Check file exists
+     inquire( file=trim(inputpert_filename), exist = file_exists )
+
+     if (file_exists) then
+
+       ! Open the file
+       f_unit = open_namelist_file(inputpert_filename)
+
+       !Read linearized FVCORE namelist
+       rewind (f_unit)
+       read (f_unit,fv_core_pert_nml,iostat=ios)
+       ierr = check_nml_error(ios,'fv_core_pert_nml')
+
+       call close_file(f_unit)
+
+       unit = stdlog()
+       write(unit, nml=fv_core_pert_nml)
+
      endif
-
-     !Read linearized FVCORE namelist
-     rewind (f_unit)
-     read (f_unit,fv_core_pert_nml,iostat=ios)
-     ierr = check_nml_error(ios,'fv_core_pert_nml')
-
-     call close_file(f_unit)
-
-     unit = stdlog()
-     write(unit, nml=fv_core_pert_nml)
 
      !Unless specfied the trajectory uses the coeffs suitable for the perts
      if (.not. AtmP(n)%flagstruct%split_damp) then
@@ -276,7 +279,7 @@ module fv_control_tlmadm_mod
         print*, '  hord_tr_pert = ', AtmP(n)%flagstruct%hord_tr_pert
         print*, ''
         print*, ' Number of sponge layers for the perturbations'
-        print*, '  n_sponge_pert = ', AtmP(n)%flagstruct%n_sponge_pert 
+        print*, '  n_sponge_pert = ', AtmP(n)%flagstruct%n_sponge_pert
         print*, ''
         print*, ' Sponge layer advection of the trajecotry'
         print*, '  hord_ks_traj = '   , AtmP(n)%flagstruct%hord_ks_traj
@@ -299,7 +302,7 @@ module fv_control_tlmadm_mod
         print*, '  kord_wz = ', Atm(n)%flagstruct%kord_wz
         print*, '  kord_tm = ', Atm(n)%flagstruct%kord_tm
         print*, '  kord_tr = ', Atm(n)%flagstruct%kord_tr
-        print*, ''              
+        print*, ''
         print*, ' Remapping of the perturbations'
         print*, '  kord_mt_pert = ', AtmP(n)%flagstruct%kord_mt_pert
         print*, '  kord_wz_pert = ', AtmP(n)%flagstruct%kord_wz_pert
@@ -308,14 +311,14 @@ module fv_control_tlmadm_mod
         print*, ''
         print*, ' Dynamics damping, trajectory'
         print*, '  nord         = ', Atm(n)%flagstruct%nord
-        print*, '  dddmp        = ', Atm(n)%flagstruct%dddmp       
+        print*, '  dddmp        = ', Atm(n)%flagstruct%dddmp
         print*, '  d2_bg        = ', Atm(n)%flagstruct%d2_bg
         print*, '  d4_bg        = ', Atm(n)%flagstruct%d4_bg
         print*, '  do_vort_damp = ', Atm(n)%flagstruct%do_vort_damp
         print*, '  vtdm4        = ', Atm(n)%flagstruct%vtdm4
         print*, '  d2_bg_k1     = ', Atm(n)%flagstruct%d2_bg_k1
         print*, '  d2_bg_k2     = ', Atm(n)%flagstruct%d2_bg_k2
-   
+
         print*, ''
         print*, ' Dynamics damping, perturbations'
         print*, '  nord_pert         = ', AtmP(n)%flagstruct%nord_pert
@@ -344,5 +347,5 @@ module fv_control_tlmadm_mod
    enddo
 
   end subroutine run_setup_pert
-       
+
 end module fv_control_tlmadm_mod
