@@ -35,6 +35,7 @@ end type fv3jedi_lm_conf
 type :: fv3jedi_lm_pert
   real(kind_real), allocatable, dimension(:,:,:) :: u, v, t, delp  !Dynamics
   real(kind_real), allocatable, dimension(:,:,:) :: qv, ql, qi, o3 !Tracers
+  real(kind_real), allocatable, dimension(:,:,:,:) :: tracers      !Aerosol Tracers
   real(kind_real), allocatable, dimension(:,:,:) :: w, delz        !nh vars
   real(kind_real), allocatable, dimension(:,:,:) :: ua, va, cfcn   !Internal not part of increment
 end type fv3jedi_lm_pert
@@ -43,6 +44,7 @@ end type fv3jedi_lm_pert
 type :: fv3jedi_lm_traj
   real(kind_real), allocatable, dimension(:,:,:) :: u, v, t, delp  !Dynamics
   real(kind_real), allocatable, dimension(:,:,:) :: qv, ql, qi, o3 !Tracers
+  real(kind_real), allocatable, dimension(:,:,:,:) :: tracers      !Aerosol Tracers
   real(kind_real), allocatable, dimension(:,:,:) :: w, delz        !nh vars
   real(kind_real), allocatable, dimension(:,:,:) :: ua, va, cfcn   !Internal not part of increment
   real(kind_real), allocatable, dimension(:,:,:) :: qls, qcn
@@ -89,6 +91,7 @@ subroutine allocate_pert(pert,isc,iec,jsc,jec,npz,hydrostatic)
  allocate(pert%ql     (isc:iec, jsc:jec, npz))
  allocate(pert%qi     (isc:iec, jsc:jec, npz))
  allocate(pert%o3     (isc:iec, jsc:jec, npz))
+ allocate(pert%tracers     (isc:iec, jsc:jec, npz, 5))
 
  allocate(pert%cfcn     (isc:iec, jsc:jec, npz))
 
@@ -116,6 +119,7 @@ subroutine deallocate_pert(pert)
  if(allocated(pert%ql)  ) deallocate(pert%ql)
  if(allocated(pert%qi)  ) deallocate(pert%qi)
  if(allocated(pert%o3)  ) deallocate(pert%o3)
+ if(allocated(pert%tracers)  ) deallocate(pert%tracers)
  if(allocated(pert%cfcn)) deallocate(pert%cfcn)
  if(allocated(pert%w)   ) deallocate(pert%w)
  if(allocated(pert%delz)) deallocate(pert%delz)
@@ -142,6 +146,7 @@ subroutine allocate_traj(traj,isc,iec,jsc,jec,npz,hydrostatic,dpm)
  allocate(traj%ql     (isc:iec, jsc:jec, npz))
  allocate(traj%qi     (isc:iec, jsc:jec, npz))
  allocate(traj%o3     (isc:iec, jsc:jec, npz))
+ allocate(traj%tracers     (isc:iec, jsc:jec, npz, 5))
 
  if (.not. hydrostatic) then
    allocate(traj%w      (isc:iec, jsc:jec, npz))
@@ -189,6 +194,7 @@ subroutine deallocate_traj(traj)
  if (allocated(traj%ql     )) deallocate(traj%ql     )
  if (allocated(traj%qi     )) deallocate(traj%qi     )
  if (allocated(traj%o3     )) deallocate(traj%o3     )
+ if (allocated(traj%tracers     )) deallocate(traj%tracers     )
  if (allocated(traj%w      )) deallocate(traj%w      )
  if (allocated(traj%delz   )) deallocate(traj%delz   )
  if (allocated(traj%qls    )) deallocate(traj%qls    )
@@ -232,6 +238,7 @@ subroutine copy_traj( traj_in, traj_out, hydrostatic, dpm )
  traj_out%ql   = traj_in%ql
  traj_out%qi   = traj_in%qi
  traj_out%o3   = traj_in%o3
+ traj_out%tracers   = traj_in%tracers
 
  if (.not. hydrostatic) then
  traj_out%w    = traj_in%w
