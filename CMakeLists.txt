@@ -125,6 +125,16 @@ endforeach()
 # Sources
 ################################################################################
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_FORTRAN_STANDARD 08)
+set(CMAKE_FORTRAN_STANDARD_REQUIRED ON)
+set(CMAKE_FORTRAN_EXTENSIONS OFF)
+
 include( fv3jedilm_compiler_flags )
 include_directories( ${FV3JEDILM_INCLUDE_DIRS} ${FV3JEDILM_EXTRA_INCLUDE_DIRS} )
 
