@@ -832,7 +832,7 @@ subroutine fv3_to_traj(self,conf,traj)
 
  implicit none
 
- integer :: i_tracer, ft, f
+ integer :: ft, f
 
  class(fv3jedi_lm_dynamics_type), intent(in) :: self
  type(fv3jedi_lm_conf), intent(in)    :: conf
@@ -844,16 +844,15 @@ subroutine fv3_to_traj(self,conf,traj)
  traj%delp(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%delp(self%isc:self%iec,self%jsc:self%jec,:)
  traj%qv  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,1)
 
+ traj%tracers(self%isc:self%iec,self%jsc:self%jec,:,f) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,f)
+
  ft = 2
  do f = 1, self%FV_Atm(1)%nf
    if (self%FV_Atm(1)%fields(f)%tracer .and. trim(self%FV_Atm(1)%fields(f)%short_name.ne.'sphum')) then
-     self%FV_Atm(1)%fields(f)%array = traj%tracers(:,:,:,ft)
+     traj%tracers(:,:,:,ft) = self%FV_Atm(1)%fields(f)%array
      ft = ft + 1
    end if
  end do
-
- traj%tracers(self%isc:self%iec,self%jsc:self%jec,:,f) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,f)
-
 
  !traj%ql  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,2)
  !traj%qi  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,3)
@@ -887,7 +886,7 @@ subroutine pert_to_fv3(self,conf,pert)
 
  implicit none
 
- integer :: i_tracer
+ integer :: ft, f
  class(fv3jedi_lm_dynamics_type), intent(inout) :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(in) :: pert
@@ -909,17 +908,26 @@ subroutine pert_to_fv3(self,conf,pert)
  self%FV_AtmP(1)%delpp(self%isc:self%iec,self%jsc:self%jec,:) = pert%delp(self%isc:self%iec,self%jsc:self%jec,:)
 
  self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,1) = pert%qv(self%isc:self%iec,self%jsc:self%jec,:)
- self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,2) = pert%ql(self%isc:self%iec,self%jsc:self%jec,:)
- self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,3) = pert%qi(self%isc:self%iec,self%jsc:self%jec,:)
- self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4) = pert%o3(self%isc:self%iec,self%jsc:self%jec,:)
 
- do i_tracer = 1, 5
-   self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4+i_tracer) = pert%tracers(self%isc:self%iec,self%jsc:self%jec,:, i_tracer)
- enddo
+ ft = 2
+ do f = 1, self%FV_AtmP(1)%nf
+   if (self%FV_AtmP(1)%fields(f)%tracer .and. trim(self%FV_AtmP(1)%fields(f)%short_name.ne.'sphum')) then
+     self%FV_AtmP(1)%fields(f)%array = pert%tracers(:,:,:,ft)
+     ft = ft + 1
+   end if
+ end do
 
- if (conf%do_phy_mst .ne. 0) then
-   self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,10) = pert%cfcn(self%isc:self%iec,self%jsc:self%jec,:)
- endif
+ !self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,2) = pert%ql(self%isc:self%iec,self%jsc:self%jec,:)
+ !self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,3) = pert%qi(self%isc:self%iec,self%jsc:self%jec,:)
+ !self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4) = pert%o3(self%isc:self%iec,self%jsc:self%jec,:)
+
+ !do i_tracer = 1, 5
+!   self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4+i_tracer) = pert%tracers(self%isc:self%iec,self%jsc:self%jec,:, i_tracer)
+! enddo
+
+! if (conf%do_phy_mst .ne. 0) then
+!   self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,10) = pert%cfcn(self%isc:self%iec,self%jsc:self%jec,:)
+! endif
 
  if (.not. self%FV_Atm(1)%flagstruct%hydrostatic) then
     self%FV_AtmP(1)%delzp(self%isc:self%iec,self%jsc:self%jec,:) = pert%delz(self%isc:self%iec,self%jsc:self%jec,:)
@@ -948,18 +956,27 @@ subroutine fv3_to_pert(self,conf,pert)
  pert%delp(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%delpp(self%isc:self%iec,self%jsc:self%jec,:)
 
  pert%qv(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,1)
- pert%ql(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,2)
- pert%qi(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,3)
- pert%o3(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4)
 
- do i_tracer = 1, 5
-   pert%tracers(self%isc:self%iec,self%jsc:self%jec,:,i_tracer) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4+i_tracer)
- enddo
+ ft = 2
+ do f = 1, self%FV_AtmP(1)%nf
+   if (self%FV_AtmP(1)%fields(f)%tracer .and. trim(self%FV_AtmP(1)%fields(f)%short_name.ne.'sphum')) then
+     pert%tracers(:,:,:,ft) = self%FV_AtmP(1)%fields(f)%array
+     ft = ft + 1
+   end if
+ end do
+
+ !pert%ql(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,2)
+ !pert%qi(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,3)
+ !pert%o3(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4)
+
+! do i_tracer = 1, 5
+!   pert%tracers(self%isc:self%iec,self%jsc:self%jec,:,i_tracer) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4+i_tracer)
+! enddo
 
 
- if (conf%do_phy_mst .ne. 0) then
-  pert%cfcn(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,10)
- endif
+! if (conf%do_phy_mst .ne. 0) then
+!  pert%cfcn(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,10)
+! endif
 
  if (.not. self%FV_Atm(1)%flagstruct%hydrostatic) then
    pert%delz(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%delzp(self%isc:self%iec,self%jsc:self%jec,:)
