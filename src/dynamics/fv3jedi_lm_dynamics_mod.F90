@@ -152,6 +152,7 @@ subroutine create(self,conf)
   FV_Atm(1)%flagstruct%breed_vortex_inline = .false.
 
   !Initialze the perturbation fv3 structure
+  ! it will allocate q based on what is in field table. make sure there's at least one variable there.
   call fv_init_pert(self%FV_Atm,self%FV_AtmP,conf%inputpert_filename)
 
   !Not using field_table here to allocate q based on hardwiring
@@ -164,12 +165,12 @@ subroutine create(self,conf)
   !endif
 
   ! for now set ntrs to 5
-  !FV_Atm(1)%ntrs = 5
+  !FV_Atm(1)%ncnst = 5
 
+  !FV_Atm(1)%ncnst = 1 ! will be changed to number of tracers later
   !FV_Atm(1)%flagstruct%ncnst = FV_Atm(1)%ncnst
-  FV_Atm(1)%flagstruct%ncnst = FV_Atm(1)%ntracers
-  allocate(     FV_Atm (1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,FV_Atm(1)%flagstruct%ncnst))
-  allocate(self%FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,FV_Atm(1)%flagstruct%ncnst))
+  !allocate(     FV_Atm (1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,FV_Atm(1)%ncnst))
+  !allocate(self%FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,FV_Atm(1)%ncnst))
 
   !Global
   cp_iter_controls%cp_i  = 0
@@ -235,10 +236,31 @@ subroutine init_nl(self,conf,pert,traj)
 
  implicit none
 
- class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ integer :: ntracers
+
+ ! class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ ! had to make it target. is it ok?
+ class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
  type(fv3jedi_lm_traj), intent(in) :: traj
+ type(fv_atmos_type), pointer :: FV_Atm(:)
+
+ !Convenience pointer to the main FV_Atm structure
+ !------------------------------------------------
+ FV_Atm => self%FV_Atm
+
+ ntracers = size(traj%tracers,4)
+ if (allocated(FV_Atm(1)%q) .and. size(FV_Atm(1)%q,4) .ne. ntracers) then
+    deallocate(FV_Atm(1)%q)
+    allocate  (FV_Atm(1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
+                            FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
+                            FV_Atm(1)%flagstruct%npz, &
+                            ntracers))
+ end if
+
+FV_Atm(1)%flagstruct%ncnst = ntracers
+FV_Atm(1)%ncnst = ntracers
 
 endsubroutine init_nl
 
@@ -248,10 +270,42 @@ subroutine init_tl(self,conf,pert,traj)
 
  implicit none
 
- class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ integer :: ntracers
+
+ ! class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ ! had to make it target. is it ok?
+ class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
  type(fv3jedi_lm_traj), intent(in) :: traj
+ type(fv_atmos_type), pointer :: FV_Atm(:)
+ type(fv_atmos_pert_type), pointer :: FV_AtmP(:)
+
+ !Convenience pointer to the main FV_Atm structure
+ !------------------------------------------------
+ FV_Atm  => self%FV_Atm
+ FV_AtmP => self%FV_AtmP
+
+ ntracers = size(traj%tracers,4)
+ if (allocated (FV_Atm(1)%q) .and. size(FV_Atm(1)%q,4) .ne. ntracers) then
+     deallocate(FV_Atm(1)%q)
+     allocate  (FV_Atm(1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
+                             FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
+                             FV_Atm(1)%flagstruct%npz, &
+                             ntracers))
+ end if
+
+ ! repeated for pert
+ if (allocated (FV_AtmP(1)%qp) .and. size(FV_AtmP(1)%qp,4) .ne. ntracers) then
+     deallocate(FV_AtmP(1)%qp)
+     allocate  (FV_AtmP(1)%qp (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
+                              FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
+                              FV_Atm(1)%flagstruct%npz, &
+                              ntracers))
+ end if
+
+ FV_Atm(1)%flagstruct%ncnst = ntracers
+ FV_Atm(1)%ncnst = ntracers
 
 endsubroutine init_tl
 
@@ -261,10 +315,42 @@ subroutine init_ad(self,conf,pert,traj)
 
  implicit none
 
- class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+ integer :: ntracers
+
+! class(fv3jedi_lm_dynamics_type), intent(inout) :: self
+! had to make it target. is it ok?
+ class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
  type(fv3jedi_lm_traj), intent(in) :: traj
+ type(fv_atmos_type), pointer :: FV_Atm(:)
+ type(fv_atmos_pert_type), pointer :: FV_AtmP(:)
+
+ !Convenience pointer to the main FV_Atm structure
+ !------------------------------------------------
+ FV_Atm  => self%FV_Atm
+ FV_AtmP => self%FV_AtmP
+
+ ntracers = size(traj%tracers,4)
+ if (allocated (FV_Atm(1)%q) .and. size(FV_Atm(1)%q,4) .ne. ntracers) then
+     deallocate(FV_Atm(1)%q)
+     allocate  (FV_Atm(1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
+                             FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
+                             FV_Atm(1)%flagstruct%npz, &
+                             ntracers))
+ end if
+
+ ! repeated for pert
+ if (allocated (FV_AtmP(1)%qp) .and. size(FV_AtmP(1)%qp,4) .ne. ntracers) then
+     deallocate(FV_AtmP(1)%qp)
+     allocate  (FV_AtmP(1)%qp (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
+                               FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
+                               FV_Atm(1)%flagstruct%npz, &
+                               ntracers))
+ end if
+
+ FV_Atm(1)%flagstruct%ncnst = ntracers
+ FV_Atm(1)%ncnst = ntracers
 
 endsubroutine init_ad
 
@@ -280,7 +366,6 @@ subroutine step_nl(self,conf,traj)
 
  type(fv_atmos_type), pointer :: FV_Atm(:)
  integer :: i,j,k
-
 
  !Convenience pointer to the main FV_Atm structure
  !------------------------------------------------
@@ -300,7 +385,7 @@ subroutine step_nl(self,conf,traj)
  !Propagate FV3 one time step
  !---------------------------
  if (self%linmodtest == 0) then
-    call fv_dynamics( FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ntracers, FV_Atm(1)%ng,  &
+    call fv_dynamics( FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,  &
                       real(conf%dt, fvprec), FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,           &
                       FV_Atm(1)%flagstruct%reproduce_sum, real(kappa, fvprec),                                   &
                       real(cp, fvprec), real(zvir, fvprec), FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,          &
@@ -316,7 +401,7 @@ subroutine step_nl(self,conf,traj)
                       FV_Atm(1)%neststruct, FV_Atm(1)%idiag, FV_Atm(1)%bd, FV_Atm(1)%parent_grid,  &
                       FV_Atm(1)%domain )
  else
-    call fv_dynamics_nlm( FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ntracers, FV_Atm(1)%ng,  &
+    call fv_dynamics_nlm( FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,  &
                           real(conf%dt, fvprec), FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,           &
                           FV_Atm(1)%flagstruct%reproduce_sum, real(kappa, fvprec),                                   &
                           real(cp, fvprec), real(zvir, fvprec), FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,          &
@@ -423,7 +508,7 @@ subroutine step_tl(self,conf,traj,pert)
 
  !Propagate TLM one time step
  !---------------------------
- call fv_dynamics_tlm(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ntracers, FV_Atm(1)%ng,                      &
+ call fv_dynamics_tlm(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,                      &
                       real(conf%DT, fvprec), FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,                               &
                       FV_Atm(1)%flagstruct%reproduce_sum, real(kappa, fvprec),                                                       &
                       real(cp, fvprec), real(zvir, fvprec), FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,                              &
@@ -509,7 +594,7 @@ subroutine step_ad(self,conf,traj,pert)
  ! ----------------------------------------------------------------------------------
  if (cp_iter_controls%cp_i <= 3) then
 
-    call fv_dynamics_fwd(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ntracers, FV_Atm(1)%ng,                      &
+    call fv_dynamics_fwd(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,                      &
                          real(conf%DT, fvprec), FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,                               &
                          FV_Atm(1)%flagstruct%reproduce_sum, real(kappa, fvprec),                                                       &
                          real(cp, fvprec), real(zvir, fvprec), FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,                              &
@@ -537,7 +622,7 @@ subroutine step_ad(self,conf,traj,pert)
        call PUSHREALARRAY(FV_Atm(1)%delz,(self%ied-self%isd+1)*(self%jed-self%jsd+1)*self%npz)
        call PUSHREALARRAY(FV_Atm(1)%pt  ,(self%ied-self%isd+1)*(self%jed-self%jsd+1)*self%npz)
        call PUSHREALARRAY(FV_Atm(1)%delp,(self%ied-self%isd+1)*(self%jed-self%jsd+1)*self%npz)
-       call PUSHREALARRAY(FV_Atm(1)%q   ,(self%ied-self%isd+1)*(self%jed-self%jsd+1)*self%npz*FV_Atm(1)%ntracers)
+       call PUSHREALARRAY(FV_Atm(1)%q   ,(self%ied-self%isd+1)*(self%jed-self%jsd+1)*self%npz*FV_Atm(1)%ncnst)
        call PUSHREALARRAY(FV_Atm(1)%ps  ,(self%ied-self%isd+1)*(self%jed-self%jsd+1))
        call PUSHREALARRAY(FV_Atm(1)%pe  ,(self%iec-self%isc+3)*(self%jec-self%jsc+3)*(self%npz+1))
        call PUSHREALARRAY(FV_Atm(1)%pk  ,(self%iec-self%isc+1)*(self%jec-self%jsc+1)*(self%npz+1))
@@ -605,7 +690,7 @@ subroutine step_ad(self,conf,traj,pert)
     call POPREALARRAY(FV_Atm(1)%pk  ,(self%iec-self%isc+1)*(self%jec-self%jsc+1)*(self%npz+1))
     call POPREALARRAY(FV_Atm(1)%pe  ,(self%iec-self%isc+3)*(self%jec-self%jsc+3)*(self%npz+1))
     call POPREALARRAY(FV_Atm(1)%ps  ,(self%ied-self%isd+1)*(self%jed-self%jsd+1))
-    call POPREALARRAY(FV_Atm(1)%q   ,(self%ied-self%isd+1)*(self%jed-self%jsd+1)*self%npz*FV_Atm(1)%ntracers)
+    call POPREALARRAY(FV_Atm(1)%q   ,(self%ied-self%isd+1)*(self%jed-self%jsd+1)*self%npz*FV_Atm(1)%ncnst)
     call POPREALARRAY(FV_Atm(1)%delp,(self%ied-self%isd+1)*(self%jed-self%jsd+1)*self%npz)
     call POPREALARRAY(FV_Atm(1)%pt  ,(self%ied-self%isd+1)*(self%jed-self%jsd+1)*self%npz)
     call POPREALARRAY(FV_Atm(1)%delz,(self%ied-self%isd+1)*(self%jed-self%jsd+1)*self%npz)
@@ -617,7 +702,7 @@ subroutine step_ad(self,conf,traj,pert)
 
  ! Backward adjoint sweep of the dynamics
  ! --------------------------------------
- call fv_dynamics_bwd(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ntracers, FV_Atm(1)%ng,                      &
+ call fv_dynamics_bwd(FV_Atm(1)%npx, FV_Atm(1)%npy, FV_Atm(1)%npz, FV_Atm(1)%ncnst, FV_Atm(1)%ng,                      &
                       real(conf%DT, fvprec), FV_Atm(1)%flagstruct%consv_te, FV_Atm(1)%flagstruct%fill,                               &
                       FV_Atm(1)%flagstruct%reproduce_sum, real(kappa, fvprec),                                                       &
                       real(cp, fvprec), real(zvir, fvprec), FV_Atm(1)%ptop, FV_Atm(1)%ks, FV_Atm(1)%flagstruct%ncnst,                              &
@@ -765,27 +850,7 @@ subroutine traj_to_fv3(self,conf,traj)
  self%FV_Atm(1)%pt  (self%isc:self%iec,self%jsc:self%jec,:) = traj%t   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_Atm(1)%delp(self%isc:self%iec,self%jsc:self%jec,:) = traj%delp(self%isc:self%iec,self%jsc:self%jec,:)
 
- self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,1) = traj%qv(self%isc:self%iec,self%jsc:self%jec,:)
-
- ft = 2
- do f = 1, self%FV_Atm(1)%nf
-   if (self%FV_Atm(1)%fields(f)%tracer .and. trim(self%FV_Atm(1)%fields(f)%short_name.ne.'sphum')) then
-     traj%tracers(:,:,:,ft) = self%FV_Atm(1)%fields(f)%array
-     ft = ft + 1
-   end if
- end do
-
- self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,2) = traj%ql(self%isc:self%iec,self%jsc:self%jec,:)
- self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,3) = traj%qi(self%isc:self%iec,self%jsc:self%jec,:)
- self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,4) = traj%o3(self%isc:self%iec,self%jsc:self%jec,:)
-
- do i_tracer = 1, 5
-   self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,4+i_tracer) = traj%tracers(self%isc:self%iec,self%jsc:self%jec,:,i_tracer)
- enddo
-
- if (conf%do_phy_mst .ne. 0) then
-    self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,10) = traj%cfcn(self%isc:self%iec,self%jsc:self%jec,:)
- endif
+ self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,:) = traj%tracers(self%isc:self%iec,self%jsc:self%jec,:,:)
 
  if (.not. self%FV_Atm(1)%flagstruct%hydrostatic) then
     self%FV_Atm(1)%delz(self%isc:self%iec  ,self%jsc:self%jec  ,:  ) = traj%delz(self%isc:self%iec  ,self%jsc:self%jec  ,:  )
@@ -842,31 +907,9 @@ subroutine fv3_to_traj(self,conf,traj)
  traj%v   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%v   (self%isc:self%iec,self%jsc:self%jec,:)
  traj%t   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%pt  (self%isc:self%iec,self%jsc:self%jec,:)
  traj%delp(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%delp(self%isc:self%iec,self%jsc:self%jec,:)
- traj%qv  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,1)
+ !traj%qv  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,1)
 
- traj%tracers(self%isc:self%iec,self%jsc:self%jec,:,f) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,f)
-
- ft = 2
- do f = 1, self%FV_Atm(1)%nf
-   if (self%FV_Atm(1)%fields(f)%tracer .and. trim(self%FV_Atm(1)%fields(f)%short_name.ne.'sphum')) then
-     traj%tracers(:,:,:,ft) = self%FV_Atm(1)%fields(f)%array
-     ft = ft + 1
-   end if
- end do
-
- !traj%ql  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,2)
- !traj%qi  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,3)
- !traj%o3  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,4)
-
- !do i_tracer = 1, 5
-!   traj%tracers(self%isc:self%iec,self%jsc:self%jec,:,i_tracer) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,4+i_tracer)
-! enddo
-
- !if (conf%do_phy_mst .ne. 0) then
-!   traj%cfcn(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,10)
-! endif
-
-
+ traj%tracers(self%isc:self%iec,self%jsc:self%jec,:,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,:)
 
  if (.not. self%FV_Atm(1)%flagstruct%hydrostatic) then
     traj%delz(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%delz(self%isc:self%iec,self%jsc:self%jec,:)
@@ -907,15 +950,7 @@ subroutine pert_to_fv3(self,conf,pert)
  self%FV_AtmP(1)%ptp  (self%isc:self%iec,self%jsc:self%jec,:) = pert%T   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_AtmP(1)%delpp(self%isc:self%iec,self%jsc:self%jec,:) = pert%delp(self%isc:self%iec,self%jsc:self%jec,:)
 
- self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,1) = pert%qv(self%isc:self%iec,self%jsc:self%jec,:)
-
- ft = 2
- do f = 1, self%FV_AtmP(1)%nf
-   if (self%FV_AtmP(1)%fields(f)%tracer .and. trim(self%FV_AtmP(1)%fields(f)%short_name.ne.'sphum')) then
-     self%FV_AtmP(1)%fields(f)%array = pert%tracers(:,:,:,ft)
-     ft = ft + 1
-   end if
- end do
+ self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,:) = pert%tracers(self%isc:self%iec,self%jsc:self%jec,:,:)
 
  !self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,2) = pert%ql(self%isc:self%iec,self%jsc:self%jec,:)
  !self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,3) = pert%qi(self%isc:self%iec,self%jsc:self%jec,:)
@@ -955,15 +990,7 @@ subroutine fv3_to_pert(self,conf,pert)
  pert%T   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%ptp  (self%isc:self%iec,self%jsc:self%jec,:)
  pert%delp(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%delpp(self%isc:self%iec,self%jsc:self%jec,:)
 
- pert%qv(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,1)
-
- ft = 2
- do f = 1, self%FV_AtmP(1)%nf
-   if (self%FV_AtmP(1)%fields(f)%tracer .and. trim(self%FV_AtmP(1)%fields(f)%short_name.ne.'sphum')) then
-     pert%tracers(:,:,:,ft) = self%FV_AtmP(1)%fields(f)%array
-     ft = ft + 1
-   end if
- end do
+ pert%tracers(self%isc:self%iec,self%jsc:self%jec,:,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,:)
 
  !pert%ql(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,2)
  !pert%qi(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,3)
