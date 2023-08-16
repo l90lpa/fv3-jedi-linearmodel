@@ -163,20 +163,12 @@ subroutine step_nl(self,conf,traj)
  real(kind_real), pointer, dimension(:,:,:) :: p_v
  real(kind_real), pointer, dimension(:,:,:) :: p_t
  real(kind_real), pointer, dimension(:,:,:) :: p_delp
- !real(kind_real), pointer, dimension(:,:,:) :: p_qv
- !real(kind_real), pointer, dimension(:,:,:) :: p_qi
- !real(kind_real), pointer, dimension(:,:,:) :: p_ql
- !real(kind_real), pointer, dimension(:,:,:) :: p_o3
 
  !Pointers with ind starting at 1
  p_u   (1:,1:,1:) => traj%u
  p_v   (1:,1:,1:) => traj%v
  p_t   (1:,1:,1:) => traj%t
  p_delp(1:,1:,1:) => traj%delp
- !p_qv  (1:,1:,1:) => traj%qv
- !p_qi  (1:,1:,1:) => traj%qi
- !p_ql  (1:,1:,1:) => traj%ql
- !p_o3  (1:,1:,1:) => traj%o3
 
  !Convenience pointers
  if (conf%saveltraj) then
@@ -194,15 +186,9 @@ subroutine step_nl(self,conf,traj)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_u ,1,1)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_v ,1,1)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%aks,ltraj%bks,ltraj%cks,p_t ,1,1)
- !call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qv,1,1)
  do f = 1, size(traj%tracer_names)
    call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,traj%tracers(:,:,:,f),1,0)
  end do
-
-
- !call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qi,1,0)
- !call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_ql,1,0)
- !call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_o3,1,0)
 
  !pt2t
  p_t = ltraj%pk * p_t / p00**kappa
@@ -212,10 +198,6 @@ subroutine step_nl(self,conf,traj)
  nullify(p_v)
  nullify(p_t)
  nullify(p_delp)
- !nullify(p_qv)
- !nullify(p_qi)
- !nullify(p_ql)
- !nullify(p_o3)
  nullify(ltraj)
 
 endsubroutine step_nl
@@ -238,23 +220,12 @@ subroutine step_tl(self,conf,traj,pert)
  real(kind_real), pointer, dimension(:,:,:) :: p_v
  real(kind_real), pointer, dimension(:,:,:) :: p_t
  real(kind_real), pointer, dimension(:,:,:) :: p_delp
- real(kind_real), pointer, dimension(:,:,:,:) :: p_tracers
-
- !real(kind_real), pointer, dimension(:,:,:) :: p_qv
- !real(kind_real), pointer, dimension(:,:,:) :: p_qi
- !real(kind_real), pointer, dimension(:,:,:) :: p_ql
- !real(kind_real), pointer, dimension(:,:,:) :: p_o3
 
  !Pointers with ind starting at 1
  p_u   (1:,1:,1:) => pert%u
  p_v   (1:,1:,1:) => pert%v
  p_t   (1:,1:,1:) => pert%t
  p_delp(1:,1:,1:) => pert%delp
- p_tracers(1:,1:,1:,1:) => pert%tracers
- !p_qv  (1:,1:,1:) => pert%qv
- !p_qi  (1:,1:,1:) => pert%qi
- !p_ql  (1:,1:,1:) => pert%ql
- !p_o3  (1:,1:,1:) => pert%o3
 
  !Convenience pointers
  if (conf%saveltraj) then
@@ -272,15 +243,11 @@ subroutine step_tl(self,conf,traj,pert)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_u ,1,1)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_v ,1,1)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%aks,ltraj%bks,ltraj%cks,p_t ,1,1)
- !call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qv,1,1)
- do f = 1, size(traj%tracer_names)
-   call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%tracers(:,:,:,f),1,0)
-   call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_tracers(:,:,:,f),1,0)
- end do
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%tracers(:,:,:,1),1,1)
 
- !call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qi,1,0)
- !call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_ql,1,0)
- !call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_o3,1,0)
+ do f = 2, size(traj%tracer_names)
+   call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%tracers(:,:,:,f),1,0)
+ end do
 
  !pt2t
  p_t = ltraj%pk * p_t / p00**kappa
@@ -290,11 +257,6 @@ subroutine step_tl(self,conf,traj,pert)
  nullify(p_v)
  nullify(p_t)
  nullify(p_delp)
- nullify(p_tracers)
- !nullify(p_qv)
- !nullify(p_qi)
- !nullify(p_ql)
- !nullify(p_o3)
  nullify(ltraj)
 
 endsubroutine step_tl
@@ -317,23 +279,12 @@ subroutine step_ad(self,conf,traj,pert)
  real(kind_real), pointer, dimension(:,:,:) :: p_v
  real(kind_real), pointer, dimension(:,:,:) :: p_t
  real(kind_real), pointer, dimension(:,:,:) :: p_delp
- real(kind_real), pointer, dimension(:,:,:,:) :: p_tracers
- !real(kind_real), pointer, dimension(:,:,:) :: p_qv
-! real(kind_real), pointer, dimension(:,:,:) :: p_qi
-! real(kind_real), pointer, dimension(:,:,:) :: p_ql
-! real(kind_real), pointer, dimension(:,:,:) :: p_o3
 
  !Pointers with ind starting at 1
  p_u   (1:,1:,1:) => pert%u
  p_v   (1:,1:,1:) => pert%v
  p_t   (1:,1:,1:) => pert%t
  p_delp(1:,1:,1:) => pert%delp
- p_tracers  (1:,1:,1:,1:) => pert%tracers
-
- !p_qv  (1:,1:,1:) => pert%qv
- !p_qi  (1:,1:,1:) => pert%qi
- !p_ql  (1:,1:,1:) => pert%ql
- !p_o3  (1:,1:,1:) => pert%o3
 
  !Convenience pointers
  if (conf%saveltraj) then
@@ -351,19 +302,11 @@ subroutine step_ad(self,conf,traj,pert)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_u ,2,1)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akv,ltraj%bkv,ltraj%ckv,p_v ,2,1)
  call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%aks,ltraj%bks,ltraj%cks,p_t ,2,1)
- !call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qv,2,1)
+ call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%tracers(:,:,:,1),2,1)
 
- do f = 1, size(traj%tracer_names)
-   if (trim(traj%tracer_names(f)).eq.'specific_humidity') then
-     call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_tracers(:,:,:,f),2,1)
-   else
-     call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_tracers(:,:,:,f),2,0)
-   end if
+ do f = 2, size(traj%tracer_names)
+   call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,pert%tracers(:,:,:,f),2,0)
  end do
-
-! call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_qi,2,0)
-! call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_ql,2,0)
-! call vtrisolvepert(conf%im,conf%jm,conf%lm,ltraj%akq,ltraj%bkq,ltraj%ckq,p_o3,2,0)
 
  !pt2t adjoint
  p_t = p00**kappa * p_t / ltraj%pk
@@ -373,11 +316,6 @@ subroutine step_ad(self,conf,traj,pert)
  nullify(p_v)
  nullify(p_t)
  nullify(p_delp)
- nullify(p_tracers)
- !nullify(p_qv)
- !nullify(p_qi)
- !nullify(p_ql)
- !nullify(p_o3)
  nullify(ltraj)
 
 endsubroutine step_ad
@@ -413,7 +351,8 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  type(fv3jedi_lm_traj), target, intent(in)    :: traj
  type(local_traj_turbulence),   intent(inout) :: ltraj
 
- integer :: i,j,l,im,jm,lm,isc,iec,jsc,jec,i_qv,i_qi,i_ql
+ integer :: i,j,l,im,jm,lm,isc,iec,jsc,jec
+ integer :: it_qv,it_qi,it_ql
 
  real(kind_real), allocatable, dimension(:,:,:) :: PTT1
  real(kind_real), allocatable, dimension(:,:)   :: ZPBL1, CT1
@@ -427,7 +366,6 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  real(kind_real), pointer, dimension(:,:,:) :: p_t
  real(kind_real), pointer, dimension(:,:,:) :: p_delp
  real(kind_real), pointer, dimension(:,:,:) :: p_qv
- !real(kind_real), pointer, dimension(:,:,:,:) :: p_tracers
  real(kind_real), pointer, dimension(:,:)   :: p_frland
  real(kind_real), pointer, dimension(:,:)   :: p_frocean
  real(kind_real), pointer, dimension(:,:)   :: p_varflt
@@ -456,13 +394,11 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  allocate(ZPBL1(1:im,1:jm))
  allocate(CT1  (1:im,1:jm))
 
- call get_tracer_and_index(traj, 'specific_humidity', i_qv)
-
  p_u      (1:,1:,1:) => traj%u
  p_v      (1:,1:,1:) => traj%v
  p_t      (1:,1:,1:) => traj%t
  p_delp   (1:,1:,1:) => traj%delp
- p_qv     (1:,1:,1:) => traj%tracers(:,:,:,i_qv)
+
  p_frland (1:,1:) => traj%FRLAND
  p_frocean(1:,1:) => traj%FROCEAN
  p_varflt (1:,1:) => traj%VARFLT
@@ -471,6 +407,8 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  p_ustar  (1:,1:) => traj%USTAR
  p_bstar  (1:,1:) => traj%BSTAR
 
+ call get_tracer_and_index(traj, 'specific_humidity', it_qv)
+ p_qv     (1:,1:,1:) => traj%tracers(:,:,:,it_qv)
 
  !Compute pressures from delp
  call compute_pressures(im,jm,lm,conf%ptop,p_delp,pet,pmt,ltraj%pk)
@@ -483,16 +421,11 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
 
  !Calculate total cloud ice and liquid trajectory
  if (conf%do_phy_mst == 0) then
-    !QIT1(1:im,1:jm,:) = traj%QI(isc:iec,jsc:jec,:)
-    !QLT1(1:im,1:jm,:) = traj%QL(isc:iec,jsc:jec,:)
-    call get_tracer_and_index(traj, 'cloud_liquid_ice', i_qi )
-    call get_tracer_and_index(traj, 'cloud_liquid_water', i_ql )
-    QIT1(1:im,1:jm,:) = traj%tracers(isc:iec,jsc:jec,:,i_qi)
-    QLT1(1:im,1:jm,:) = traj%tracers(isc:iec,jsc:jec,:,i_ql)
-
-
+    call get_tracer_and_index(traj, 'cloud_liquid_ice', it_qi )
+    call get_tracer_and_index(traj, 'cloud_liquid_water', it_ql )
+    QIT1(1:im,1:jm,:) = traj%tracers(isc:iec,jsc:jec,:,it_qi)
+    QLT1(1:im,1:jm,:) = traj%tracers(isc:iec,jsc:jec,:,it_ql)
  else
-
    do l = 1,lm
      do j = 1,jm
        do i = 1,im
@@ -503,7 +436,6 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
 
    QIT1(1:im,1:jm,:) = (traj%QLS(isc:iec,jsc:jec,:) + traj%QCN(isc:iec,jsc:jec,:)) * fQi(1:im,1:jm,:)
    QLT1(1:im,1:jm,:) = (traj%QLS(isc:iec,jsc:jec,:) + traj%QCN(isc:iec,jsc:jec,:)) * (1-fQi(1:im,1:jm,:))
-
  endif
 
  !Initialize tri-diagonal arrays
@@ -713,21 +645,6 @@ subroutine vtrisolvepert(im,jm,lm,a,b,c,y,phase,ygswitch)
  endif
 
 end subroutine vtrisolvepert
-
-! ------------------------------------------------------------------------------
-
-!function get_tracer (traj, tracer_name) result (data_ptr)
-!
-!  type(fv3jedi_lm_traj), target, intent(in) :: traj
-!  character(len=*), intent(in) :: tracer_name
-!  integer :: t
-!  do t = 1, size(traj%tracer_names)
-!    if (trim(traj%tracer_names(t)) == trim(tracer_name)) then
-!      data_ptr => traj%tracers(t)
-!    end if
-!  end do
-!
-!end function get_tracer
 
 ! ------------------------------------------------------------------------------
 subroutine get_tracer_and_index(traj, tracer_name, index)

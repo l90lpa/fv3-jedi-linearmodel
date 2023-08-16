@@ -152,25 +152,10 @@ subroutine create(self,conf)
   FV_Atm(1)%flagstruct%breed_vortex_inline = .false.
 
   !Initialze the perturbation fv3 structure
-  ! it will allocate q based on what is in field table. make sure there's at least one variable there.
   call fv_init_pert(self%FV_Atm,self%FV_AtmP,conf%inputpert_filename)
 
   !Not using field_table here to allocate q based on hardwiring
   deallocate(FV_Atm(1)%q,self%FV_AtmP(1)%qp)
-
-  !if (conf%do_phy_mst == 0) then
-  !   FV_Atm(1)%ncnst = 9
-  !else
-  !   FV_Atm(1)%ncnst = 10
-  !endif
-
-  ! for now set ntrs to 5
-  !FV_Atm(1)%ncnst = 5
-
-  !FV_Atm(1)%ncnst = 1 ! will be changed to number of tracers later
-  !FV_Atm(1)%flagstruct%ncnst = FV_Atm(1)%ncnst
-  !allocate(     FV_Atm (1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,FV_Atm(1)%ncnst))
-  !allocate(self%FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied,FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed,FV_Atm(1)%flagstruct%npz,FV_Atm(1)%ncnst))
 
   !Global
   cp_iter_controls%cp_i  = 0
@@ -295,7 +280,7 @@ subroutine init_tl(self,conf,pert,traj)
                              ntracers))
  end if
 
- ! repeated for pert
+ ! repeat for pert
  if (allocated (FV_AtmP(1)%qp) .and. size(FV_AtmP(1)%qp,4) .ne. ntracers) then
      deallocate(FV_AtmP(1)%qp)
      allocate  (FV_AtmP(1)%qp (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
@@ -340,7 +325,7 @@ subroutine init_ad(self,conf,pert,traj)
                              ntracers))
  end if
 
- ! repeated for pert
+ ! repeat for pert
  if (allocated (FV_AtmP(1)%qp) .and. size(FV_AtmP(1)%qp,4) .ne. ntracers) then
      deallocate(FV_AtmP(1)%qp)
      allocate  (FV_AtmP(1)%qp (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
@@ -812,7 +797,7 @@ subroutine traj_to_fv3(self,conf,traj)
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_traj), intent(in) :: traj
 
- integer :: i,j,k,i_tracer
+ integer :: i,j,k
 
 
  !Zero the halos
@@ -849,7 +834,6 @@ subroutine traj_to_fv3(self,conf,traj)
  self%FV_Atm(1)%v   (self%isc:self%iec,self%jsc:self%jec,:) = traj%v   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_Atm(1)%pt  (self%isc:self%iec,self%jsc:self%jec,:) = traj%t   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_Atm(1)%delp(self%isc:self%iec,self%jsc:self%jec,:) = traj%delp(self%isc:self%iec,self%jsc:self%jec,:)
-
  self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,:) = traj%tracers(self%isc:self%iec,self%jsc:self%jec,:,:)
 
  if (.not. self%FV_Atm(1)%flagstruct%hydrostatic) then
@@ -858,7 +842,6 @@ subroutine traj_to_fv3(self,conf,traj)
  endif
 
  self%FV_Atm(1)%phis(self%isc:self%iec,self%jsc:self%jec) = traj%phis(self%isc:self%iec,self%jsc:self%jec)
-
 
  !Update edges of d-grid winds
  !----------------------------
@@ -897,8 +880,6 @@ subroutine fv3_to_traj(self,conf,traj)
 
  implicit none
 
- integer :: ft, f
-
  class(fv3jedi_lm_dynamics_type), intent(in) :: self
  type(fv3jedi_lm_conf), intent(in)    :: conf
  type(fv3jedi_lm_traj), intent(inout) :: traj
@@ -907,8 +888,6 @@ subroutine fv3_to_traj(self,conf,traj)
  traj%v   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%v   (self%isc:self%iec,self%jsc:self%jec,:)
  traj%t   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%pt  (self%isc:self%iec,self%jsc:self%jec,:)
  traj%delp(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%delp(self%isc:self%iec,self%jsc:self%jec,:)
- !traj%qv  (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_Atm(1)%q   (self%isc:self%iec,self%jsc:self%jec,:,1)
-
  traj%tracers(self%isc:self%iec,self%jsc:self%jec,:,:) = self%FV_Atm(1)%q(self%isc:self%iec,self%jsc:self%jec,:,:)
 
  if (.not. self%FV_Atm(1)%flagstruct%hydrostatic) then
@@ -929,7 +908,6 @@ subroutine pert_to_fv3(self,conf,pert)
 
  implicit none
 
- integer :: ft, f
  class(fv3jedi_lm_dynamics_type), intent(inout) :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(in) :: pert
@@ -949,20 +927,7 @@ subroutine pert_to_fv3(self,conf,pert)
  self%FV_AtmP(1)%vp   (self%isc:self%iec,self%jsc:self%jec,:) = pert%v   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_AtmP(1)%ptp  (self%isc:self%iec,self%jsc:self%jec,:) = pert%T   (self%isc:self%iec,self%jsc:self%jec,:)
  self%FV_AtmP(1)%delpp(self%isc:self%iec,self%jsc:self%jec,:) = pert%delp(self%isc:self%iec,self%jsc:self%jec,:)
-
  self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,:) = pert%tracers(self%isc:self%iec,self%jsc:self%jec,:,:)
-
- !self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,2) = pert%ql(self%isc:self%iec,self%jsc:self%jec,:)
- !self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,3) = pert%qi(self%isc:self%iec,self%jsc:self%jec,:)
- !self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4) = pert%o3(self%isc:self%iec,self%jsc:self%jec,:)
-
- !do i_tracer = 1, 5
-!   self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4+i_tracer) = pert%tracers(self%isc:self%iec,self%jsc:self%jec,:, i_tracer)
-! enddo
-
-! if (conf%do_phy_mst .ne. 0) then
-!   self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,10) = pert%cfcn(self%isc:self%iec,self%jsc:self%jec,:)
-! endif
 
  if (.not. self%FV_Atm(1)%flagstruct%hydrostatic) then
     self%FV_AtmP(1)%delzp(self%isc:self%iec,self%jsc:self%jec,:) = pert%delz(self%isc:self%iec,self%jsc:self%jec,:)
@@ -980,7 +945,6 @@ subroutine fv3_to_pert(self,conf,pert)
 
  implicit none
 
- integer :: i_tracer
  class(fv3jedi_lm_dynamics_type), intent(inout) :: self
  type(fv3jedi_lm_conf), intent(in)    :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
@@ -989,21 +953,7 @@ subroutine fv3_to_pert(self,conf,pert)
  pert%v   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%vp   (self%isc:self%iec,self%jsc:self%jec,:)
  pert%T   (self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%ptp  (self%isc:self%iec,self%jsc:self%jec,:)
  pert%delp(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%delpp(self%isc:self%iec,self%jsc:self%jec,:)
-
  pert%tracers(self%isc:self%iec,self%jsc:self%jec,:,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,:)
-
- !pert%ql(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,2)
- !pert%qi(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,3)
- !pert%o3(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4)
-
-! do i_tracer = 1, 5
-!   pert%tracers(self%isc:self%iec,self%jsc:self%jec,:,i_tracer) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,4+i_tracer)
-! enddo
-
-
-! if (conf%do_phy_mst .ne. 0) then
-!  pert%cfcn(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%qp(self%isc:self%iec,self%jsc:self%jec,:,10)
-! endif
 
  if (.not. self%FV_Atm(1)%flagstruct%hydrostatic) then
    pert%delz(self%isc:self%iec,self%jsc:self%jec,:) = self%FV_AtmP(1)%delzp(self%isc:self%iec,self%jsc:self%jec,:)
@@ -1040,6 +990,7 @@ FV_AtmP%delpp = 0.0
 FV_AtmP%qp = 0.0
 FV_AtmP%wp = 0.0
 FV_AtmP%delzP = 0.0
+FV_AtmP%qp = 0.0
 
 !Outputs
 FV_AtmP%ze0p = 0.0
