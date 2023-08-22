@@ -35,7 +35,6 @@ end type fv3jedi_lm_conf
 type :: fv3jedi_lm_pert
   real(kind_real), allocatable, dimension(:,:,:) :: u, v, t, delp  !Dynamics
   real(kind_real), allocatable, dimension(:,:,:,:) :: tracers      ! Tracers
-  character(len=:), allocatable :: tracer_names(:)
   real(kind_real), allocatable, dimension(:,:,:) :: w, delz        !nh vars
   real(kind_real), allocatable, dimension(:,:,:) :: ua, va, cfcn   !Internal not part of increment
 end type fv3jedi_lm_pert

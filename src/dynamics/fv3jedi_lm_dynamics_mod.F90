@@ -155,7 +155,7 @@ subroutine create(self,conf)
   call fv_init_pert(self%FV_Atm,self%FV_AtmP,conf%inputpert_filename)
 
   !Not using field_table here to allocate q based on hardwiring
-  deallocate(FV_Atm(1)%q,self%FV_AtmP(1)%qp)
+  !deallocate(FV_Atm(1)%q,self%FV_AtmP(1)%qp)
 
   !Global
   cp_iter_controls%cp_i  = 0
@@ -272,6 +272,7 @@ subroutine init_tl(self,conf,pert,traj)
  FV_AtmP => self%FV_AtmP
 
  ntracers = size(traj%tracers,4)
+
  if (allocated (FV_Atm(1)%q) .and. size(FV_Atm(1)%q,4) .ne. ntracers) then
      deallocate(FV_Atm(1)%q)
      allocate  (FV_Atm(1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
@@ -317,6 +318,7 @@ subroutine init_ad(self,conf,pert,traj)
  FV_AtmP => self%FV_AtmP
 
  ntracers = size(traj%tracers,4)
+
  if (allocated (FV_Atm(1)%q) .and. size(FV_Atm(1)%q,4) .ne. ntracers) then
      deallocate(FV_Atm(1)%q)
      allocate  (FV_Atm(1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
@@ -344,7 +346,6 @@ endsubroutine init_ad
 subroutine step_nl(self,conf,traj)
 
  implicit none
-
  class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_traj), intent(inout) :: traj
  type(fv3jedi_lm_conf), intent(in) :: conf
@@ -361,11 +362,9 @@ subroutine step_nl(self,conf,traj)
  !-----------------------------------
  call traj_to_fv3(self,conf,traj)
 
-
  ! MPP set domain
  ! --------------
  call set_domain(FV_Atm(1)%domain)
-
 
  !Propagate FV3 one time step
  !---------------------------
@@ -408,7 +407,6 @@ subroutine step_nl(self,conf,traj)
  ! MPP nulify
  ! ----------
  call nullify_domain()
-
 
  !Copy from fv3 back to traj structure
  !------------------------------------
@@ -798,7 +796,6 @@ subroutine traj_to_fv3(self,conf,traj)
  type(fv3jedi_lm_traj), intent(in) :: traj
 
  integer :: i,j,k
-
 
  !Zero the halos
  !--------------

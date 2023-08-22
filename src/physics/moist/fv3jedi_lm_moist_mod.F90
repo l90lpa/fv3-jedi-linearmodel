@@ -742,6 +742,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  !Some moist vars
  call get_tracer_and_index(traj, 'specific_humidity', i_qv)
 
+
  ltraj%qvt(1:im,1:jm,:) = dble(traj%tracers(isc:iec,jsc:jec,:,i_qv))
  ltraj%cflst  = 0.0_8
 
@@ -773,10 +774,11 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  !Strapping levels
  DO I = 1,IM
     DO J = 1,JM
-       ltraj%WGT0(I,J,:)                  = 0.0_8
-       ltraj%WGT0(I,J,ltraj%KCBL(I,J):LM) = 1.0_8
-       ltraj%WGT1(I,J,:)                  = 0.0_8
-       ltraj%WGT1(I,J,ltraj%KCBL(I,J):LM) = 1.0_8
+
+       ltraj%WGT0(I,J,:)                    = 0.0_8
+       ltraj%WGT0(I,J,ltraj%KCBL(I,J)+1:LM) = 1.0_8 !I needed to add +1 here
+       ltraj%WGT1(I,J,:)                    = 0.0_8
+       ltraj%WGT1(I,J,ltraj%KCBL(I,J)+1:LM) = 1.0_8 !I needed to add +1 here
     ENDDO
  ENDDO
 
