@@ -646,19 +646,5 @@ subroutine vtrisolvepert(im,jm,lm,a,b,c,y,phase,ygswitch)
 
 end subroutine vtrisolvepert
 
-! ------------------------------------------------------------------------------
-subroutine get_tracer_and_index(traj, tracer_name, index)
-
-  type(fv3jedi_lm_traj), intent(in) :: traj
-  character(len=*), intent(in) :: tracer_name
-  integer :: t, index
-
-  do t = 1, size(traj%tracer_names)
-    if (trim(traj%tracer_names(t)) == trim(tracer_name)) then
-      index = t
-    end if
-  end do
-endsubroutine get_tracer_and_index
-
 
 end module fv3jedi_lm_turbulence_mod

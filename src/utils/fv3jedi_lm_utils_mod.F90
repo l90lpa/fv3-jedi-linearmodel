@@ -8,7 +8,7 @@ private
 
 public :: fv3jedi_lm_conf, fv3jedi_lm_pert, fv3jedi_lm_traj
 public :: allocate_pert, deallocate_pert
-public :: allocate_traj, deallocate_traj, copy_traj
+public :: allocate_traj, deallocate_traj, copy_traj, get_tracer_and_index
 
 !> Fortran derived type to hold the linearized model configuration
 type :: fv3jedi_lm_conf
@@ -41,17 +41,17 @@ end type fv3jedi_lm_pert
 
 !> Fortran derived type to hold the linearized model trajectory
 type :: fv3jedi_lm_traj
-  real(kind_real), allocatable, dimension(:,:,:) :: u, v, t, delp  !Dynamics
-  real(kind_real), allocatable, dimension(:,:,:,:) :: tracers      ! Tracers
-  character(len=40), allocatable :: tracer_names(:) !? complained when len=:?
-  real(kind_real), allocatable, dimension(:,:,:) :: w, delz        !nh vars
-  real(kind_real), allocatable, dimension(:,:,:) :: ua, va, cfcn   !Internal not part of increment
-  real(kind_real), allocatable, dimension(:,:,:) :: qls, qcn
-  real(kind_real), allocatable, dimension(:,:)   :: phis, ps
-  real(kind_real), allocatable, dimension(:,:)   :: frocean, frland
-  real(kind_real), allocatable, dimension(:,:)   :: varflt, ustar, bstar
-  real(kind_real), allocatable, dimension(:,:)   :: zpbl, cm, ct, cq
-  real(kind_real), allocatable, dimension(:,:)   :: kcbl, ts, khl, khu
+  real(kind_real),     allocatable, dimension(:,:,:)   :: u, v, t, delp  !Dynamics
+  real(kind_real),     allocatable, dimension(:,:,:,:) :: tracers      ! Tracers
+  character(len=2048), allocatable                     :: tracer_names(:)
+  real(kind_real),     allocatable, dimension(:,:,:)   :: w, delz        !nh vars
+  real(kind_real),     allocatable, dimension(:,:,:)   :: ua, va, cfcn   !Internal not part of increment
+  real(kind_real),     allocatable, dimension(:,:,:)   :: qls, qcn
+  real(kind_real),     allocatable, dimension(:,:)     :: phis, ps
+  real(kind_real),     allocatable, dimension(:,:)     :: frocean, frland
+  real(kind_real),     allocatable, dimension(:,:)     :: varflt, ustar, bstar
+  real(kind_real),     allocatable, dimension(:,:)     :: zpbl, cm, ct, cq
+  real(kind_real),     allocatable, dimension(:,:)     :: kcbl, ts, khl, khu
 end type fv3jedi_lm_traj
 
 !> Compute ice fraction from temperature
@@ -377,5 +377,22 @@ subroutine compute_pressures_r8(im,jm,lm,ptop,delp,pe,p,pk)
  pk(:,:,1:lm) = (pek(:,:,1:lm)-pek(:,:,0:lm-1))/(kappa*(lpe(:,:,1:lm)-lpe(:,:,0:lm-1)))
 
 endsubroutine compute_pressures_r8
+
+
+! ------------------------------------------------------------------------------
+subroutine get_tracer_and_index(traj, tracer_name, index)
+
+  type(fv3jedi_lm_traj), intent(in) :: traj
+  character(len=*), intent(in) :: tracer_name
+  integer :: t, index
+
+  do t = 1, size(traj%tracer_names)
+    if (trim(traj%tracer_names(t)) == trim(tracer_name)) then
+      index = t
+    end if
+  end do
+
+endsubroutine get_tracer_and_index
+
 
 end module fv3jedi_lm_utils_mod

@@ -154,9 +154,6 @@ subroutine create(self,conf)
   !Initialze the perturbation fv3 structure
   call fv_init_pert(self%FV_Atm,self%FV_AtmP,conf%inputpert_filename)
 
-  !Not using field_table here to allocate q based on hardwiring
-  !deallocate(FV_Atm(1)%q,self%FV_AtmP(1)%qp)
-
   !Global
   cp_iter_controls%cp_i  = 0
   cp_iter_controls%cp_nt = 4
@@ -223,8 +220,6 @@ subroutine init_nl(self,conf,pert,traj)
 
  integer :: ntracers
 
- ! class(fv3jedi_lm_dynamics_type), intent(inout) :: self
- ! had to make it target. is it ok?
  class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
@@ -236,13 +231,8 @@ subroutine init_nl(self,conf,pert,traj)
  FV_Atm => self%FV_Atm
 
  ntracers = size(traj%tracers,4)
- if (allocated(FV_Atm(1)%q) .and. size(FV_Atm(1)%q,4) .ne. ntracers) then
-    deallocate(FV_Atm(1)%q)
-    allocate  (FV_Atm(1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
-                            FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
-                            FV_Atm(1)%flagstruct%npz, &
-                            ntracers))
- end if
+
+ call allocate_tracers(FV_Atm, ntracers)
 
 FV_Atm(1)%flagstruct%ncnst = ntracers
 FV_Atm(1)%ncnst = ntracers
@@ -257,8 +247,6 @@ subroutine init_tl(self,conf,pert,traj)
 
  integer :: ntracers
 
- ! class(fv3jedi_lm_dynamics_type), intent(inout) :: self
- ! had to make it target. is it ok?
  class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
@@ -273,22 +261,8 @@ subroutine init_tl(self,conf,pert,traj)
 
  ntracers = size(traj%tracers,4)
 
- if (allocated (FV_Atm(1)%q) .and. size(FV_Atm(1)%q,4) .ne. ntracers) then
-     deallocate(FV_Atm(1)%q)
-     allocate  (FV_Atm(1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
-                             FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
-                             FV_Atm(1)%flagstruct%npz, &
-                             ntracers))
- end if
-
- ! repeat for pert
- if (allocated (FV_AtmP(1)%qp) .and. size(FV_AtmP(1)%qp,4) .ne. ntracers) then
-     deallocate(FV_AtmP(1)%qp)
-     allocate  (FV_AtmP(1)%qp (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
-                              FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
-                              FV_Atm(1)%flagstruct%npz, &
-                              ntracers))
- end if
+ call allocate_tracers(FV_Atm,ntracers)
+ call allocate_tracersP(FV_AtmP,FV_Atm,ntracers)
 
  FV_Atm(1)%flagstruct%ncnst = ntracers
  FV_Atm(1)%ncnst = ntracers
@@ -303,8 +277,6 @@ subroutine init_ad(self,conf,pert,traj)
 
  integer :: ntracers
 
-! class(fv3jedi_lm_dynamics_type), intent(inout) :: self
-! had to make it target. is it ok?
  class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
@@ -319,22 +291,8 @@ subroutine init_ad(self,conf,pert,traj)
 
  ntracers = size(traj%tracers,4)
 
- if (allocated (FV_Atm(1)%q) .and. size(FV_Atm(1)%q,4) .ne. ntracers) then
-     deallocate(FV_Atm(1)%q)
-     allocate  (FV_Atm(1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
-                             FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
-                             FV_Atm(1)%flagstruct%npz, &
-                             ntracers))
- end if
-
- ! repeat for pert
- if (allocated (FV_AtmP(1)%qp) .and. size(FV_AtmP(1)%qp,4) .ne. ntracers) then
-     deallocate(FV_AtmP(1)%qp)
-     allocate  (FV_AtmP(1)%qp (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
-                               FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
-                               FV_Atm(1)%flagstruct%npz, &
-                               ntracers))
- end if
+ call allocate_tracers(FV_Atm,ntracers)
+ call allocate_tracersP(FV_AtmP,FV_Atm,ntracers)
 
  FV_Atm(1)%flagstruct%ncnst = ntracers
  FV_Atm(1)%ncnst = ntracers
@@ -346,6 +304,7 @@ endsubroutine init_ad
 subroutine step_nl(self,conf,traj)
 
  implicit none
+
  class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_traj), intent(inout) :: traj
  type(fv3jedi_lm_conf), intent(in) :: conf
@@ -1009,4 +968,38 @@ FV_AtmP%cyp = 0.0
 
 end subroutine zero_pert_vars
 
+! ------------------------------------------------------------------------------
+subroutine allocate_tracers(FV_Atm, ntracers)
+
+  type(fv_atmos_type), intent(inout), target :: FV_Atm(:)
+  integer :: ntracers
+
+  if (allocated(FV_Atm(1)%q) .and. size(FV_Atm(1)%q,4) .ne. ntracers) then
+     deallocate(FV_Atm(1)%q)
+     allocate  (FV_Atm(1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
+                             FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
+                             FV_Atm(1)%flagstruct%npz, &
+                             ntracers))
+  end if
+
+endsubroutine allocate_tracers
+
+! ------------------------------------------------------------------------------
+subroutine allocate_tracersP(FV_AtmP, FV_Atm, ntracers)
+
+  type(fv_atmos_pert_type), intent(inout), target :: FV_AtmP(:)
+  type(fv_atmos_type), intent(in), target :: FV_Atm(:)
+  integer :: ntracers
+
+  if (allocated (FV_AtmP(1)%qp) .and. size(FV_AtmP(1)%qp,4) .ne. ntracers) then
+      deallocate(FV_AtmP(1)%qp)
+      allocate  (FV_AtmP(1)%qp (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
+                                FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
+                                FV_Atm(1)%flagstruct%npz, &
+                                ntracers))
+  end if
+
+endsubroutine allocate_tracersP
+
+! ------------------------------------------------------------------------------
 end module fv3jedi_lm_dynamics_mod

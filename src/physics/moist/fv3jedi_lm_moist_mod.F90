@@ -509,8 +509,8 @@ subroutine step_tl(self,conf,traj,pert)
   pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
 
  ! order of tracers is the same for traj and pert
- call get_tracer_and_index(traj, 'specific_humidity', it_qv)
- call get_tracer_and_index(traj, 'cloud_liquid_ice', it_qi)
+ call get_tracer_and_index(traj, 'specific_humidity',  it_qv)
+ call get_tracer_and_index(traj, 'cloud_liquid_ice',   it_qi)
  call get_tracer_and_index(traj, 'cloud_liquid_water', it_ql)
 
  pert%tracers(isc:iec,jsc:jec,:,it_qv) = real(lpert%qvp(1:im,1:jm,:),kind_real)
@@ -1152,19 +1152,6 @@ subroutine deallocate_lpert(lpert)
 endsubroutine deallocate_lpert
 
 ! ------------------------------------------------------------------------------
-
-subroutine get_tracer_and_index(traj, tracer_name, index)
-
-  type(fv3jedi_lm_traj), intent(in) :: traj
-  character(len=*), intent(in) :: tracer_name
-  integer :: t, index
-
-  do t = 1, size(traj%tracer_names)
-    if (trim(traj%tracer_names(t)) == trim(tracer_name)) then
-      index = t
-    end if
-  end do
-endsubroutine get_tracer_and_index
 
 
 end module fv3jedi_lm_moist_mod
