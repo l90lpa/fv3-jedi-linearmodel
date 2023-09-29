@@ -8,7 +8,7 @@ private
 
 public :: fv3jedi_lm_conf, fv3jedi_lm_pert, fv3jedi_lm_traj
 public :: allocate_pert, deallocate_pert
-public :: allocate_traj, deallocate_traj, copy_traj, get_tracer_and_index
+public :: allocate_traj, deallocate_traj, get_tracer_and_index
 
 !> Fortran derived type to hold the linearized model configuration
 type :: fv3jedi_lm_conf
@@ -33,19 +33,21 @@ end type fv3jedi_lm_conf
 
 !> Fortran derived type to hold the linearized model increment
 type :: fv3jedi_lm_pert
-  real(kind_real), allocatable, dimension(:,:,:) :: u, v, t, delp  !Dynamics
-  real(kind_real), allocatable, dimension(:,:,:,:) :: tracers      ! Tracers
-  real(kind_real), allocatable, dimension(:,:,:) :: w, delz        !nh vars
-  real(kind_real), allocatable, dimension(:,:,:) :: ua, va, cfcn   !Internal not part of increment
+  real(kind_real), allocatable, dimension(:,:,:)   :: u, v, t, delp   !Dynamics
+  real(kind_real), allocatable, dimension(:,:,:,:) :: tracers         !Tracers
+  character(len=2048), allocatable                 :: tracer_names(:) !Tracer names
+  real(kind_real), allocatable, dimension(:,:,:)   :: w, delz         !nh vars
+  real(kind_real), allocatable, dimension(:,:,:)   :: ua, va, cfcn    !Internal not part of increment
 end type fv3jedi_lm_pert
 
 !> Fortran derived type to hold the linearized model trajectory
 type :: fv3jedi_lm_traj
-  real(kind_real),     allocatable, dimension(:,:,:)   :: u, v, t, delp  !Dynamics
-  real(kind_real),     allocatable, dimension(:,:,:,:) :: tracers      ! Tracers
-  character(len=2048), allocatable                     :: tracer_names(:)
-  real(kind_real),     allocatable, dimension(:,:,:)   :: w, delz        !nh vars
-  real(kind_real),     allocatable, dimension(:,:,:)   :: ua, va, cfcn   !Internal not part of increment
+  integer :: isc,iec,jsc,jec,npz,ntracers
+  real(kind_real),     allocatable, dimension(:,:,:)   :: u, v, t, delp   !Dynamics
+  real(kind_real),     allocatable, dimension(:,:,:,:) :: tracers         !Tracers
+  character(len=2048), allocatable                     :: tracer_names(:) !Tracer names
+  real(kind_real),     allocatable, dimension(:,:,:)   :: w, delz         !nh vars
+  real(kind_real),     allocatable, dimension(:,:,:)   :: ua, va, cfcn    !Internal not part of increment
   real(kind_real),     allocatable, dimension(:,:,:)   :: qls, qcn
   real(kind_real),     allocatable, dimension(:,:)     :: phis, ps
   real(kind_real),     allocatable, dimension(:,:)     :: frocean, frland
@@ -86,8 +88,10 @@ subroutine allocate_pert(pert,isc,iec,jsc,jec,npz,hydrostatic)
  allocate(pert%va     (isc:iec, jsc:jec, npz))
  allocate(pert%t      (isc:iec, jsc:jec, npz))
  allocate(pert%delp   (isc:iec, jsc:jec, npz))
- allocate(pert%tracers     (isc:iec, jsc:jec, npz, 1))
- allocate(pert%cfcn     (isc:iec, jsc:jec, npz))
+ allocate(pert%cfcn   (isc:iec, jsc:jec, npz))
+
+ !NB we dont allocate tracers because the number of tracers is not known. This duty belongs
+ !   to the client
 
  if (.not. hydrostatic) then
    allocate(pert%w      (isc:iec, jsc:jec, npz))
@@ -103,16 +107,17 @@ subroutine deallocate_pert(pert)
  implicit none
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
- if(allocated(pert%u)   )    deallocate(pert%u)
- if(allocated(pert%v)   )    deallocate(pert%v)
- if(allocated(pert%ua)  )    deallocate(pert%ua)
- if(allocated(pert%va)  )    deallocate(pert%va)
- if(allocated(pert%t)   )    deallocate(pert%t)
- if(allocated(pert%delp))    deallocate(pert%delp)
- if(allocated(pert%tracers)) deallocate(pert%tracers)
- if(allocated(pert%cfcn))    deallocate(pert%cfcn)
- if(allocated(pert%w)   )    deallocate(pert%w)
- if(allocated(pert%delz))    deallocate(pert%delz)
+ if(allocated(pert%u)   )         deallocate(pert%u)
+ if(allocated(pert%v)   )         deallocate(pert%v)
+ if(allocated(pert%ua)  )         deallocate(pert%ua)
+ if(allocated(pert%va)  )         deallocate(pert%va)
+ if(allocated(pert%t)   )         deallocate(pert%t)
+ if(allocated(pert%delp))         deallocate(pert%delp)
+ if(allocated(pert%tracers))      deallocate(pert%tracers)
+ if(allocated(pert%tracer_names)) deallocate(pert%tracer_names)
+ if(allocated(pert%cfcn))         deallocate(pert%cfcn)
+ if(allocated(pert%w)   )         deallocate(pert%w)
+ if(allocated(pert%delz))         deallocate(pert%delz)
 
 end subroutine deallocate_pert
 
@@ -126,14 +131,22 @@ subroutine allocate_traj(traj,isc,iec,jsc,jec,npz,hydrostatic,dpm)
  integer,               intent(in   ) :: dpm
  integer,               intent(in   ) :: isc, iec, jsc, jec, npz
 
+ ! Save grid bounds
+ traj%isc = isc
+ traj%iec = iec
+ traj%jsc = jsc
+ traj%jec = jec
+ traj%npz = npz
+
  allocate(traj%u      (isc:iec, jsc:jec, npz))
  allocate(traj%v      (isc:iec, jsc:jec, npz))
  allocate(traj%ua     (isc:iec, jsc:jec, npz))
  allocate(traj%va     (isc:iec, jsc:jec, npz))
  allocate(traj%t      (isc:iec, jsc:jec, npz))
  allocate(traj%delp   (isc:iec, jsc:jec, npz))
- allocate(traj%tracers     (isc:iec, jsc:jec, npz, 1))
- allocate(traj%tracer_names (1))
+
+ !NB we dont allocate tracers because the number of tracers is not known. This duty belongs
+ !   to the client
 
  if (.not. hydrostatic) then
    allocate(traj%w      (isc:iec, jsc:jec, npz))
@@ -171,84 +184,36 @@ subroutine deallocate_traj(traj)
  implicit none
  type(fv3jedi_lm_traj), intent(inout) :: traj
 
- if (allocated(traj%u      )) deallocate(traj%u      )
- if (allocated(traj%v      )) deallocate(traj%v      )
- if (allocated(traj%ua     )) deallocate(traj%ua     )
- if (allocated(traj%va     )) deallocate(traj%va     )
- if (allocated(traj%t      )) deallocate(traj%t      )
- if (allocated(traj%delp   )) deallocate(traj%delp   )
- if (allocated(traj%tracers)) deallocate(traj%tracers     )
- if (allocated(traj%tracer_names)) deallocate(traj%tracer_names     )
- if (allocated(traj%w      )) deallocate(traj%w      )
- if (allocated(traj%delz   )) deallocate(traj%delz   )
- if (allocated(traj%qls    )) deallocate(traj%qls    )
- if (allocated(traj%qcn    )) deallocate(traj%qcn    )
- if (allocated(traj%cfcn   )) deallocate(traj%cfcn   )
- if (allocated(traj%phis   )) deallocate(traj%phis   )
- if (allocated(traj%ps     )) deallocate(traj%ps     )
- if (allocated(traj%frocean)) deallocate(traj%frocean)
- if (allocated(traj%frland )) deallocate(traj%frland )
- if (allocated(traj%varflt )) deallocate(traj%varflt )
- if (allocated(traj%ustar  )) deallocate(traj%ustar  )
- if (allocated(traj%bstar  )) deallocate(traj%bstar  )
- if (allocated(traj%zpbl   )) deallocate(traj%zpbl   )
- if (allocated(traj%cm     )) deallocate(traj%cm     )
- if (allocated(traj%ct     )) deallocate(traj%ct     )
- if (allocated(traj%cq     )) deallocate(traj%cq     )
- if (allocated(traj%kcbl   )) deallocate(traj%kcbl   )
- if (allocated(traj%ts     )) deallocate(traj%ts     )
- if (allocated(traj%khl    )) deallocate(traj%khl    )
- if (allocated(traj%khu    )) deallocate(traj%khu    )
+ if (allocated(traj%u           )) deallocate(traj%u           )
+ if (allocated(traj%v           )) deallocate(traj%v           )
+ if (allocated(traj%ua          )) deallocate(traj%ua          )
+ if (allocated(traj%va          )) deallocate(traj%va          )
+ if (allocated(traj%t           )) deallocate(traj%t           )
+ if (allocated(traj%delp        )) deallocate(traj%delp        )
+ if (allocated(traj%tracers     )) deallocate(traj%tracers     )
+ if (allocated(traj%tracer_names)) deallocate(traj%tracer_names)
+ if (allocated(traj%w           )) deallocate(traj%w           )
+ if (allocated(traj%delz        )) deallocate(traj%delz        )
+ if (allocated(traj%qls         )) deallocate(traj%qls         )
+ if (allocated(traj%qcn         )) deallocate(traj%qcn         )
+ if (allocated(traj%cfcn        )) deallocate(traj%cfcn        )
+ if (allocated(traj%phis        )) deallocate(traj%phis        )
+ if (allocated(traj%ps          )) deallocate(traj%ps          )
+ if (allocated(traj%frocean     )) deallocate(traj%frocean     )
+ if (allocated(traj%frland      )) deallocate(traj%frland      )
+ if (allocated(traj%varflt      )) deallocate(traj%varflt      )
+ if (allocated(traj%ustar       )) deallocate(traj%ustar       )
+ if (allocated(traj%bstar       )) deallocate(traj%bstar       )
+ if (allocated(traj%zpbl        )) deallocate(traj%zpbl        )
+ if (allocated(traj%cm          )) deallocate(traj%cm          )
+ if (allocated(traj%ct          )) deallocate(traj%ct          )
+ if (allocated(traj%cq          )) deallocate(traj%cq          )
+ if (allocated(traj%kcbl        )) deallocate(traj%kcbl        )
+ if (allocated(traj%ts          )) deallocate(traj%ts          )
+ if (allocated(traj%khl         )) deallocate(traj%khl         )
+ if (allocated(traj%khu         )) deallocate(traj%khu         )
 
 end subroutine deallocate_traj
-
-! ------------------------------------------------------------------------------
-
-subroutine copy_traj( traj_in, traj_out, hydrostatic, dpm )
-
- implicit none
- type(fv3jedi_lm_traj), intent(in)    :: traj_in
- type(fv3jedi_lm_traj), intent(inout) :: traj_out
- logical,               intent(in)    :: hydrostatic
- integer,               intent(in)    :: dpm
-
- traj_out%u    = traj_in%u
- traj_out%v    = traj_in%v
- traj_out%ua   = traj_in%ua
- traj_out%va   = traj_in%va
- traj_out%t    = traj_in%t
- traj_out%delp = traj_in%delp
- traj_out%tracers   = traj_in%tracers
- traj_out%tracer_names = traj_in%tracer_names
-
- if (.not. hydrostatic) then
- traj_out%w    = traj_in%w
- traj_out%delz = traj_in%delz
- endif
-
- if (dpm /= 0) then
- traj_out%qls  = traj_in%qls
- traj_out%qcn  = traj_in%qcn
- traj_out%cfcn = traj_in%cfcn
- endif
-
- traj_out%phis    = traj_in%phis
- traj_out%ps      = traj_in%ps
- traj_out%frocean = traj_in%frocean
- traj_out%frland  = traj_in%frland
- traj_out%varflt  = traj_in%varflt
- traj_out%ustar   = traj_in%ustar
- traj_out%bstar   = traj_in%bstar
- traj_out%zpbl    = traj_in%zpbl
- traj_out%cm      = traj_in%cm
- traj_out%ct      = traj_in%ct
- traj_out%cq      = traj_in%cq
- traj_out%kcbl    = traj_in%kcbl
- traj_out%ts      = traj_in%ts
- traj_out%khl     = traj_in%khl
- traj_out%khu     = traj_in%khu
-
-end subroutine copy_traj
 
 ! ------------------------------------------------------------------------------
 

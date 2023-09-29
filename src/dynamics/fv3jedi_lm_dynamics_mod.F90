@@ -218,8 +218,6 @@ subroutine init_nl(self,conf,pert,traj)
 
  implicit none
 
- integer :: ntracers
-
  class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
@@ -230,12 +228,10 @@ subroutine init_nl(self,conf,pert,traj)
  !------------------------------------------------
  FV_Atm => self%FV_Atm
 
- ntracers = size(traj%tracers,4)
+ FV_Atm(1)%flagstruct%ncnst = size(traj%tracers,4)
+ FV_Atm(1)%ncnst = size(traj%tracers,4)
 
- call allocate_tracers(FV_Atm, ntracers)
-
-FV_Atm(1)%flagstruct%ncnst = ntracers
-FV_Atm(1)%ncnst = ntracers
+ call allocate_tracers(FV_Atm)
 
 endsubroutine init_nl
 
@@ -245,8 +241,6 @@ subroutine init_tl(self,conf,pert,traj)
 
  implicit none
 
- integer :: ntracers
-
  class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
@@ -259,13 +253,14 @@ subroutine init_tl(self,conf,pert,traj)
  FV_Atm  => self%FV_Atm
  FV_AtmP => self%FV_AtmP
 
- ntracers = size(traj%tracers,4)
+ FV_Atm(1)%flagstruct%ncnst = size(traj%tracers,4)
+ FV_Atm(1)%ncnst = size(traj%tracers,4)
 
- call allocate_tracers(FV_Atm,ntracers)
- call allocate_tracersP(FV_AtmP,FV_Atm,ntracers)
+ ! Check for equivalency between traj and pert tracers
+ call check_tracers(traj, pert)
 
- FV_Atm(1)%flagstruct%ncnst = ntracers
- FV_Atm(1)%ncnst = ntracers
+ call allocate_tracers(FV_Atm)
+ call allocate_tracersP(FV_AtmP,FV_Atm)
 
 endsubroutine init_tl
 
@@ -275,8 +270,6 @@ subroutine init_ad(self,conf,pert,traj)
 
  implicit none
 
- integer :: ntracers
-
  class(fv3jedi_lm_dynamics_type), intent(inout), target :: self
  type(fv3jedi_lm_conf), intent(in) :: conf
  type(fv3jedi_lm_pert), intent(inout) :: pert
@@ -289,13 +282,14 @@ subroutine init_ad(self,conf,pert,traj)
  FV_Atm  => self%FV_Atm
  FV_AtmP => self%FV_AtmP
 
- ntracers = size(traj%tracers,4)
+ FV_Atm(1)%flagstruct%ncnst = size(traj%tracers,4)
+ FV_Atm(1)%ncnst = size(traj%tracers,4)
 
- call allocate_tracers(FV_Atm,ntracers)
- call allocate_tracersP(FV_AtmP,FV_Atm,ntracers)
+ ! Check for equivalency between traj and pert tracers
+ call check_tracers(traj, pert)
 
- FV_Atm(1)%flagstruct%ncnst = ntracers
- FV_Atm(1)%ncnst = ntracers
+ call allocate_tracers(FV_Atm)
+ call allocate_tracersP(FV_AtmP,FV_Atm)
 
 endsubroutine init_ad
 
@@ -315,7 +309,6 @@ subroutine step_nl(self,conf,traj)
  !Convenience pointer to the main FV_Atm structure
  !------------------------------------------------
  FV_Atm => self%FV_Atm
-
 
  !Copy from traj to the fv3 structure
  !-----------------------------------
@@ -969,35 +962,85 @@ FV_AtmP%cyp = 0.0
 end subroutine zero_pert_vars
 
 ! ------------------------------------------------------------------------------
-subroutine allocate_tracers(FV_Atm, ntracers)
+
+subroutine check_tracers(traj, pert)
+
+ type(fv3jedi_lm_traj), intent(in) :: traj
+ type(fv3jedi_lm_pert), intent(in) :: pert
+
+ integer :: i
+
+ ! Check that tracers are allocated
+ if (.not. allocated(traj%tracers)) &
+   call abor1_ftn("check_tracers: .not. allocated(traj%tracers)")
+
+ if (.not. allocated(pert%tracers)) &
+   call abor1_ftn("check_tracers: .not. allocated(pert%tracers)")
+
+ ! Check that size of traj%tracers is the same as pert%tracers
+ if (size(traj%tracers,4) /= size(pert%tracers,4)) then
+   if (mpp_pe() == mpp_root_pe()) then
+     print*, 'Size of traj%tracers = ', size(traj%tracers,4), &
+             'Size of pert%tracers = ', size(pert%tracers,4)
+     do i = 1, size(traj%tracers,4)
+       print*, 'Traj tracer at index ', i, ' = ', trim(traj%tracer_names(i))
+     enddo
+     do i = 1, size(pert%tracers,4)
+       print*, 'Pert tracer at index ', i, ' = ', trim(pert%tracer_names(i))
+     enddo
+   endif
+   call abor1_ftn("check_tracers: Size of tracer arrays differs between trajectory and perturbation.")
+ endif
+
+ ! Loop over traj%tracer_names and pert%tracer_names and check they are all the same
+   do i = 1, size(traj%tracer_names)
+      if (trim(traj%tracer_names(i)) /= trim(pert%tracer_names(i))) then
+        if (mpp_pe() == mpp_root_pe()) then
+          print*, 'Traj tracer with index ', i, ' has name ', trim(traj%tracer_names(i))
+          print*, 'Pert tracer with index ', i, ' has name ', trim(pert%tracer_names(i))
+        endif
+        call abor1_ftn("check_tracers: trajectory and perturbation tracers have different name in the same position.")
+      endif
+   enddo
+
+endsubroutine check_tracers
+
+! ------------------------------------------------------------------------------
+
+subroutine allocate_tracers(FV_Atm)
 
   type(fv_atmos_type), intent(inout), target :: FV_Atm(:)
-  integer :: ntracers
 
-  if (allocated(FV_Atm(1)%q) .and. size(FV_Atm(1)%q,4) .ne. ntracers) then
-     deallocate(FV_Atm(1)%q)
-     allocate  (FV_Atm(1)%q (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
-                             FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
-                             FV_Atm(1)%flagstruct%npz, &
-                             ntracers))
-  end if
+  ! If the size is correct then return
+  if (size(FV_Atm(1)%q,4) == FV_Atm(1)%ncnst) return
+
+  ! If internal tracers are allocated then deallocate
+  if (allocated(FV_Atm(1)%q)) deallocate(FV_Atm(1)%q)
+
+  ! Allocate internal tracers
+  allocate(FV_Atm(1)%q(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
+                       FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
+                       FV_Atm(1)%flagstruct%npz, FV_Atm(1)%ncnst))
 
 endsubroutine allocate_tracers
 
 ! ------------------------------------------------------------------------------
-subroutine allocate_tracersP(FV_AtmP, FV_Atm, ntracers)
+subroutine allocate_tracersP(FV_AtmP, FV_Atm)
 
   type(fv_atmos_pert_type), intent(inout), target :: FV_AtmP(:)
   type(fv_atmos_type), intent(in), target :: FV_Atm(:)
-  integer :: ntracers
 
-  if (allocated (FV_AtmP(1)%qp) .and. size(FV_AtmP(1)%qp,4) .ne. ntracers) then
-      deallocate(FV_AtmP(1)%qp)
-      allocate  (FV_AtmP(1)%qp (FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
-                                FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
-                                FV_Atm(1)%flagstruct%npz, &
-                                ntracers))
-  end if
+  ! If the size is correct then return
+  if (size(FV_AtmP(1)%qp,4) == FV_Atm(1)%ncnst) return
+
+  ! If internal perturabtion tracers are allocated then deallocate
+  if (allocated(FV_AtmP(1)%qp)) deallocate(FV_AtmP(1)%qp)
+
+  ! Allocate internal perturbation tracers
+  allocate(FV_AtmP(1)%qp(FV_Atm(1)%bd%isd:FV_Atm(1)%bd%ied, &
+                         FV_Atm(1)%bd%jsd:FV_Atm(1)%bd%jed, &
+                         FV_Atm(1)%flagstruct%npz, &
+                         FV_Atm(1)%ncnst))
 
 endsubroutine allocate_tracersP
 
