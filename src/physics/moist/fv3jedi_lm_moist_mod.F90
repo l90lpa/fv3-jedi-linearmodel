@@ -776,9 +776,9 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
     DO J = 1,JM
 
        ltraj%WGT0(I,J,:)                    = 0.0_8
-       ltraj%WGT0(I,J,ltraj%KCBL(I,J)+1:LM) = 1.0_8 !I needed to add +1 here
+       ltraj%WGT0(I,J,ltraj%KCBL(I,J):LM)   = 1.0_8
        ltraj%WGT1(I,J,:)                    = 0.0_8
-       ltraj%WGT1(I,J,ltraj%KCBL(I,J)+1:LM) = 1.0_8 !I needed to add +1 here
+       ltraj%WGT1(I,J,ltraj%KCBL(I,J):LM)   = 1.0_8
     ENDDO
  ENDDO
 
