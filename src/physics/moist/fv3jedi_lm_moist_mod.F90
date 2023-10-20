@@ -385,9 +385,9 @@ subroutine step_nl(self,conf,traj)
  traj%t(isc:iec,jsc:jec,:) = real(ltraj%pk(1:im,1:jm,:) * ltraj%PTT(1:im,1:jm,:) / p00**kappa,kind_real)
  traj%cfcn(isc:iec,jsc:jec,:) = real(ltraj%cfcnt(1:im,1:jm,:),kind_real)
 
- call get_tracer_and_index(traj, 'specific_humidity', it_qv)
- call get_tracer_and_index(traj, 'cloud_liquid_ice', it_qi)
- call get_tracer_and_index(traj, 'cloud_liquid_water', it_ql)
+ call get_tracer_index(traj, 'specific_humidity', it_qv)
+ call get_tracer_index(traj, 'cloud_liquid_ice', it_qi)
+ call get_tracer_index(traj, 'cloud_liquid_water', it_ql)
  traj%tracers(isc:iec,jsc:jec,:,it_qv) = real(ltraj%qvt(1:im,1:jm,:),kind_real)
  traj%tracers(isc:iec,jsc:jec,:,it_qi) = real(ltraj%qilst(1:im,1:jm,:) + ltraj%qicnt(1:im,1:jm,:),kind_real)
  traj%tracers(isc:iec,jsc:jec,:,it_ql) = real(ltraj%qllst(1:im,1:jm,:) + ltraj%qlcnt(1:im,1:jm,:),kind_real)
@@ -436,9 +436,9 @@ subroutine step_tl(self,conf,traj,pert)
  lpert%vp(1:im,1:jm,:)    = dble(pert%v (isc:iec,jsc:jec,:))
  lpert%ptp(1:im,1:jm,:)   = dble(pert%t (isc:iec,jsc:jec,:)) * p00**kappa / ltraj%pk(1:im,1:jm,:)
 
- call get_tracer_and_index(traj, 'specific_humidity', it_qv)
- call get_tracer_and_index(traj, 'cloud_liquid_ice', it_qi)
- call get_tracer_and_index(traj, 'cloud_liquid_water', it_ql)
+ call get_tracer_index(traj, 'specific_humidity', it_qv)
+ call get_tracer_index(traj, 'cloud_liquid_ice', it_qi)
+ call get_tracer_index(traj, 'cloud_liquid_water', it_ql)
 
  lpert%qvp(1:im,1:jm,:)   = dble(pert%tracers(isc:iec,jsc:jec,:,it_qv))
  lpert%qilsp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:,it_qi)) * ltraj%ilsf(1:im,1:jm,:)
@@ -506,12 +506,12 @@ subroutine step_tl(self,conf,traj,pert)
  pert%u(isc:iec,jsc:jec,:)    = real(lpert%up (1:im,1:jm,:),kind_real)
  pert%v(isc:iec,jsc:jec,:)    = real(lpert%vp (1:im,1:jm,:),kind_real)
  pert%t(isc:iec,jsc:jec,:)    = real(lpert%ptp(1:im,1:jm,:) * ltraj%pk(1:im,1:jm,:) / p00**kappa,kind_real)
-  pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
+ pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
 
  ! order of tracers is the same for traj and pert
- call get_tracer_and_index(traj, 'specific_humidity',  it_qv)
- call get_tracer_and_index(traj, 'cloud_liquid_ice',   it_qi)
- call get_tracer_and_index(traj, 'cloud_liquid_water', it_ql)
+ call get_tracer_index(traj, 'specific_humidity',  it_qv)
+ call get_tracer_index(traj, 'cloud_liquid_ice',   it_qi)
+ call get_tracer_index(traj, 'cloud_liquid_water', it_ql)
 
  pert%tracers(isc:iec,jsc:jec,:,it_qv) = real(lpert%qvp(1:im,1:jm,:),kind_real)
  pert%tracers(isc:iec,jsc:jec,:,it_qi) = real(lpert%qilsp(1:im,1:jm,:) + lpert%qicnp(1:im,1:jm,:),kind_real)
@@ -563,9 +563,9 @@ subroutine step_ad(self,conf,traj,pert)
  lpert%cflsp(1:im,1:jm,:) = 0.0_8
  lpert%cfcnp(1:im,1:jm,:) = dble(pert%cfcn(isc:iec,jsc:jec,:))
 
- call get_tracer_and_index(traj, 'specific_humidity', it_qv)
- call get_tracer_and_index(traj, 'cloud_liquid_ice', it_qi)
- call get_tracer_and_index(traj, 'cloud_liquid_water', it_ql)
+ call get_tracer_index(traj, 'specific_humidity', it_qv)
+ call get_tracer_index(traj, 'cloud_liquid_ice', it_qi)
+ call get_tracer_index(traj, 'cloud_liquid_water', it_ql)
  lpert%qvp(1:im,1:jm,:)   = dble(pert%tracers(isc:iec,jsc:jec,:,it_qv))
  lpert%qilsp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:,it_qi))
  lpert%qicnp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:,it_qi))
@@ -631,9 +631,9 @@ subroutine step_ad(self,conf,traj,pert)
  pert%v   (isc:iec,jsc:jec,:) = real(lpert%vp (1:im,1:jm,:),kind_real)
  pert%t   (isc:iec,jsc:jec,:) = real(lpert%ptp(1:im,1:jm,:) * p00**kappa,kind_real) / ltraj%pk(1:im,1:jm,:)
 
- call get_tracer_and_index(traj, 'specific_humidity', it_qv)
- call get_tracer_and_index(traj, 'cloud_liquid_ice', it_qi)
- call get_tracer_and_index(traj, 'cloud_liquid_water', it_ql)
+ call get_tracer_index(traj, 'specific_humidity', it_qv)
+ call get_tracer_index(traj, 'cloud_liquid_ice', it_qi)
+ call get_tracer_index(traj, 'cloud_liquid_water', it_ql)
  pert%tracers  (isc:iec,jsc:jec,:,it_qv) = real(lpert%qvp(1:im,1:jm,:),kind_real)
  pert%tracers  (isc:iec,jsc:jec,:,it_qi) = real(lpert%qilsp(1:im,1:jm,:)*ltraj%ilsf(1:im,1:jm,:) + &
                                                 lpert%qicnp(1:im,1:jm,:)*ltraj%icnf(1:im,1:jm,:),kind_real)
@@ -740,7 +740,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  TEMP              = ltraj%PTT*PK
 
  !Some moist vars
- call get_tracer_and_index(traj, 'specific_humidity', i_qv)
+ call get_tracer_index(traj, 'specific_humidity', i_qv)
 
 
  ltraj%qvt(1:im,1:jm,:) = dble(traj%tracers(isc:iec,jsc:jec,:,i_qv))

@@ -407,7 +407,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  p_ustar  (1:,1:) => traj%USTAR
  p_bstar  (1:,1:) => traj%BSTAR
 
- call get_tracer_and_index(traj, 'specific_humidity', it_qv)
+ call get_tracer_index(traj, 'specific_humidity', it_qv)
  p_qv     (1:,1:,1:) => traj%tracers(:,:,:,it_qv)
 
  !Compute pressures from delp
@@ -421,8 +421,8 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
 
  !Calculate total cloud ice and liquid trajectory
  if (conf%do_phy_mst == 0) then
-    call get_tracer_and_index(traj, 'cloud_liquid_ice', it_qi )
-    call get_tracer_and_index(traj, 'cloud_liquid_water', it_ql )
+    call get_tracer_index(traj, 'cloud_liquid_ice', it_qi )
+    call get_tracer_index(traj, 'cloud_liquid_water', it_ql )
     QIT1(1:im,1:jm,:) = traj%tracers(isc:iec,jsc:jec,:,it_qi)
     QLT1(1:im,1:jm,:) = traj%tracers(isc:iec,jsc:jec,:,it_ql)
  else

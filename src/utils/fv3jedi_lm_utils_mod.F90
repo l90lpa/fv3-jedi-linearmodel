@@ -8,7 +8,7 @@ private
 
 public :: fv3jedi_lm_conf, fv3jedi_lm_pert, fv3jedi_lm_traj
 public :: allocate_pert, deallocate_pert
-public :: allocate_traj, deallocate_traj, get_tracer_and_index
+public :: allocate_traj, deallocate_traj, get_tracer_index
 
 !> Fortran derived type to hold the linearized model configuration
 type :: fv3jedi_lm_conf
@@ -345,7 +345,7 @@ endsubroutine compute_pressures_r8
 
 
 ! ------------------------------------------------------------------------------
-subroutine get_tracer_and_index(traj, tracer_name, index)
+subroutine get_tracer_index(traj, tracer_name, index)
 
   type(fv3jedi_lm_traj), intent(in) :: traj
   character(len=*), intent(in) :: tracer_name
@@ -354,10 +354,11 @@ subroutine get_tracer_and_index(traj, tracer_name, index)
   do t = 1, size(traj%tracer_names)
     if (trim(traj%tracer_names(t)) == trim(tracer_name)) then
       index = t
+      exit
     end if
   end do
 
-endsubroutine get_tracer_and_index
+endsubroutine get_tracer_index
 
 
 end module fv3jedi_lm_utils_mod
