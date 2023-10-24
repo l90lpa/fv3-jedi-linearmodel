@@ -38,7 +38,7 @@ type local_traj_moist
   integer, allocatable, dimension(:,:)   :: SEEDRAS
   real(8), allocatable, dimension(:,:)   :: CO_AUTO
   integer, allocatable, dimension(:,:)   :: DOCONVEC
-  real(8), allocatable, dimension(:,:,:) :: WGT0, WGT1  
+  real(8), allocatable, dimension(:,:,:) :: WGT0, WGT1
   real(8), allocatable, dimension(:,:,:) :: QILST, QLLST, QICNT, QLCNT
   real(8), allocatable, dimension(:,:,:) :: CFLST, CFCNT
   real(8), allocatable, dimension(:,:,:) :: ILSF, ICNF, LLSF, LCNF
@@ -47,7 +47,7 @@ endtype local_traj_moist
 
 !> Local perturbation objects
 type local_pert_moist
-  real(8), allocatable, dimension(:,:,:) :: UP, VP, PTP, QVP            
+  real(8), allocatable, dimension(:,:,:) :: UP, VP, PTP, QVP
   real(8), allocatable, dimension(:,:,:) :: CNV_DQLDTP, CNV_MFDP, CNV_PRC3P, CNV_UPDFP
   real(8), allocatable, dimension(:,:,:) :: QILSP, QLLSP, QICNP, QLCNP
   real(8), allocatable, dimension(:,:,:) :: CFLSP, CFCNP
@@ -55,7 +55,7 @@ endtype local_pert_moist
 
 !> Local constants objects
 type local_cnst_moist
-  integer :: ICMIN 
+  integer :: ICMIN
   real(8), allocatable, dimension(:) :: ESTBLX, SIGE
   real(8) :: RASPARAMS(25),  CLOUDPARAMS (57)
   real(8) :: MAPL8_CP, MAPL8_ALHL, MAPL8_GRAV, MAPL8_P00, MAPL8_KAPPA
@@ -124,20 +124,20 @@ subroutine create(self,conf)
  self%lcnst%RASPARAMS( 5) = 1800.
  self%lcnst%RASPARAMS( 6) = 43200.0
  self%lcnst%RASPARAMS( 7) = -300. !RASNCL, CONTROLS FINDDTLS, USE OF RANDOM NUMBER
- self%lcnst%RASPARAMS( 8) = 4.0 
- self%lcnst%RASPARAMS( 9) = 0.0 
+ self%lcnst%RASPARAMS( 8) = 4.0
+ self%lcnst%RASPARAMS( 9) = 0.0
  self%lcnst%RASPARAMS(10) = 200.
  self%lcnst%RASPARAMS(11) = 7.5e-4
- self%lcnst%RASPARAMS(12) = 1.0 
- self%lcnst%RASPARAMS(13) =-1.0 
- self%lcnst%RASPARAMS(14) = 1.3 
- self%lcnst%RASPARAMS(15) = 1.3 
+ self%lcnst%RASPARAMS(12) = 1.0
+ self%lcnst%RASPARAMS(13) =-1.0
+ self%lcnst%RASPARAMS(14) = 1.3
+ self%lcnst%RASPARAMS(15) = 1.3
  self%lcnst%RASPARAMS(16) = 263.
- self%lcnst%RASPARAMS(17) = 0.5 
- self%lcnst%RASPARAMS(18) = 1.0 
- self%lcnst%RASPARAMS(19) = 0.0 
- self%lcnst%RASPARAMS(20) = 0.1 
- self%lcnst%RASPARAMS(21) = 0.8 
+ self%lcnst%RASPARAMS(17) = 0.5
+ self%lcnst%RASPARAMS(18) = 1.0
+ self%lcnst%RASPARAMS(19) = 0.0
+ self%lcnst%RASPARAMS(20) = 0.1
+ self%lcnst%RASPARAMS(21) = 0.8
  self%lcnst%RASPARAMS(22) = 1.0
  if( imsize .le. 200                      ) self%lcnst%RASPARAMS(23) = 4000.0
  if( imsize .gt. 200 .and. imsize.le.400  ) self%lcnst%RASPARAMS(23) = 2000.0
@@ -149,46 +149,46 @@ subroutine create(self,conf)
 
  !SET SBAC PARAMETERS
  self%lcnst%CLOUDPARAMS( 1) = 10.0
- self%lcnst%CLOUDPARAMS( 2) = 4.0 
+ self%lcnst%CLOUDPARAMS( 2) = 4.0
  self%lcnst%CLOUDPARAMS( 3) = 4.0
  self%lcnst%CLOUDPARAMS( 4) = 1.0
  self%lcnst%CLOUDPARAMS( 5) = 2.0e-3
  self%lcnst%CLOUDPARAMS( 6) = 8.0e-4
- self%lcnst%CLOUDPARAMS( 7) = 2.0   
- self%lcnst%CLOUDPARAMS( 8) = 1.0  
- self%lcnst%CLOUDPARAMS( 9) = -1.0  
- self%lcnst%CLOUDPARAMS(10) = 0.0   
- self%lcnst%CLOUDPARAMS(11) = 1.3   
+ self%lcnst%CLOUDPARAMS( 7) = 2.0
+ self%lcnst%CLOUDPARAMS( 8) = 1.0
+ self%lcnst%CLOUDPARAMS( 9) = -1.0
+ self%lcnst%CLOUDPARAMS(10) = 0.0
+ self%lcnst%CLOUDPARAMS(11) = 1.3
  self%lcnst%CLOUDPARAMS(12) = 1.0e-9
  self%lcnst%CLOUDPARAMS(13) = 3.3e-4
- self%lcnst%CLOUDPARAMS(14) = 20.   
- self%lcnst%CLOUDPARAMS(15) = 4.8   
- self%lcnst%CLOUDPARAMS(16) = 4.8   
- self%lcnst%CLOUDPARAMS(17) = 230.  
- self%lcnst%CLOUDPARAMS(18) = 1.0   
- self%lcnst%CLOUDPARAMS(19) = 1.0   
- self%lcnst%CLOUDPARAMS(20) = 230.  
+ self%lcnst%CLOUDPARAMS(14) = 20.
+ self%lcnst%CLOUDPARAMS(15) = 4.8
+ self%lcnst%CLOUDPARAMS(16) = 4.8
+ self%lcnst%CLOUDPARAMS(17) = 230.
+ self%lcnst%CLOUDPARAMS(18) = 1.0
+ self%lcnst%CLOUDPARAMS(19) = 1.0
+ self%lcnst%CLOUDPARAMS(20) = 230.
  self%lcnst%CLOUDPARAMS(21) = 14400.
- self%lcnst%CLOUDPARAMS(22) = 50.   
- self%lcnst%CLOUDPARAMS(23) = 0.01  
- self%lcnst%CLOUDPARAMS(24) = 0.1   
- self%lcnst%CLOUDPARAMS(25) = 200.  
- self%lcnst%CLOUDPARAMS(26) = 0.    
- self%lcnst%CLOUDPARAMS(27) = 0.    
- self%lcnst%CLOUDPARAMS(28) = 0.5   
+ self%lcnst%CLOUDPARAMS(22) = 50.
+ self%lcnst%CLOUDPARAMS(23) = 0.01
+ self%lcnst%CLOUDPARAMS(24) = 0.1
+ self%lcnst%CLOUDPARAMS(25) = 200.
+ self%lcnst%CLOUDPARAMS(26) = 0.
+ self%lcnst%CLOUDPARAMS(27) = 0.
+ self%lcnst%CLOUDPARAMS(28) = 0.5
  self%lcnst%CLOUDPARAMS(29) = 0.5
- self%lcnst%CLOUDPARAMS(30) = 2000. 
- self%lcnst%CLOUDPARAMS(31) = 0.8   
- self%lcnst%CLOUDPARAMS(32) = 0.5   
- self%lcnst%CLOUDPARAMS(33) = -40.0 
- self%lcnst%CLOUDPARAMS(34) = 1.0 
- self%lcnst%CLOUDPARAMS(35) = 4.0 
- self%lcnst%CLOUDPARAMS(36) = 0.0 
- self%lcnst%CLOUDPARAMS(37) = 0.0 
- self%lcnst%CLOUDPARAMS(38) = 0.0 
+ self%lcnst%CLOUDPARAMS(30) = 2000.
+ self%lcnst%CLOUDPARAMS(31) = 0.8
+ self%lcnst%CLOUDPARAMS(32) = 0.5
+ self%lcnst%CLOUDPARAMS(33) = -40.0
+ self%lcnst%CLOUDPARAMS(34) = 1.0
+ self%lcnst%CLOUDPARAMS(35) = 4.0
+ self%lcnst%CLOUDPARAMS(36) = 0.0
+ self%lcnst%CLOUDPARAMS(37) = 0.0
+ self%lcnst%CLOUDPARAMS(38) = 0.0
  self%lcnst%CLOUDPARAMS(39) = 1.0e-3
  self%lcnst%CLOUDPARAMS(40) = 8.0e-4
- self%lcnst%CLOUDPARAMS(41) = 1.0   
+ self%lcnst%CLOUDPARAMS(41) = 1.0
  if( imsize .le. 200                      ) self%lcnst%CLOUDPARAMS(42) = 0.80
  if( imsize .gt. 200 .and. imsize.le.400  ) self%lcnst%CLOUDPARAMS(42) = 0.90
  if( imsize .gt. 400 .and. imsize.le.800  ) self%lcnst%CLOUDPARAMS(42) = 0.93
@@ -196,8 +196,8 @@ subroutine create(self,conf)
  if( imsize .gt. 1600                     ) self%lcnst%CLOUDPARAMS(42) = 0.97
  self%lcnst%CLOUDPARAMS(43) = 1.0
  self%lcnst%CLOUDPARAMS(44) = 0.0
- self%lcnst%CLOUDPARAMS(45) = 750.0 
- self%lcnst%CLOUDPARAMS(46) = self%lcnst%CLOUDPARAMS(42)+0.01 
+ self%lcnst%CLOUDPARAMS(45) = 750.0
+ self%lcnst%CLOUDPARAMS(46) = self%lcnst%CLOUDPARAMS(42)+0.01
  self%lcnst%CLOUDPARAMS(47) = 1.0
  self%lcnst%CLOUDPARAMS(48) = 1.0
  self%lcnst%CLOUDPARAMS(49) = 0.0
@@ -207,15 +207,15 @@ subroutine create(self,conf)
  self%lcnst%CLOUDPARAMS(53) = 21.e-6
  self%lcnst%CLOUDPARAMS(54) = 40.e-6
  self%lcnst%CLOUDPARAMS(55) = 30.e-6
- self%lcnst%CLOUDPARAMS(56) = 1.0  
- self%lcnst%CLOUDPARAMS(57) = 1.0  
+ self%lcnst%CLOUDPARAMS(56) = 1.0
+ self%lcnst%CLOUDPARAMS(57) = 1.0
 
  if (conf%saveltraj) then
    allocate(self%ltraj(conf%nt))
    do n = 1,conf%nt
      call allocate_ltraj(conf%im,conf%jm,conf%lm,self%ltraj(n))
    enddo
- else 
+ else
    allocate(self%ltraj(1))
    call allocate_ltraj(conf%im,conf%jm,conf%lm,self%ltraj(1))
  endif
@@ -288,6 +288,7 @@ subroutine step_nl(self,conf,traj)
  type(fv3jedi_lm_conf),                 intent(in)   :: conf
 
  integer :: i,j,im,jm,lm,isc,iec,jsc,jec
+ integer :: it_qv,it_qi,it_ql
  type(local_traj_moist), pointer :: ltraj
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lcnst
@@ -361,7 +362,7 @@ subroutine step_nl(self,conf,traj)
 
    enddo
  enddo
- 
+
  !Call the tangent linear cloud scheme.
  call cloud_driver_d ( conf%dt, conf%im, conf%jm, conf%lm,                                         &
                        ltraj%ptt_c, lpert%ptp,                                                     &
@@ -382,10 +383,14 @@ subroutine step_nl(self,conf,traj)
  traj%u(isc:iec,jsc:jec,:) = real(ltraj%ut(1:im,1:jm,:),kind_real)
  traj%v(isc:iec,jsc:jec,:) = real(ltraj%vt(1:im,1:jm,:),kind_real)
  traj%t(isc:iec,jsc:jec,:) = real(ltraj%pk(1:im,1:jm,:) * ltraj%PTT(1:im,1:jm,:) / p00**kappa,kind_real)
- traj%qv(isc:iec,jsc:jec,:) = real(ltraj%qvt(1:im,1:jm,:),kind_real)
- traj%qi(isc:iec,jsc:jec,:) = real(ltraj%qilst(1:im,1:jm,:) + ltraj%qicnt(1:im,1:jm,:),kind_real)
- traj%ql(isc:iec,jsc:jec,:) = real(ltraj%qllst(1:im,1:jm,:) + ltraj%qlcnt(1:im,1:jm,:),kind_real)
  traj%cfcn(isc:iec,jsc:jec,:) = real(ltraj%cfcnt(1:im,1:jm,:),kind_real)
+
+ call get_tracer_index(traj, 'specific_humidity', it_qv)
+ call get_tracer_index(traj, 'cloud_liquid_ice', it_qi)
+ call get_tracer_index(traj, 'cloud_liquid_water', it_ql)
+ traj%tracers(isc:iec,jsc:jec,:,it_qv) = real(ltraj%qvt(1:im,1:jm,:),kind_real)
+ traj%tracers(isc:iec,jsc:jec,:,it_qi) = real(ltraj%qilst(1:im,1:jm,:) + ltraj%qicnt(1:im,1:jm,:),kind_real)
+ traj%tracers(isc:iec,jsc:jec,:,it_ql) = real(ltraj%qllst(1:im,1:jm,:) + ltraj%qlcnt(1:im,1:jm,:),kind_real)
 
 endsubroutine step_nl
 
@@ -401,6 +406,7 @@ subroutine step_tl(self,conf,traj,pert)
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
  integer :: i,j,im,jm,lm,isc,iec,jsc,jec
+ integer :: it_qv,it_qi,it_ql
  type(local_traj_moist), pointer :: ltraj
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lcnst
@@ -429,11 +435,16 @@ subroutine step_tl(self,conf,traj,pert)
  lpert%up(1:im,1:jm,:)    = dble(pert%u (isc:iec,jsc:jec,:))
  lpert%vp(1:im,1:jm,:)    = dble(pert%v (isc:iec,jsc:jec,:))
  lpert%ptp(1:im,1:jm,:)   = dble(pert%t (isc:iec,jsc:jec,:)) * p00**kappa / ltraj%pk(1:im,1:jm,:)
- lpert%qvp(1:im,1:jm,:)   = dble(pert%qv(isc:iec,jsc:jec,:))
- lpert%qilsp(1:im,1:jm,:) = dble(pert%qi(isc:iec,jsc:jec,:)) * ltraj%ilsf(1:im,1:jm,:)
- lpert%qicnp(1:im,1:jm,:) = dble(pert%qi(isc:iec,jsc:jec,:)) * ltraj%icnf(1:im,1:jm,:)
- lpert%qllsp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:)) * ltraj%llsf(1:im,1:jm,:)
- lpert%qlcnp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:)) * ltraj%lcnf(1:im,1:jm,:)
+
+ call get_tracer_index(traj, 'specific_humidity', it_qv)
+ call get_tracer_index(traj, 'cloud_liquid_ice', it_qi)
+ call get_tracer_index(traj, 'cloud_liquid_water', it_ql)
+
+ lpert%qvp(1:im,1:jm,:)   = dble(pert%tracers(isc:iec,jsc:jec,:,it_qv))
+ lpert%qilsp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:,it_qi)) * ltraj%ilsf(1:im,1:jm,:)
+ lpert%qicnp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:,it_qi)) * ltraj%icnf(1:im,1:jm,:)
+ lpert%qllsp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:,it_ql)) * ltraj%llsf(1:im,1:jm,:)
+ lpert%qlcnp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:,it_ql)) * ltraj%lcnf(1:im,1:jm,:)
  lpert%cflsp(1:im,1:jm,:) = 0.0_8
  lpert%cfcnp(1:im,1:jm,:) = dble(pert%cfcn(isc:iec,jsc:jec,:))
 
@@ -474,7 +485,7 @@ subroutine step_tl(self,conf,traj,pert)
 
    enddo
  enddo
- 
+
  !Call the tangent linear cloud scheme.
  call cloud_driver_d ( conf%dt, conf%im, conf%jm, conf%lm,                                         &
                        ltraj%ptt_c, lpert%ptp,                                                     &
@@ -495,10 +506,16 @@ subroutine step_tl(self,conf,traj,pert)
  pert%u(isc:iec,jsc:jec,:)    = real(lpert%up (1:im,1:jm,:),kind_real)
  pert%v(isc:iec,jsc:jec,:)    = real(lpert%vp (1:im,1:jm,:),kind_real)
  pert%t(isc:iec,jsc:jec,:)    = real(lpert%ptp(1:im,1:jm,:) * ltraj%pk(1:im,1:jm,:) / p00**kappa,kind_real)
- pert%qv(isc:iec,jsc:jec,:)   = real(lpert%qvp(1:im,1:jm,:),kind_real)
- pert%qi(isc:iec,jsc:jec,:)   = real(lpert%qilsp(1:im,1:jm,:) + lpert%qicnp(1:im,1:jm,:),kind_real)
- pert%ql(isc:iec,jsc:jec,:)   = real(lpert%qllsp(1:im,1:jm,:) + lpert%qlcnp(1:im,1:jm,:),kind_real)
  pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
+
+ ! order of tracers is the same for traj and pert
+ call get_tracer_index(traj, 'specific_humidity',  it_qv)
+ call get_tracer_index(traj, 'cloud_liquid_ice',   it_qi)
+ call get_tracer_index(traj, 'cloud_liquid_water', it_ql)
+
+ pert%tracers(isc:iec,jsc:jec,:,it_qv) = real(lpert%qvp(1:im,1:jm,:),kind_real)
+ pert%tracers(isc:iec,jsc:jec,:,it_qi) = real(lpert%qilsp(1:im,1:jm,:) + lpert%qicnp(1:im,1:jm,:),kind_real)
+ pert%tracers(isc:iec,jsc:jec,:,it_ql) = real(lpert%qllsp(1:im,1:jm,:) + lpert%qlcnp(1:im,1:jm,:),kind_real)
 
 endsubroutine step_tl
 
@@ -514,6 +531,7 @@ subroutine step_ad(self,conf,traj,pert)
  type(fv3jedi_lm_pert), intent(inout) :: pert
 
  integer :: i,j,im,jm,lm,isc,iec,jsc,jec
+ integer :: it_qv,it_qi,it_ql
  type(local_traj_moist), pointer :: ltraj
  type(local_pert_moist), pointer :: lpert
  type(local_cnst_moist), pointer :: lcnst
@@ -542,13 +560,17 @@ subroutine step_ad(self,conf,traj,pert)
  lpert%up(1:im,1:jm,:)    = dble(pert%u (isc:iec,jsc:jec,:))
  lpert%vp(1:im,1:jm,:)    = dble(pert%v (isc:iec,jsc:jec,:))
  lpert%ptp(1:im,1:jm,:)   = dble(pert%t (isc:iec,jsc:jec,:)) * ltraj%pk(1:im,1:jm,:) / p00**kappa
- lpert%qvp(1:im,1:jm,:)   = dble(pert%qv(isc:iec,jsc:jec,:))
- lpert%qilsp(1:im,1:jm,:) = dble(pert%qi(isc:iec,jsc:jec,:))
- lpert%qicnp(1:im,1:jm,:) = dble(pert%qi(isc:iec,jsc:jec,:))
- lpert%qllsp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:))
- lpert%qlcnp(1:im,1:jm,:) = dble(pert%ql(isc:iec,jsc:jec,:))
  lpert%cflsp(1:im,1:jm,:) = 0.0_8
  lpert%cfcnp(1:im,1:jm,:) = dble(pert%cfcn(isc:iec,jsc:jec,:))
+
+ call get_tracer_index(traj, 'specific_humidity', it_qv)
+ call get_tracer_index(traj, 'cloud_liquid_ice', it_qi)
+ call get_tracer_index(traj, 'cloud_liquid_water', it_ql)
+ lpert%qvp(1:im,1:jm,:)   = dble(pert%tracers(isc:iec,jsc:jec,:,it_qv))
+ lpert%qilsp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:,it_qi))
+ lpert%qicnp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:,it_qi))
+ lpert%qllsp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:, it_ql))
+ lpert%qlcnp(1:im,1:jm,:) = dble(pert%tracers(isc:iec,jsc:jec,:, it_ql))
 
  ltraj%cnv_dqldtt  = 0.0_8
  ltraj%cnv_mfdt    = 0.0_8
@@ -603,16 +625,20 @@ subroutine step_ad(self,conf,traj,pert)
 
    enddo
  enddo
- 
+
  !Back to pert
  pert%u   (isc:iec,jsc:jec,:) = real(lpert%up (1:im,1:jm,:),kind_real)
  pert%v   (isc:iec,jsc:jec,:) = real(lpert%vp (1:im,1:jm,:),kind_real)
  pert%t   (isc:iec,jsc:jec,:) = real(lpert%ptp(1:im,1:jm,:) * p00**kappa,kind_real) / ltraj%pk(1:im,1:jm,:)
- pert%qv  (isc:iec,jsc:jec,:) = real(lpert%qvp(1:im,1:jm,:),kind_real)
- pert%qi  (isc:iec,jsc:jec,:) = real(lpert%qilsp(1:im,1:jm,:)*ltraj%ilsf(1:im,1:jm,:) + &
-                                     lpert%qicnp(1:im,1:jm,:)*ltraj%icnf(1:im,1:jm,:),kind_real)
- pert%ql  (isc:iec,jsc:jec,:) = real(lpert%qllsp(1:im,1:jm,:)*ltraj%llsf(1:im,1:jm,:) + &
-                                     lpert%qlcnp(1:im,1:jm,:)*ltraj%lcnf(1:im,1:jm,:),kind_real)
+
+ call get_tracer_index(traj, 'specific_humidity', it_qv)
+ call get_tracer_index(traj, 'cloud_liquid_ice', it_qi)
+ call get_tracer_index(traj, 'cloud_liquid_water', it_ql)
+ pert%tracers  (isc:iec,jsc:jec,:,it_qv) = real(lpert%qvp(1:im,1:jm,:),kind_real)
+ pert%tracers  (isc:iec,jsc:jec,:,it_qi) = real(lpert%qilsp(1:im,1:jm,:)*ltraj%ilsf(1:im,1:jm,:) + &
+                                                lpert%qicnp(1:im,1:jm,:)*ltraj%icnf(1:im,1:jm,:),kind_real)
+ pert%tracers  (isc:iec,jsc:jec,:,it_ql) = real(lpert%qllsp(1:im,1:jm,:)*ltraj%llsf(1:im,1:jm,:) + &
+                                                lpert%qlcnp(1:im,1:jm,:)*ltraj%lcnf(1:im,1:jm,:),kind_real)
  pert%cfcn(isc:iec,jsc:jec,:) = real(lpert%cfcnp(1:im,1:jm,:),kind_real)
 
 endsubroutine step_ad
@@ -636,10 +662,10 @@ subroutine delete(self,conf)
    do n = 1,conf%nt
      call deallocate_ltraj(self%ltraj(n))
    enddo
- else 
+ else
    call deallocate_ltraj(self%ltraj(1))
  endif
- 
+
  deallocate(self%ltraj)
 
 endsubroutine delete
@@ -660,13 +686,13 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  real(8), allocatable, dimension(:,:,:) :: HEAT
  integer, allocatable, dimension(:,:)   :: CTOP
  real(8), allocatable, dimension(:,:)   :: sumHEAT
- real(8), allocatable, dimension(:,:)   :: JACOBIAN 
+ real(8), allocatable, dimension(:,:)   :: JACOBIAN
  real(8), allocatable, dimension(:)     :: PT_pert, QV_pert
  real(8), allocatable, dimension(:)     :: PT_pert_in, QV_pert_in
  real(8), allocatable, dimension(:)     :: H_pert, M_pert
  real(8), allocatable, dimension(:,:,:) :: fQi
 
- integer :: i,j,l,im,jm,lm,isc,iec,jsc,jec
+ integer :: i,j,l,im,jm,lm,isc,iec,jsc,jec,i_qv
  real(8), parameter :: PMIN_DET = 3000.0, AUTOC_CN_OCN  = 2.5e-3, AUTOC_CN_LAND = AUTOC_CN_OCN
  integer :: maxcondep
 
@@ -690,7 +716,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  allocate(sumheat(im,jm)  )
  allocate(jacobian(2*lm,2))
  allocate(h_pert(lm)      )
- allocate(m_pert(lm)      ) 
+ allocate(m_pert(lm)      )
  allocate(pt_pert(lm)     )
  allocate(qv_pert(lm)     )
  allocate(pt_pert_in(lm)  )
@@ -714,7 +740,10 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  TEMP              = ltraj%PTT*PK
 
  !Some moist vars
- ltraj%qvt(1:im,1:jm,:) = dble(traj%qv(isc:iec,jsc:jec,:))
+ call get_tracer_index(traj, 'specific_humidity', i_qv)
+
+
+ ltraj%qvt(1:im,1:jm,:) = dble(traj%tracers(isc:iec,jsc:jec,:,i_qv))
  ltraj%cflst  = 0.0_8
 
  ltraj%cfcnt(1:im,1:jm,:)  = dble(traj%cfcn(isc:iec,jsc:jec,:))
@@ -745,14 +774,15 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  !Strapping levels
  DO I = 1,IM
     DO J = 1,JM
-       ltraj%WGT0(I,J,:)                  = 0.0_8
-       ltraj%WGT0(I,J,ltraj%KCBL(I,J):LM) = 1.0_8
-       ltraj%WGT1(I,J,:)                  = 0.0_8
-       ltraj%WGT1(I,J,ltraj%KCBL(I,J):LM) = 1.0_8
+
+       ltraj%WGT0(I,J,:)                    = 0.0_8
+       ltraj%WGT0(I,J,ltraj%KCBL(I,J):LM)   = 1.0_8
+       ltraj%WGT1(I,J,:)                    = 0.0_8
+       ltraj%WGT1(I,J,ltraj%KCBL(I,J):LM)   = 1.0_8
     ENDDO
  ENDDO
 
- where (ltraj%FRLAND<0.1_8) 
+ where (ltraj%FRLAND<0.1_8)
     ltraj%CO_AUTO = AUTOC_CN_OCN   ! ocean value
  elsewhere
     ltraj%CO_AUTO = AUTOC_CN_LAND  ! land value
@@ -772,7 +802,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
             ltraj%CNV_DQLDTT_C, ltraj%CNV_MFDT_C,                      &
             ltraj%CNV_PRC3T_C, ltraj%CNV_UPDFT_C,                      &
             lcnst%RASPARAMS, lcnst%ESTBLX                              )
-   
+
  ! Do the filtering to determine whether linear convection should be called
  ! ------------------------------------------------------------------------
  !Figure out whether or not each convective profile should be linearized.
@@ -784,7 +814,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  HEAT = 0.0
  CTOP = LM
  sumHEAT = 0.0
- 
+
  !Be more lenient on profiles let in for 4DVAR, less likely to encounter problems
  !at shorter lead times and gives more realistic low level cloud perturbations.
  if (conf%do_phy_mst == 1) then
@@ -792,13 +822,13 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  elseif (conf%do_phy_mst == 2) then
     MAXCONDEP = 10
  endif
- 
+
  DO I = 1,IM
     DO J = 1,JM
- 
+
        !Compute the heating rate.
        HEAT(I,J,:) = (ltraj%PTT_C(I,J,:) - ltraj%PTT(I,J,:))/conf%DT
- 
+
        !Starting at the top scan downwards to look for nonzero heating rate,
        !record index of highest level convection reaches (ignoring v.small heating rate)
        DO L = 1,LM
@@ -807,31 +837,31 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
              exit
           ENDIF
        ENDDO
-       
+
        !Compute sort of integral of the heating rate.
        if ( (CTOP(I,J) .ne. LM) .and. (ltraj%KCBL(I,J) - CTOP(I,J) > 0) ) then
           sumHEAT(I,J) = (   sum(abs(HEAT(I,J,CTOP(I,J):ltraj%KCBL(I,J)-1))) &
                                  - maxval(abs(HEAT(I,J,CTOP(I,J):ltraj%KCBL(I,J)-1)),1) ) &
                                  / ( ltraj%KCBL(I,J) - CTOP(I,J)  )
        endif
- 
+
        !Compare `integral` to maximum absolute heating rate
        IF ( ltraj%KCBL(I,J) - CTOP(I,J) >= MAXCONDEP ) THEN
           IF (sumHEAT(I,J) / maxval(abs(HEAT(I,J,1:ltraj%KCBL(I,J)-1)),1) > 0.125 ) then
              ltraj%DOCONVEC(I,J) = 1
           endif
        endif
- 
+
        !Compute two columns of the Jacobian to check for steep gradients
        !This prevents instability and floating point issues that can cause failure of the TLM/ADJ dot prod test
        IF ( ltraj%DOCONVEC(I,J) == 1 ) THEN
           call jacobian_filter_tlm
        ENDIF
- 
+
     enddo
  enddo
-   
- !Prepare the inputs for the cloud scheme 
+
+ !Prepare the inputs for the cloud scheme
  !---------------------------------------
  !Compute the ice fraction for each grid box
  DO i = 1,IM
@@ -841,13 +871,13 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
        enddo
     enddo
  enddo
- 
+
  !Split the input large scale and convective cloud into ice and liquid parts.
  ltraj%QILST(1:im,1:jm,:) = dble(traj%QLS(isc:iec,jsc:jec,:)) * fQi(1:im,1:jm,:)
  ltraj%QLLST(1:im,1:jm,:) = dble(traj%QLS(isc:iec,jsc:jec,:)) * (1-fQi(1:im,1:jm,:))
  ltraj%QICNT(1:im,1:jm,:) = dble(traj%QCN(isc:iec,jsc:jec,:)) * fQi(1:im,1:jm,:)
  ltraj%QLCNT(1:im,1:jm,:) = dble(traj%QCN(isc:iec,jsc:jec,:)) * (1-fQi(1:im,1:jm,:))
- 
+
  !Split the perturbations for total cloud water and ice into the convective and large scale parts.
  !Spilitting is based on fraction of total cloud ice/water that is attributed to large scale and anvil
  !in the trajectory at this time step. Note that we don't really need to protect for small values of
@@ -859,7 +889,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
  DO I = 1,IM
     DO J = 1,JM
        DO L = 1,LM
- 
+
           if ( ltraj%QILST(i,j,l) + ltraj%QICNT(i,j,l) .gt. 0.0_8 ) then
              ltraj%ILSF(i,j,l) = ltraj%QILST(i,j,l) / ( ltraj%QILST(i,j,l) + ltraj%QICNT(i,j,l) )
              ltraj%ICNF(i,j,l) = ltraj%QICNT(i,j,l) / ( ltraj%QILST(i,j,l) + ltraj%QICNT(i,j,l) )
@@ -868,11 +898,11 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
              ltraj%LLSF(i,j,l) = ltraj%QLLST(i,j,l) / ( ltraj%QLLST(i,j,l) + ltraj%QLCNT(i,j,l) )
              ltraj%LCNF(i,j,l) = ltraj%QLCNT(i,j,l) / ( ltraj%QLLST(i,j,l) + ltraj%QLCNT(i,j,l) )
           endif
- 
+
        enddo
     enddo
- enddo 
-   
+ enddo
+
  deallocate(plo)
  deallocate(pk)
  deallocate(temp)
@@ -900,30 +930,30 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
   !columns are over a certain value, implying too steep gradients.
 
   JACOBIAN = 0.0_8
-  
+
   DO L = 1,1 !Perturb level by level
- 
+
      PT_pert = 0.0_8
      QV_pert = 0.0_8
- 
+
      if (L == 1) then
- 
+
         PT_pert(ltraj%KCBL(I,J)) = 1.0_8
- 
+
      elseif (L == 2) then
- 
+
         if (ltraj%KCBL(I,J) == lm) then
           QV_pert(ltraj%KCBL(I,J)) = 1.0_8
         else
            QV_pert(ltraj%KCBL(I,J) + 1) = 1.0_8
         endif
- 
+
      endif
- 
+
      !Save precall prognostic variables
      PT_pert_in = PT_pert
      QV_pert_in = QV_pert
-         
+
      !Do nonlinear convection to create inputs trajectory for large scale adjoint
      call rase0_d ( 1, 1, lm, lcnst%icmin, conf%dt,          &
                     lcnst%mapl8_cp, lcnst%mapl8_alhl,       &
@@ -938,11 +968,11 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
                     qvt_f(i,j,:), qv_pert,                    &
                     ltraj%co_auto(i,j), ltraj%cnv_ple(i,j,:), &
                     lcnst%rasparams, lcnst%estblx           )
- 
+
      !Compute perturbation heating and moistening rates
      H_pert = (PT_pert - PT_pert_in)/conf%DT
      M_pert = (QV_pert - QV_pert_in)/conf%DT
-       
+
      !Uncomment here if just doing two columns of the Jacobian
      if (L == 1) then
         Jacobian(0*LM+1:1*LM,1) = H_pert
@@ -951,14 +981,14 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
         Jacobian(0*LM+1:1*LM,2) = H_pert
         Jacobian(1*LM+1:2*LM,2) = M_pert
      endif
- 
+
   endDO
 
   !Constants here determined so as to remove as many of the problematic points as possible.
   !The constants used in this if loop are tuned from looking at many Jacobians for many time steps. Values are choosen
-  !so as to balance between keeping the natural behahiour for as many points as possible without 
+  !so as to balance between keeping the natural behahiour for as many points as possible without
   if ( (maxval(abs(Jacobian(1:lm     ,1))) .gt. 0.00010  ) .or. &
-       (maxval(abs(Jacobian(1:lm     ,2))) .gt. 0.25     ) .or. & 
+       (maxval(abs(Jacobian(1:lm     ,2))) .gt. 0.25     ) .or. &
        (maxval(abs(Jacobian(lm+1:2*lm,1))) .gt. 1.0e-07  ) .or. &
        (maxval(abs(Jacobian(lm+1:2*lm,2))) .gt. 0.000250 ) ) then
 
@@ -968,7 +998,7 @@ subroutine set_ltraj(conf,lcnst,traj,ltraj)
 
      ltraj%doconvec(i,j) = 1
 
-  endif 
+  endif
 
  endsubroutine jacobian_filter_tlm
 
@@ -1122,5 +1152,6 @@ subroutine deallocate_lpert(lpert)
 endsubroutine deallocate_lpert
 
 ! ------------------------------------------------------------------------------
+
 
 end module fv3jedi_lm_moist_mod
