@@ -7,8 +7,9 @@ implicit none
 private
 
 public :: fv3jedi_lm_conf, fv3jedi_lm_pert, fv3jedi_lm_traj
-public :: allocate_pert, deallocate_pert
-public :: allocate_traj, deallocate_traj, get_tracer_index
+public :: allocate_pert, allocate_pert_tracers, deallocate_pert
+public :: allocate_traj, allocate_traj_tracers, deallocate_traj
+public :: get_tracer_index
 
 !> Fortran derived type to hold the linearized model configuration
 type :: fv3jedi_lm_conf
@@ -90,8 +91,9 @@ subroutine allocate_pert(pert,isc,iec,jsc,jec,npz,hydrostatic)
  allocate(pert%delp   (isc:iec, jsc:jec, npz))
  allocate(pert%cfcn   (isc:iec, jsc:jec, npz))
 
- !NB we dont allocate tracers because the number of tracers is not known. This duty belongs
- !   to the client
+ !NB We don't allocate tracers because the number of tracers may not be known when setting up the
+ !   linear model. This can be done as a later step by calling allocate_pert_tracers; this duty
+ !   belongs to the client
 
  if (.not. hydrostatic) then
    allocate(pert%w      (isc:iec, jsc:jec, npz))
@@ -99,6 +101,29 @@ subroutine allocate_pert(pert,isc,iec,jsc,jec,npz,hydrostatic)
  endif
 
 end subroutine allocate_pert
+
+! ------------------------------------------------------------------------------
+
+subroutine allocate_pert_tracers(pert,isc,iec,jsc,jec,npz,ntracers)
+
+ implicit none
+ type(fv3jedi_lm_pert), intent(inout) :: pert
+ integer,               intent(in)    :: isc, iec, jsc, jec, npz, ntracers
+
+ ! Check whether (re)allocation is needed, else skip work
+ if (allocated(pert%tracers)) then
+   if (ntracers == size(pert%tracers, 4)) return
+ end if
+
+ ! Reallocate perturbation tracer names
+ if (allocated(pert%tracer_names)) deallocate(pert%tracer_names)
+ allocate(pert%tracer_names(ntracers))
+
+ ! Reallocate perturbation tracers
+ if (allocated(pert%tracers)) deallocate(pert%tracers)
+ allocate(pert%tracers(isc:iec, jsc:jec, npz, ntracers))
+
+end subroutine allocate_pert_tracers
 
 ! ------------------------------------------------------------------------------
 
@@ -145,8 +170,9 @@ subroutine allocate_traj(traj,isc,iec,jsc,jec,npz,hydrostatic,dpm)
  allocate(traj%t      (isc:iec, jsc:jec, npz))
  allocate(traj%delp   (isc:iec, jsc:jec, npz))
 
- !NB we dont allocate tracers because the number of tracers is not known. This duty belongs
- !   to the client
+ !NB We don't allocate tracers because the number of tracers may not be known when setting up the
+ !   linear model. This can be done as a later step by calling allocate_traj_tracers; this duty
+ !   belongs to the client
 
  if (.not. hydrostatic) then
    allocate(traj%w      (isc:iec, jsc:jec, npz))
@@ -176,6 +202,29 @@ subroutine allocate_traj(traj,isc,iec,jsc,jec,npz,hydrostatic,dpm)
  allocate(traj%khu    (isc:iec, jsc:jec))
 
 end subroutine allocate_traj
+
+! ------------------------------------------------------------------------------
+
+subroutine allocate_traj_tracers(traj,isc,iec,jsc,jec,npz,ntracers)
+
+ implicit none
+ type(fv3jedi_lm_traj), intent(inout) :: traj
+ integer,               intent(in)    :: isc, iec, jsc, jec, npz, ntracers
+
+ ! Check whether (re)allocation is needed, else skip work
+ if (allocated(traj%tracers)) then
+   if (ntracers == size(traj%tracers, 4)) return
+ end if
+
+ ! Reallocate trajectory tracer names
+ if (allocated(traj%tracer_names)) deallocate(traj%tracer_names)
+ allocate(traj%tracer_names(ntracers))
+
+ ! Reallocate trajectory tracers
+ if (allocated(traj%tracers)) deallocate(traj%tracers)
+ allocate(traj%tracers(isc:iec, jsc:jec, npz, ntracers))
+
+end subroutine allocate_traj_tracers
 
 ! ------------------------------------------------------------------------------
 
