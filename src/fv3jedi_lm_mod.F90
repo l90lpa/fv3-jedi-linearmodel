@@ -25,6 +25,7 @@ type fv3jedi_lm_type
  type(fv3jedi_lm_physics_type)  :: fv3jedi_lm_physics
  contains
   procedure :: create
+  procedure :: allocate_tracers
   procedure :: init_nl
   procedure :: init_tl
   procedure :: init_ad
@@ -99,6 +100,28 @@ subroutine create(self,dt,npx,npy,npz,ptop,ak,bk)
  call allocate_pert(self%pert,self%conf%isc,self%conf%iec,self%conf%jsc,self%conf%jec,self%conf%npz,self%conf%hydrostatic)
 
 endsubroutine create
+
+! ------------------------------------------------------------------------------
+
+subroutine allocate_tracers(self, isc, iec, jsc, jec, npz, ntracers, include_pert_tracers)
+
+ implicit none
+
+ class(fv3jedi_lm_type), intent(inout) :: self
+ integer, intent(in) :: isc
+ integer, intent(in) :: iec
+ integer, intent(in) :: jsc
+ integer, intent(in) :: jec
+ integer, intent(in) :: npz
+ integer, intent(in) :: ntracers
+ logical, intent(in) :: include_pert_tracers
+
+ call allocate_traj_tracers(self%traj, isc, iec, jsc, jec, npz, ntracers)
+ if (include_pert_tracers) then
+   call allocate_pert_tracers(self%pert, isc, iec, jsc, jec, npz, ntracers)
+ end if
+
+endsubroutine allocate_tracers
 
 ! ------------------------------------------------------------------------------
 

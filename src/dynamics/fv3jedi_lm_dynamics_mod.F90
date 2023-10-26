@@ -5,7 +5,7 @@ use fv3jedi_lm_kinds_mod
 use fv3jedi_lm_const_mod
 
 use fms_mod,         only: set_domain, nullify_domain
-use mpp_mod,         only: mpp_pe, mpp_root_pe
+use mpp_mod,         only: mpp_pe, mpp_root_pe, mpp_error, FATAL
 use mpp_domains_mod, only: mpp_update_domains, mpp_get_boundary, DGRID_NE, mpp_get_boundary_ad
 
 use fv_control_nlm_mod,     only: fv_init, pelist_all
@@ -972,10 +972,10 @@ subroutine check_tracers(traj, pert)
 
  ! Check that tracers are allocated
  if (.not. allocated(traj%tracers)) &
-   call abor1_ftn("check_tracers: .not. allocated(traj%tracers)")
+   call mpp_error(FATAL, 'check_tracers: .not. allocated(traj%tracers)')
 
  if (.not. allocated(pert%tracers)) &
-   call abor1_ftn("check_tracers: .not. allocated(pert%tracers)")
+   call mpp_error(FATAL, 'check_tracers: .not. allocated(pert%tracers)')
 
  ! Check that size of traj%tracers is the same as pert%tracers
  if (size(traj%tracers,4) /= size(pert%tracers,4)) then
@@ -989,19 +989,19 @@ subroutine check_tracers(traj, pert)
        print*, 'Pert tracer at index ', i, ' = ', trim(pert%tracer_names(i))
      enddo
    endif
-   call abor1_ftn("check_tracers: Size of tracer arrays differs between trajectory and perturbation.")
+   call mpp_error(FATAL, 'check_tracers: traj and pert tracer arrays have different size')
  endif
 
  ! Loop over traj%tracer_names and pert%tracer_names and check they are all the same
-   do i = 1, size(traj%tracer_names)
-      if (trim(traj%tracer_names(i)) /= trim(pert%tracer_names(i))) then
-        if (mpp_pe() == mpp_root_pe()) then
-          print*, 'Traj tracer with index ', i, ' has name ', trim(traj%tracer_names(i))
-          print*, 'Pert tracer with index ', i, ' has name ', trim(pert%tracer_names(i))
-        endif
-        call abor1_ftn("check_tracers: trajectory and perturbation tracers have different name in the same position.")
-      endif
-   enddo
+ do i = 1, size(traj%tracer_names)
+   if (trim(traj%tracer_names(i)) /= trim(pert%tracer_names(i))) then
+     if (mpp_pe() == mpp_root_pe()) then
+       print*, 'Traj tracer with index ', i, ' has name ', trim(traj%tracer_names(i))
+       print*, 'Pert tracer with index ', i, ' has name ', trim(pert%tracer_names(i))
+     endif
+     call mpp_error(FATAL, 'check_tracers: traj and pert tracers have different names in the same position')
+   endif
+ enddo
 
 endsubroutine check_tracers
 
