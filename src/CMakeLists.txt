@@ -29,9 +29,11 @@ ecbuild_add_library( TARGET   fv3jedilm
                      PUBLIC_LIBS NetCDF::NetCDF_Fortran
                      PRIVATE_LIBS     ${FV3JEDILM_LIB_DEP}
                      INSTALL_HEADERS LISTED )
+include_directories( fv3jedilm ${DEPEND_LIB_ROOT}/include_r8 )
+target_include_directories( fv3jedilm INTERFACE "$<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>"
+                                                "$<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>")
 
-target_include_directories( fv3jedilm INTERFACE $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
-                                                $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>)
+target_link_libraries(fv3jedilm PUBLIC FMS::fms_r8)
 
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
     target_compile_options(fv3jedilm PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-fallow-argument-mismatch>)
