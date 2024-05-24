@@ -1,0 +1,15 @@
+[build-system]
+requires = ["scikit-build-core", "numpy", "f90wrap"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pyfv3jedilm"
+version = "1.5.0"
+dependencies = ["numpy >= 1.22.3",
+                "f90wrap >= 0.2.13",
+                "isodate >= 0.6.1"]
+
+[tool.scikit-build]
+ninja.minimum-version = "1.10"
+cmake.minimum-version = "3.3.2"
+cmake.args = ["-DCMAKE_MODULE_PATH=/opt/view/share/ecbuild/cmake/", "-DBUILD_FV3LM_PYTHON_BINDINGS=ON", "-DINSTALL_LIB_DIR=pyfv3jedilm", "-DCMAKE_BUILD_TYPE=Release"]

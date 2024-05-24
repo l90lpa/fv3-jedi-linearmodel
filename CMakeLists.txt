@@ -21,6 +21,7 @@ set( ECBUILD_DEFAULT_BUILD_TYPE Release )
 set( ENABLE_OS_TESTS           OFF CACHE BOOL "Disable OS tests" FORCE )
 set( ENABLE_LARGE_FILE_SUPPORT OFF CACHE BOOL "Disable testing of large file support" FORCE )
 set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
+option( BUILD_FV3LM_PYTHON_BINDINGS "Enable building of Python bindings" OFF )
 
 include( ecbuild_system NO_POLICY_SCOPE )
 
@@ -33,6 +34,9 @@ ecbuild_requires_macro_version( 2.7 )
 ecbuild_declare_project()
 
 ecbuild_enable_fortran( REQUIRED )
+if(NOT DEFINED INSTALL_LIB_DIR)
+  set(INSTALL_LIB_DIR "lib")
+endif()
 
 ################################################################################
 # Dependencies
@@ -136,6 +140,14 @@ include( fv3jedilm_compiler_flags )
 include_directories( ${FV3JEDILM_INCLUDE_DIRS} ${FV3JEDILM_EXTRA_INCLUDE_DIRS} )
 
 add_subdirectory( src )
+
+################################################################################
+# Python Bindings
+################################################################################
+
+if(${BUILD_FV3LM_PYTHON_BINDINGS})
+  add_subdirectory( python_bindings )
+endif()
 
 ################################################################################
 # Finalise configuration
